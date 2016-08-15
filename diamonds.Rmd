@@ -1,0 +1,462 @@
+An Exploration of Diamond prices and characteristics by Brian Taylor
+========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using
+# in your analysis in this code chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk.
+# This prevents the code from displaying in the knitted HTML output.
+# You should set echo=FALSE for all code chunks in your file.
+
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+library(scales)
+library(memisc)
+theme_set(theme_grey())
+```
+
+```{r echo=FALSE, Load_the_Data}
+# Load the Data
+# the BigDiamonds file contains 598024 observations
+load("/Users/Brian/Udacity/EDA\ with\ R/lesson6/BigDiamonds.Rda")
+
+# only 463555 of those observations have GIA certification
+diamondsb <- subset(diamondsbig, cert == "GIA")
+
+# and 463066 of those have a value for price
+diamondsb <- subset(diamondsb, price > 0)
+
+# create an estimate of carat weight from x, y and z
+diamondsb$mass_estimate <- diamondsb$x * diamondsb$y * diamondsb$z * 7 / 1200
+
+# create a log-price variable
+diamondsb$logprice <- log10(diamondsb$price)
+
+# create a price per carat variable
+diamondsb$price_per_carat <- diamondsb$price / diamondsb$carat
+```
+### What is the structure of your dataset?
+I started with the large dataset of diamond prices that Solomon Messing created for use in Lesson 6 of the Udacity course. I then subsetted it to keep only those diamonds with GIA certification (about 77% of them) and to remove any diamonds that had no value for price (roughly 500 of them). 
+
+The dataset consists of 463066 observations of 13 variables, one of which I created by taking the log of price. There are eight numeric variables: carat, table, depth, price, x, y, z and logprice. There are four 'Factor' variables: cut, color, clarity and cert. And finally there is one character variable, measurements, which is just a string representation of the x, y and z variables.
+
+Here's an explanation of what each of these variables means, and the nature of them in this particular dataset.
+
+Carat - a carat is a measure of weight equivalent to 0.2 g. This equivalence has been a global standard since 1907. It is by far the most important feature in determining the value of a dimaond. The diamonds in this dataset range from 0.2 carats to 7.17 carats, with a median value of 0.8 carats.
+
+Cut - technically this is the 'cut grade' and not a reference to the style of cut, of which there are many. This is largely a subjective measurement although there have been recent technologocial advancements to remove some of the subjectivity. All the diamonds in this dataset are one of three cut grades: Good, V.Good and Ideal, with almost 64% being Ideal.
+
+Color - diamond colour grades are single letter ranging from D (perfectly colourless) to Z (light yellow). Strictly speaking this is a measure of saturation for yellow diamonds, and not hue. If a diamond is a colour like blue or pink it is not given a colour grade. There are nine different colour grades for diamonds in this dataset: D, E, F, G, H, I, J, K, and L. E is the most common colour grade in this dataset with F and G fairly close behind and L the least common.
+
+Clarity - this is a subjective judgment of a diamond's internal characteristics, called inclusions, and its surface defects, called blemishes. Both affect the 'sparkle', or appearance of the diamond. The diamonds in this dataset range from IF (internally flawless), to I2. There are nine different grades with the most common being VS2 and SI1, roughly in the middle of the grade spectrum, and the least common being the worst grade, I2.
+
+Table - this refers to the width of the top facet as a percentage of the total width of the diamond. It's an important feature in the determination of the cut grade, but can vary with different styles, too. The minimum table value for diamonds in this dataset is 0 (i.e. no top facet) to 75, a very wide top facet, with the median being 58.
+
+Depth - this refers to the depth of the diamond from the widest point to the bottom expressed as a percentage. In this dataset it ranges from 0 (I'm not sure if this is a missing value or the widest point is the bottom of this particular diamond) to 81.30, with a median of 62.
+
+Cert - this refers to the certification. I've subsetted the original dataset to include only diamonds with a GIA certification so that the various grades are consistent. GIA refers to the Gemological Institute of America, based in Carlsbad, California.
+
+Measurements - this is simply a string showing the x, y and z measurements.
+
+Price - the minimum price of a diamond in this dataset is $300 and the maximum price is $99966. The median price is $3305. There is a strange gap in the prices of the diamonds -- there are no diamonds at all between the amounts of $2471 and $2600. I don't have a good explanation for this.
+
+x, y and z - these are the volumetric measurements of the diamond in millimeters. It's possible to estimate the volume of a diamond by assuming that it is roughly pyramid shape and using the formula V = xyz/3. Since diamonds have a density of 3.5 g per cubic cm we can compare this volume to the carat measure and see how good the formula is. It turns out that it would appear to slightly underestimate the volume for most diamonds. The correlation between volume (as calculated with this formula) and carat weight is almost perfect (0.999), so in reality volume, as a separate variable, doesn't add any new information.
+
+Logprice - I created this variable by taking the log(base10) of price. The minimum value is 2.477 and the maximum value is 5.000, with a median of 3.519. This was a useful transformation as the vast majority of diamonds were lower priced. The third quartile of price is $11207, but the maximum price is $99966.
+
+Mass_estimate - I created this variable by multiplying the x, y and z variables and then multiplying that by 7 and dividing by 1200. I started by using the formula for a rectangular pyramid, V = xyz/3, which gives us the volume in cubic millimeters. I then divided by 1000 to get cubic centimeters, multiplied by 3.5 to get grams and multiplied by 5 to get carats.
+
+Price_per_carat - I created this variable by dividing price by carat.
+
+## Univariate Plots Section
+```{r echo=FALSE, Univariate_Plots1}
+
+str(diamondsb)
+summary(diamondsb)
+
+# what's the correlation coefficient of carat and my estimate of mass?
+with(subset(diamondsb, mass_estimate > 0), cor.test(carat, mass_estimate))
+
+# let's create a linear model to see how closely the mass estimate
+# predicts the actual mass
+m1 <- lm(carat ~ mass_estimate, 
+         data = diamondsb[diamondsb$mass_estimate > 0,])
+mtable(m1)
+
+ggplot(diamondsb, aes(carat, ..density..)) + geom_histogram(binwidth = 0.1)
+ggplot(diamondsb, aes(carat, ..density..)) + geom_histogram(binwidth = 0.05)
+ggplot(diamondsb, aes(carat, ..density..)) + geom_histogram(binwidth = 0.01)
+ggplot(data = subset(diamondsb, carat < quantile(diamondsb$carat, .99)), 
+       aes(carat, ..density..)) + 
+  geom_histogram(binwidth = 0.01)
+```
+  
+### The distribution of carat masses
+I used a few different binwidths and finally subsetted the data to eliminate the largest 1% of the diamonds. It's quite clear that cutting decisions are made to hit certain carat values as there are pronounced spikes, especially at round numbers as the diamonds get bigger, e.g. 1 carat, 1.5 carats, 2 carats, etc.
+
+```{r echo=FALSE, Univariate_Plots4}
+ggplot(aes(x = price), data = diamondsb) + geom_histogram(bins = 100)
+ggplot(aes(x = price), data = diamondsb) +
+  geom_histogram(bins = 100) +
+  scale_x_log10(breaks = c(250, 500, 1000, 2000, 4000, 8000, 
+                           16000, 32000, 64000))
+```
+  
+### The distribution of prices
+The vast majority of the diamonds are under $10,000, but the maximum price is almost $100,000 so the histogram is a bit easier to digest after applying a log transformation to the price scale. We can now see a few spikes, the first being just under $1,000 (perhaps an important price point) and the second notable spike at around $15,000. There is also the gap, as noted above, between $2471 and $2600, for which I have no explanation.
+
+```{r echo=FALSE, Univariate_Plots6}
+ggplot(aes(x = cut, fill = cut), data = diamondsb) + geom_bar() + 
+  scale_fill_brewer(direction = -1) + 
+  labs(title = "Diamond Count by Cut")
+```
+  
+### The distribution of cuts
+More than half the diamonds are of Ideal cut.
+
+```{r echo=FALSE, Univariate_Plots7}
+ggplot(aes(x = color, fill = color), data = diamondsb) + geom_bar() +
+  scale_fill_brewer(direction = -1) + 
+  labs(title = "Diamond Count by Color")
+```
+  
+### The distribution of color
+The distribution of color follows an almost normal looking curve, with the intermediate colors E, F and G being the highest and the values at the extremes dropping off.
+
+```{r echo=FALSE, Univariate_Plots8}
+ggplot(aes(x = clarity, fill = clarity), data = diamondsb) + geom_bar() + 
+  scale_fill_brewer(direction = -1) + 
+  labs(title = "Diamond Count by Clarity")
+```
+  
+### The distribution of clarity
+The distribution of clarity also follows an almost normal looking curve, with the intermediate clarities of VS2 and SI1 being the highest and the extremes dropping off.
+
+## Univariate Analysis
+
+### What is/are the main feature(s) of interest in your dataset?
+The dataset contains measurements and grades of 463,066 diamonds. The primary features are price and the "four Cs" -- carat, cut, color and clarity. 
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+There are also a number of other measurements including the three volume dimensions in millimeters and some diamond design measurements -- table and depth.
+
+### Did you create any new variables from existing variables in the dataset?
+I created a variable to estimate the mass of the diamond based on the three volume dimensions, using a very rough assumption that a diamond is a rectangular pyramid and using the density of diamonds. I created a price per carat variable and I also created a scaled price variable by taking the log (base 10) of price.
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+A small number of the volume dimensions were missing, so I eliminated those diamonds when calculating the correlation coefficient for my estimated mass and the carat mass, and for the linear model I used to see how close the two variables were.
+
+## Bivariate Plots Section
+```{r echo=FALSE, Bivariate_Plots1}
+ggplot(aes(x = carat, y = price), data = diamondsb) + 
+  geom_point(alpha = 0.01, color = 'blue')
+```
+  
+### Price vs. Carat
+There is clearly a relationship between price and size, but it appears non-linear. It also seems that the larger the diamond the greater the variation in price. Most of the diamonds under 1 carat cluster in a fairly tight price band, but once we get to 2 carats the price varies from under $10,000 to $100,000.
+
+```{r echo=FALSE, Bivariate_Plots2}
+ggplot(diamondsb, aes(table, carat)) + geom_point(alpha = 0.1)
+```
+  
+### Carat vs. Table
+This plot certainly shows that the bigger the diamond the less variability in the table value. Also, table values of 0 or close to 0 are not common for diamonds bigger than about 2 carats. I don't really know what a table value of 0 means, whether it's a different style of cut or perhaps is a missing value. More investigation here is necessary.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots3}
+ggplot(aes(x = table, y = clarity), data = diamondsb) + 
+  geom_point(alpha = 0.001) + geom_jitter()
+```
+  
+### Clarity vs. Table
+In reading about table, I thought it might influence clarity, but this plot doesn't seem to indicate that there is much of a relationship.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots4}
+ggplot(diamondsb, aes(clarity, table)) + 
+  geom_boxplot()
+
+# let's take a closer look at the actual numbers
+aggregate(table ~ clarity, data = diamondsb, quantile)
+```
+  
+### Boxplot of table vs. clarity
+The boxplot seems to show that the better the clarity the lower the value of table, but only slightly. The median table value drops from 59% for I2 to 57% for IF. The IQR is 4% for I2 and 3% for all other grades of clarity.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots5}
+ggplot(aes(x = table, y = cut), data = diamondsb) + 
+  geom_point(alpha = 0.001) + geom_jitter()
+```
+  
+### Cut vs. Table
+There doesn't seem to be much relationship here, except that the Ideal cut diamonds, the majority of diamonds in this dataset, have a much tighter distribution of Table than either the V.Good or Good cut diamonds.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots6}
+ggplot(diamondsb, aes(cut, table)) + 
+  geom_boxplot()
+
+# let's take a closer look at the actual numbers
+aggregate(table ~ cut, data = diamondsb, quantile)
+```
+  
+### Boxplot of table vs. cut
+The boxplot seems to show that the Ideal diamonds have a narrower range of table values and a slightly lower median table value. The median table value is 59% for Good, 58% for V.Good and 57% for Ideal. The IQR goes from 5% to 4% to 3% as we get better grades for cut.
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots7}
+ggplot(aes(x = mass_estimate, y = carat), data = diamondsb) + 
+  geom_point(alpha = 0.01)
+```
+  
+### Carat vs. Estimated Mass
+This plot demonstrates how closely the Estimated Mass models the actual mass. I was struck by the anomolous behaviour around the integral carat values, though, and will write more about that below.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots8}
+ggplot(diamondsb, aes(carat, ..density..)) +
+  geom_histogram(binwidth = 0.2) +
+  facet_grid(. ~ cut) +
+  coord_cartesian(xlim = c(0, quantile(diamondsb$carat, .99)))
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots8A}
+# let's also take a look at the boxplots
+ggplot(diamondsb, aes(cut, carat)) + 
+  geom_boxplot()
+
+# let's take a closer look at the actual numbers
+aggregate(carat ~ cut, data = diamondsb, quantile)
+```
+  
+### Carat size by cut
+This side-by-side comparison of the distribution of carat sizes by cut shows that the vast majority of Good cut diamonds are 1 carat or less (the 75% percentile is 1.00 carats). There is a bit more variation for V.Good, but not as much as for Ideal. The IQR goes from 0.57 carats for Good to 0.59 for V.Good to 1.09 for Ideal. I'm not sure if this reflects bigger diamonds being given to more experienced people who can generate better cuts, or some other influence.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots9}
+ggplot(diamondsb, aes(carat, ..density..)) +
+  geom_histogram(binwidth = 0.2) +
+  facet_grid(. ~ color) +
+  coord_cartesian(xlim = c(0, quantile(diamondsb$carat, .99)))
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots9A}
+# let's also take a look at the boxplots
+ggplot(diamondsb, aes(color, carat)) + 
+  geom_boxplot()
+
+# let's take a closer look at the actual numbers
+aggregate(carat ~ color, data = diamondsb, quantile)
+```
+  
+### Carat size by color
+This side-by-side comparison of the distribution of carat sizes by color shows that the D-grade (completely colorless) diamonds are more likely to be smaller. As you move along the color scale the distribution becomes less peaked. The four color grades I, J, K and L are much more spread out. With the exception of L grade the median carat size falls as the color grade gets better from a peak of 1.10 carats for K grade to 0.54 carats for D grade. Similarly, with the exception of L, the IQR falls from a peak of 1.33 carats for K grade to a minimum of 0.40 carats for F grade, with a slight widening for E grade (0.43 carats) and D grade (0.47 carats).
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots10}
+ggplot(diamondsb, aes(carat, ..density..)) +
+  geom_histogram(binwidth = 0.2) +
+  facet_grid(. ~ clarity) +
+  coord_cartesian(xlim = c(0, quantile(diamondsb$carat, .99)))
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Bivariate_Plots10A}
+# let's also take a look at the boxplots
+ggplot(diamondsb, aes(clarity, carat)) + 
+  geom_boxplot()
+
+# let's take a closer look at the actual numbers
+aggregate(carat ~ clarity, data = diamondsb, quantile)
+```
+  
+### Carat size by clarity
+This side-by-side comparison of the distribution of carat sizes by clarity shows less variability than the previous two comparisons (for cut and color). It's difficult to make any generalizations based on these plots. The median carat size peaks at 0.92 for SI2 grade and then falls as the clarity gets better with a median of 0.77 carats for IF. The IQR is greatest for the middle ranges of clarity with a peak of 1.09 carats for VS1 and a minimum of 0.50 carats for I1.
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+
+The three "lesser" Cs -- cut, color and clarity -- all seemed to influence price, but their influence is only visible when looking at diamonds of a given carat weight. And of the three cut seems to be the most ambiguous, whereas clarity and color seem strongly related to price for a given carat weight.
+
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+
+I thought the carat size by color relationship was interesting and a bit mysterious. I can't think of any particular reason why the least coloured diamonds would have distributions that skew to the small size, whereas the most coloured diamonds seemed to have wider distributions of size.
+
+### What was the strongest relationship you found?
+
+The strongest relationship is that between carat and price. That being said there was still significant variation at a given carat size, as mentioned before -- anywhere from four to eight-fold difference between the cheapest and most expensive diamonds in a given size.
+
+# Multivariate Plots Section
+```{r echo=FALSE, Multivariate_Plots0}
+ggplot(diamondsb, aes(price_per_carat, fill = cut)) + 
+  geom_histogram(bins = 100) + scale_x_log10()
+```
+  
+### Price per Carat distinguished by Cut
+This plot shows that the most common price per carat is around $3000 and that as the diamonds get more expensive on a price per carat basis the proportion of Ideal cut diamonds seems to increase.
+
+```{r echo=FALSE, Multivariate_Plots1}
+ggplot(diamondsb, aes(carat, price)) + geom_point(alpha = 0.05) +
+  scale_y_log10(breaks = c(250, 500, 1000, 2000, 4000, 
+                           8000, 16000, 32000, 64000)) +
+  facet_grid(cut ~ color)
+```
+  
+### Price vs. Carat faceted by Color and Cut
+I think the best insight from this plot is the effect of color on the price curve. The further right (toward the perfectly colorless end) the steeper the curve. In order to get into the really high priced diamonds in the L or K color grade the size has to be truly massive (5 or 6 carats), whereas there are D and E grade diamonds that are over $64,000 and only about 3 carats.
+
+```{r echo=FALSE, Multivariate_Plots2}
+ggplot(diamondsb, aes(carat, price)) + geom_point(alpha = 0.05) +
+  scale_y_log10(breaks = c(250, 500, 1000, 2000, 4000, 
+                           8000, 16000, 32000, 64000)) +
+  facet_grid(cut ~ clarity)
+```
+  
+### Price vs. Carat faceted by Clarity and Cut
+This plot is similar to the previous one, but the relationship doesn't seem quite as strong, perhaps just because of the small numbers of diamonds with poor clarity grades.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Multivariate_Plots2.5}
+ggplot(diamondsb, aes(carat, price, color=cut)) +
+  geom_point(alpha = 1) +
+  scale_colour_brewer(type = "seq", palette = 3, direction = -1)
+```
+  
+### Price vs. Carat distinguished by Cut
+This plot shows a non-linear relationship. We know that there are many more lower priced diamonds and given the nature of the non-linear relationship a log transformation on the price seems to reasonable. It also shows that Good diamonds are not consistently the cheapest for any given carat size. Some even appear to be among the most expensive, albeit not that often.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Multivariate_Plots3}
+ggplot(diamondsb, aes(carat, price, color=cut)) +
+  geom_point(alpha = 1) +
+  scale_y_log10(breaks = c(250, 500, 1000, 2000, 4000, 
+                           8000, 16000, 32000, 64000)) +
+  scale_colour_brewer(type = "seq", palette = 2, direction = 1)
+```
+  
+### Log(price) vs. Carat distinguished by Cut
+This plot shows a non-linear relationship even after transforming the price variable to a log scale. Since carat and volume are almost perfectly correlated it seems reasonable to try a cube-root transformation on carat to approximate a single dimension characteristic of the diamonds. Perhaps consumers perceive the size of the diamonds by a single dimension more readily than the volume.
+
+```{r echo=FALSE, cuberoot_transformation}
+# the cuberoot transformtion is used to tranform the carat weight of the
+# diamonds to get a more linear looking relationship between price and 
+# carat weight.
+
+cuberoot_trans = function() trans_new('cuberoot',
+                                      transform = function(x) x^(1/3),
+                                      inverse = function(x) x^3)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Use_cuberoot_trans}
+# transform both the x and y scales in this scatterplot
+ggplot(aes(carat, price, color=cut), data = diamondsb) + 
+  geom_point(alpha = 1) + 
+  scale_colour_brewer(type = "qual", palette = 2, direction = -1) +
+  scale_x_continuous(trans = cuberoot_trans(), limits = c(0.2, 6),
+                     breaks = c(0.1, 0.5, 1.0, 1.5, 2, 3, 4, 5)) + 
+  scale_y_continuous(trans = log10_trans(), limits = c(250, 100000),
+                     breaks = c(250, 500, 1000, 2000, 4000, 
+                                8000, 16000, 32000, 64000)) +
+  ggtitle('Price in USD (log10 scale) vs. Carat (cube root scale)')
+```
+  
+### Log(price) vs. Cube root(carat) distinguished by Cut
+In this plot we finally see what looks like the makings of a linear model, although as the carat size gets bigger it does seem to be deviating from a linear model. I changed the palette because I was finding it hard to see the different cuts in the previous plots. Now it's possible to see that diamonds with a V.Good cut are sometimes just as expensive as identically sized diamonds with Ideal cut.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Multivariate_Plots4}
+ggplot(aes(carat, price, color=color), data = diamondsb) + 
+  geom_point(alpha = 1) + 
+  scale_colour_brewer(type = "seq", palette = 2, direction = -1) +
+  scale_x_continuous(trans = cuberoot_trans(), limits = c(0.2, 6),
+                     breaks = c(0.1, 0.5, 1.0, 1.5, 2, 3, 4, 5)) + 
+  scale_y_continuous(trans = log10_trans(), limits = c(250, 100000),
+                     breaks = c(250, 500, 1000, 2000, 4000, 
+                                8000, 16000, 32000, 64000)) +
+  ggtitle('Price in USD (log10 scale) vs. Carat (cube root scale)')
+```
+  
+### Log(price) vs. Cube root(carat) distinguished by Color
+The same plot as before, but with the effect of Color highlighted. Color would appear to be a much more influential factor than cut.
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, Multivariate_Plots5}
+ggplot(aes(carat, price, color=clarity), data = diamondsb) + 
+  geom_point(alpha = 1) + 
+  scale_colour_brewer(type = "seq", palette = 3, direction = -1) +
+  scale_x_continuous(trans = cuberoot_trans(), limits = c(0.2, 6),
+                     breaks = c(0.1, 0.5, 1.0, 1.5, 2, 3, 4, 5)) + 
+  scale_y_continuous(trans = log10_trans(), limits = c(250, 100000),
+                     breaks = c(250, 500, 1000, 2000, 4000, 
+                                8000, 16000, 32000, 64000)) +
+  ggtitle('Price in USD (log10 scale) vs. Carat (cube root scale)')
+```
+  
+### Log(price) vs. Cube root(carat) distinguished by Clarity
+Here we can see the same linear relationship, but a much more striking effect of clarity.
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+Carat size is clearly the driving force behind diamond prices, but for a given carat size there is quite a bit of variability based on cut, color and clarity. 
+
+### Were there any interesting or surprising interactions between features?
+Cut does not seem to be as important. While the Ideal cut diamonds do seem to be priced higher there are certainly many examples of V.Good cut diamonds that are priced as high or higher than identically sized Ideal cut diamonds.
+
+
+------
+
+# Final Plots and Summary
+  
+### Plot One
+```{r echo=FALSE, warning=FALSE, message=FALSE, Plot_One}
+ggplot(aes(x = mass_estimate, y = carat), data = diamondsb) + 
+  geom_point(alpha = 0.01) +
+  labs(title = "Actual vs. Estimated Mass in Carats") +
+  labs(x = "Estimated mass in carats", y = "Actual mass in carats") +
+  theme(plot.title = element_text(size = rel(2), colour = I('#002DB3'))) +
+  geom_segment(aes(x = 1.4, y = 2.4, xend = 1.7, yend = 2.1), 
+    arrow = arrow(length = unit(0.4, "cm"))) +
+  annotate("text", label = "fraud?", x = 1, y = 2.5, 
+           size = 6, colour = I('#002DB3'))
+```
+  
+### Description One
+The three dimensional measurements of each diamond (x, y and z) are provided in millimeters. A very rough assumption is that each diamond is a rectangular pyramid and so the formula for the volume of a pyramid can be used along with the density of diamonds to come up with an estimated mass in carats for each diamond based on the measurements. This plot shows how closely the estimated mass tracks the actual mass in carats. The actual mass is on average 5.4% bigger than the estimated mass.
+  
+However, the most surprising thing about this plot (and the reason I chose to include it as one of the three polished plots) is the regular deviations at integral carat measurements and to a certain extent at the half carat measurments (e.g. at 1.5 and 2.5 carats). I can think of two possible explanations for these deviations. It's possible that with certain diamonds a different style of cut is chosen in order to ensure that the diamond hits a round number (e.g. 2 carats, or 3 carats) instead of being just under that round number (e.g. 1.99 carats, or 2.98 carats). Alternatively, there is some upward rounding taking place, an indication of fraud, and diamonds are being sold as 2 carat or 3 carat diamonds when in fact they are slightly smaller. This might be worth pursuing for an investigative journalist.
+  
+### Plot Two
+```{r echo=FALSE, warning=FALSE, message=FALSE, Plot_Two}
+ggplot(diamondsb, aes(price_per_carat, fill = cut)) + 
+  geom_histogram(bins = 100) + 
+  scale_x_continuous(trans = log10_trans(), limits = c(250, 100000),
+                     breaks = c(250, 500, 1000, 2000, 
+                                4000, 8000, 16000, 32000, 64000)) +
+  labs(title = "Price per Carat in USD by Cut") +
+  labs(x = "Price per Carat in USD", y = "Number of diamonds") +
+  theme(plot.title = element_text(size = rel(2), colour = I('#002DB3')))
+```
+  
+### Description Two
+This plot demonstrates the remarkable diversity of diamond prices. The most common price per carat is about $2,500, but the diamonds in this dataset vary from about $1000 per carat to over $30,000 per carat. It also shows that cut alone is not a very good determiner of how valuable a diamond is. While there appears to be a greater proportion of Ideal cut diamonds among the more expensive it is still the case that some V.Good cut diamonds and even some Good cut diamonds have prices well in excess of $10,000 per carat.
+  
+### Plot Three
+```{r echo=FALSE, warning=FALSE, message=FALSE, Plot_Three}
+ggplot(aes(carat, price, color=clarity), data = diamondsb) + 
+  geom_point(alpha = 1) + 
+  scale_colour_brewer(type = "seq", palette = 3, direction = -1) +
+  scale_x_continuous(trans = cuberoot_trans(), limits = c(0.2, 6),
+                     breaks = c(0.1, 0.5, 1.0, 1.5, 2, 3, 4, 5)) + 
+  scale_y_continuous(trans = log10_trans(), limits = c(250, 100000),
+                     breaks = c(250, 500, 1000, 2000, 
+                                4000, 8000, 16000, 32000, 64000)) +
+  labs(title = "Price in USD (log10 scale) vs. Carat (cube root scale)") +
+  labs(y = "Price in USD", x = "Carat size") +
+  theme(plot.title = element_text(size = rel(1), colour = I('#002DB3')))
+```
+  
+### Description Three
+This plot demostrates quite clearly (no pun intended) how important clarity is in the price of a diamond. For any given carat size we can see that a large amount of the price variation is due to the clarity grade with the best clarity grades being consistently more expensive. For example at the 1.5 carat size the diamonds graded IF appear to be almost eight times more expensive than the diamonds graded I1 or I2.
+
+------
+
+# Reflection
+One of the most striking features of the dataset is the effect of round numbers. In virtually every plot we can see the effect of round numbers for carat size, both integral values and half-integral values. As a side project I would like to do an investigation looking at diamonds that are very similar in all respects but slightly different in size, either just at an integral carat amount, or just below.
+
+It was also very intresting to see how important clarity and color were while realizing that cut didn't play as big a role, or at the very least played a much more ambiguous role.
+
+One struggle I had was simply the time it took for plots to render. On my MacBook Air some of the plots took 15 seconds to render given that I was dealing with almost half a million diamonds. A more important struggle was that because so many of the diamonds had similar characteristics almost every plot had a large amount of overplotting. This made outliers and exceptions seem more common than they really were. Changing the transparency improved many of the plots, but when I was also using the color brewer scales it had the tendency to wash out the lighter end of the spectrum of colours making the plots hard to interpret.
