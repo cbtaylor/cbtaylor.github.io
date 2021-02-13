@@ -21,4 +21,4 @@ I used pandas and a number of the Python graphing packages to explore some relat
 
 ![mountains](500by100pics/mountains1.png)
 
-![SVG examples](svg.html)
+[SVG examples](svg.html)
