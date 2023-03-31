@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Prime or Composite?</title>
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+		body {
+			font-family: 'Montserrat', sans-serif;
+		}
+		.container {
+			max-width: 600px;
+			margin: 0 auto;
+			text-align: center;
+		}
+		h1 {
+			font-size: 36px;
+			margin-top: 0;
+		}
+		button {
+			margin: 10px;
+			padding: 10px 20px;
+			font-size: 18px;
+			border-radius: 5px;
+			border: none;
+			background-color: #008CBA;
+			color: #fff;
+			cursor: pointer;
+		}
+		button:hover {
+			background-color: #005D6E;
+		}
+		#number {
+			font-size: 32px;
+			margin-top: 20px;
+			color: #444444;
+			font-weight: bold;
+		}
+		#result {
+			font-size: 32px;
+			margin-top: 20px;
+			color: #444444;
+			font-weight: bold;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>Prime or Composite?</h1>
+		<p>Is the following number prime or composite?</p>
+		<p id="number"></p>
+		<button onclick="checkPrime()">Prime</button>
+		<button onclick="checkComposite()">Composite</button>
+		<button onclick="generateNewNumber(); clearResult()">Again</button>
+		<p id="result"></p>
+	</div>
+
+
+	<script>
+		// function to generate random three-digit number
+		function generateNumber() {
+			return Math.floor(Math.random() * 900) + 100;
+		}
+
+		// function to check if a number is prime
+		function isPrime(n) {
+			for (let i = 2; i <= Math.sqrt(n); i++) {
+				if (n % i === 0) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		// function to check if a number is composite
+		function isComposite(n) {
+			return !(isPrime(n));
+		}
+
+		// function to display whether the answer is correct or incorrect
+		function displayResult(result) {
+			const resultElement = document.getElementById('result');
+			resultElement.textContent = result;
+		}
+
+		// function to clear the 'result' element
+    	function clearResult() {
+	    	const resultElement = document.getElementById('result');
+	    	resultElement.textContent = '';
+    	}
+
+		// function to check if the selected option is correct or incorrect
+		function checkAnswer(isCorrect) {
+			if (isCorrect)  {
+				displayResult('Correct!');
+			} else {
+				displayResult('Incorrect!');
+			}
+		}
+
+		// function to check if the selected number is prime
+		function checkPrime() {
+			const number = parseInt(document.getElementById('number').textContent);
+			const isCorrect = isPrime(number);
+			checkAnswer(isCorrect);
+		}
+
+		// function to check if the selected number is composite
+		function checkComposite() {
+			const number = parseInt(document.getElementById('number').textContent);
+			const isCorrect = isComposite(number);
+			checkAnswer(isCorrect);
+		}
+
+		// function to generate a new random number and display it on the page
+		function generateNewNumber() {
+			const numberElement = document.getElementById('number');
+			const number = generateNumber();
+			numberElement.textContent = number;
+		}
+
+		// generate a random three-digit number and display it on the page
+		const numberElement = document.getElementById('number');
+		const number = generateNumber();
+		numberElement.textContent = number;
+		const resultElement = document.getElementById('result');
+		const result = '';
+		resultElement.textContent = result;
+	</script>
+</body>
+</html>
