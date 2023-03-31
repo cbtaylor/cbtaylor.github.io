@@ -52,37 +52,45 @@
     </p>
     <p><span id="day-of-week"></span></p>
     <button onclick="displayDayOfWeek()">Show Day of Week</button>
+    <button onclick="reloadDate()">Reload</button>
 
     <script>
-      const year = Math.floor(Math.random() * (2199 - 1753 + 1) + 1753);
-      const month = Math.floor(Math.random() * 12) + 1;
-      const day = Math.floor(Math.random() * 31) + 1;
+      let year, month, day, date, daysOfWeek, dayOfWeek, generatedDateElement, dayOfWeekElement;
 
-      const date = new Date(year, month, day);
-
-      const daysOfWeek = [
-        'Sunday',
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-        'Friday',
-        'Saturday',
-      ];
-      const dayOfWeek = daysOfWeek[date.getDay()];
-
-      const generatedDateElement = document.getElementById('generated-date');
-      const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      generatedDateElement.textContent = date.toLocaleDateString(
-        undefined,
-        options
-      );
-
-      const dayOfWeekElement = document.getElementById('day-of-week');
+      function generateRandomDate() {
+        year = Math.floor(Math.random() * (2199 - 1753 + 1) + 1753);
+        month = Math.floor(Math.random() * 12) + 1;
+        day = Math.floor(Math.random() * 31) + 1;
+        date = new Date(year, month, day);
+        daysOfWeek = [
+          'Sunday',
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+        ];
+        dayOfWeek = daysOfWeek[date.getDay()];
+        generatedDateElement = document.getElementById('generated-date');
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        generatedDateElement.textContent = date.toLocaleDateString(
+          undefined,
+          options
+        );
+        dayOfWeekElement = document.getElementById('day-of-week');
+        dayOfWeekElement.textContent = '';
+      }
 
       function displayDayOfWeek() {
         dayOfWeekElement.textContent = dayOfWeek;
       }
+
+      function reloadDate() {
+        generateRandomDate();
+      }
+
+      generateRandomDate();
     </script>
   </body>
 </html>
