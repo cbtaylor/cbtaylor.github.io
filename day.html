@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Day Of The Week Game</title>
+    <style>
+      body {
+        background-color: #f5f5f5;
+        font-family: Arial, sans-serif;
+        text-align: center;
+      }
+
+      h1 {
+        color: #555;
+        margin-top: 50px;
+      }
+
+      button {
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin-top: 20px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #3e8e41;
+      }
+
+      #generated-date {
+        font-size: 24px;
+        font-weight: bold;
+        color: #555;
+      }
+
+      #day-of-week {
+        font-size: 36px;
+        font-weight: bold;
+        color: #4CAF50;
+        margin-top: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Do You Know The Day Of The Week?</h1>
+    <p>
+      <span id="generated-date"></span>
+    </p>
+    <p><span id="day-of-week"></span></p>
+    <button onclick="displayDayOfWeek()">Show Day of Week</button>
+
+    <script>
+      const year = Math.floor(Math.random() * (2199 - 1753 + 1) + 1753);
+      const month = Math.floor(Math.random() * 12) + 1;
+      const day = Math.floor(Math.random() * 31) + 1;
+
+      const date = new Date(year, month, day);
+
+      const daysOfWeek = [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+      ];
+      const dayOfWeek = daysOfWeek[date.getDay()];
+
+      const generatedDateElement = document.getElementById('generated-date');
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      generatedDateElement.textContent = date.toLocaleDateString(
+        undefined,
+        options
+      );
+
+      const dayOfWeekElement = document.getElementById('day-of-week');
+
+      function displayDayOfWeek() {
+        dayOfWeekElement.textContent = dayOfWeek;
+      }
+    </script>
+  </body>
+</html>
