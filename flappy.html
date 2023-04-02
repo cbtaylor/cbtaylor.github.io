@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Flappy Bird Game</title>
+  <style>
+    canvas {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="400" height="400"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let bird = {
+      x: 50,
+      y: canvas.height / 2,
+      speedY: 0,
+      gravity: 0.5,
+      radius: 20,
+      color: 'red'
+    }
+
+    let obstacles = [
+      { x: canvas.width, y: 0, width: 50, height: 150 },
+      { x: canvas.width + 200, y: canvas.height - 150, width: 50, height: 150 }
+    ]
+
+    function drawBird() {
+      ctx.beginPath();
+      ctx.arc(bird.x, bird.y, bird.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = bird.color;
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawObstacles() {
+      obstacles.forEach(function(obstacle) {
+        ctx.fillStyle = 'green';
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      });
+    }
+
+    function moveBird() {
+      bird.speedY += bird.gravity;
+      bird.y += bird.speedY;
+    }
+
+    function moveObstacles() {
+      obstacles.forEach(function(obstacle) {
+        obstacle.x -= 2;
+        if (obstacle.x + obstacle.width < 0) {
+          obstacle.x = canvas.width;
+        }
+      });
+    }
+
+    function checkCollision() {
+      obstacles.forEach(function(obstacle) {
+        if (bird.x + bird.radius > obstacle.x && bird.x - bird.radius < obstacle.x + obstacle.width &&
+            bird.y + bird.radius > obstacle.y && bird.y - bird.radius < obstacle.y + obstacle.height) {
+          alert('Game over!');
+          location.reload();
+        }
+      });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBird();
+      drawObstacles();
+      moveBird();
+      moveObstacles();
+      checkCollision();
+      requestAnimationFrame(draw);
+    }
+
+    document.addEventListener('keydown', function(event) {
+      if (event.code === 'Space') {
+        bird.speedY = -10;
+      }
+    });
+
+    draw();
+  </script>
+</body>
+</html>
