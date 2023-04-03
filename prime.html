@@ -60,7 +60,11 @@
 	<script>
 		// function to generate random three-digit number
 		function generateNumber() {
-			return Math.floor(Math.random() * 900) + 100;
+		    let n = 0;
+		    while ((n % 2 == 0) || (n % 3 == 0) || (n % 5 == 0)) {
+		        n = Math.floor(Math.random() * 900) + 100;
+		    }
+			return n;
 		}
 
 		// function to check if a number is prime
