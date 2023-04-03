@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Prime or Composite?</title>
 	<style>
 		@import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
@@ -53,6 +52,8 @@
 		<button onclick="checkComposite()">Composite</button>
 		<button onclick="generateNewNumber(); clearResult()">Again</button>
 		<p id="result"></p>
+		<p>Correct: <span id="correct">0</span></p>
+		<p>Incorrect: <span id="incorrect">0</span></p>
 	</div>
 
 
@@ -93,8 +94,10 @@
 		function checkAnswer(isCorrect) {
 			if (isCorrect)  {
 				displayResult('Correct!');
+				incrementCorrect();
 			} else {
 				displayResult('Incorrect!');
+				incrementIncorrect();
 			}
 		}
 
@@ -118,7 +121,22 @@
 			const number = generateNumber();
 			numberElement.textContent = number;
 		}
+		
+		function incrementCorrect() {
+            correct++;
+            correctDisplay.textContent = correct;
+		}
+		
+		function incrementIncorrect() {
+            incorrect++;
+            incorrectDisplay.textContent = incorrect;
+		}
 
+		let correct = 0;
+		let incorrect = 0;
+        const correctDisplay = document.getElementById("correct");
+        const incorrectDisplay = document.getElementById("incorrect");
+      
 		// generate a random three-digit number and display it on the page
 		const numberElement = document.getElementById('number');
 		const number = generateNumber();
