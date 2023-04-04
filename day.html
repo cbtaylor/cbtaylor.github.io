@@ -16,7 +16,6 @@
       }
 
       button {
-        background-color: #4CAF50;
         border: none;
         color: white;
         padding: 8px 10px;
@@ -26,6 +25,15 @@
         font-size: 14px;
         margin-top: 18px;
         cursor: pointer;
+      }
+      
+      .buttonDay {
+          width: 12%;
+          background-color: #4CAF50;
+      }
+      .buttonAnother {
+          width: 30%;
+          background-color: #fc5e03;
       }
 
       button:hover {
@@ -41,7 +49,7 @@
       #day-of-week {
         font-size: 36px;
         font-weight: bold;
-        color: #AC5F50;
+        color: #0317fc;
         margin-top: 30px;
       }
     </style>
@@ -52,16 +60,16 @@
       <span id="generated-date"></span>
     </p>
     <p></p>
-    <button onclick="sun()">Su</button>
-    <button onclick="mon()">Mo</button>
-    <button onclick="tue()">Tu</button>
-    <button onclick="wed()">We</button>
-    <button onclick="thu()">Th</button>
-    <button onclick="fri()">Fr</button>
-    <button onclick="sat()">Sa</button>
+    <button class="button buttonDay" onclick="checkDay(0)">Su</button>
+    <button class="button buttonDay" onclick="checkDay(1)">Mo</button>
+    <button class="button buttonDay" onclick="checkDay(2)">Tu</button>
+    <button class="button buttonDay" onclick="checkDay(3)">We</button>
+    <button class="button buttonDay" onclick="checkDay(4)">Th</button>
+    <button class="button buttonDay" onclick="checkDay(5)">Fr</button>
+    <button class="button buttonDay" onclick="checkDay(6)">Sa</button>
     <p></p>
     <p><span id="day-of-week"></span></p>
-    <button onclick="reloadDate()">Reload</button>
+    <button class="button buttonAnother" onclick="reloadDate()">Another</button>
     <p>Correct: <span id="correct">0</span></p>
 	<p>Incorrect: <span id="incorrect">0</span></p>
 
@@ -98,6 +106,7 @@
       }
       
       function checkDay(day) {
+          displayDayOfWeek();
           if (date.getDay() == day) {
               incrementCorrect();
           } else {
@@ -115,40 +124,6 @@
             incorrectDisplay.textContent = incorrect;
 		}
       
-      function sun() {
-        displayDayOfWeek();
-        checkDay(0);
-      }
-      
-      function mon() {
-        displayDayOfWeek();
-        checkDay(1);
-      }
-      
-      function tue() {
-        displayDayOfWeek();
-        checkDay(2);
-      }
-      
-      function wed() {
-        displayDayOfWeek();
-        checkDay(3);
-      }
-      
-      function thu() {
-        displayDayOfWeek();
-        checkDay(4);
-      }
-      
-      function fri() {
-        displayDayOfWeek();
-        checkDay(5);
-      }
-      
-      function sat() {
-        displayDayOfWeek();
-        checkDay(6);
-      }
 
       function reloadDate() {
         generateRandomDate();
