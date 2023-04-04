@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Prime or Composite?</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+    	<title>Prime or Composite?</title>
 	<style>
 		@import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
 		body {
@@ -89,9 +90,9 @@
 		}
 
 		// function to clear the 'result' element
-    	function clearResult() {
-	    	const resultElement = document.getElementById('result');
-	    	resultElement.textContent = '';
+    		function clearResult() {
+	    		const resultElement = document.getElementById('result');
+	    		resultElement.textContent = '';
     	}
 
 		// function to check if the selected option is correct or incorrect
@@ -127,19 +128,19 @@
 		}
 		
 		function incrementCorrect() {
-            correct++;
-            correctDisplay.textContent = correct;
+            		correct++;
+            		correctDisplay.textContent = correct;
 		}
 		
 		function incrementIncorrect() {
-            incorrect++;
-            incorrectDisplay.textContent = incorrect;
+            		incorrect++;
+            		incorrectDisplay.textContent = incorrect;
 		}
 
 		let correct = 0;
 		let incorrect = 0;
-        const correctDisplay = document.getElementById("correct");
-        const incorrectDisplay = document.getElementById("incorrect");
+        	const correctDisplay = document.getElementById("correct");
+        	const incorrectDisplay = document.getElementById("incorrect");
       
 		// generate a random three-digit number and display it on the page
 		const numberElement = document.getElementById('number');
