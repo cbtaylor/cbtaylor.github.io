@@ -11,7 +11,7 @@
       }
 
       h1 {
-        color: #555;
+        color: #555555;
         margin-top: 50px;
       }
 
@@ -19,12 +19,12 @@
         background-color: #4CAF50;
         border: none;
         color: white;
-        padding: 12px 24px;
+        padding: 8px 10px;
         text-align: center;
         text-decoration: none;
         display: inline-block;
-        font-size: 16px;
-        margin-top: 20px;
+        font-size: 14px;
+        margin-top: 18px;
         cursor: pointer;
       }
 
@@ -35,25 +35,35 @@
       #generated-date {
         font-size: 24px;
         font-weight: bold;
-        color: #555;
+        color: #555555;
       }
 
       #day-of-week {
         font-size: 36px;
         font-weight: bold;
-        color: #4CAF50;
+        color: #AC5F50;
         margin-top: 30px;
       }
     </style>
   </head>
   <body>
-    <h1>Do You Know The Day Of The Week?</h1>
+    <h2>Do You Know The Day Of The Week?</h2>
     <p>
       <span id="generated-date"></span>
     </p>
+    <p></p>
+    <button onclick="sun()">Su</button>
+    <button onclick="mon()">Mo</button>
+    <button onclick="tue()">Tu</button>
+    <button onclick="wed()">We</button>
+    <button onclick="thu()">Th</button>
+    <button onclick="fri()">Fr</button>
+    <button onclick="sat()">Sa</button>
+    <p></p>
     <p><span id="day-of-week"></span></p>
-    <button onclick="displayDayOfWeek()">Show Day of Week</button>
     <button onclick="reloadDate()">Reload</button>
+    <p>Correct: <span id="correct">0</span></p>
+	<p>Incorrect: <span id="incorrect">0</span></p>
 
     <script>
       let year, month, day, date, daysOfWeek, dayOfWeek, generatedDateElement, dayOfWeekElement;
@@ -86,12 +96,69 @@
       function displayDayOfWeek() {
         dayOfWeekElement.textContent = dayOfWeek;
       }
+      
+      function checkDay(day) {
+          if (date.getDay() == day) {
+              incrementCorrect();
+          } else {
+              incrementIncorrect();
+          }
+      }
+      
+	  function incrementCorrect() {
+          correct++;
+          correctDisplay.textContent = correct;
+		}
+		
+		function incrementIncorrect() {
+            incorrect++;
+            incorrectDisplay.textContent = incorrect;
+		}
+      
+      function sun() {
+        displayDayOfWeek();
+        checkDay(0);
+      }
+      
+      function mon() {
+        displayDayOfWeek();
+        checkDay(1);
+      }
+      
+      function tue() {
+        displayDayOfWeek();
+        checkDay(2);
+      }
+      
+      function wed() {
+        displayDayOfWeek();
+        checkDay(3);
+      }
+      
+      function thu() {
+        displayDayOfWeek();
+        checkDay(4);
+      }
+      
+      function fri() {
+        displayDayOfWeek();
+        checkDay(5);
+      }
+      
+      function sat() {
+        displayDayOfWeek();
+        checkDay(6);
+      }
 
       function reloadDate() {
         generateRandomDate();
       }
 
       generateRandomDate();
+      let correct = 0;
+	  let incorrect = 0;
+      const correctDisplay = document.getElementById("correct");
+      const incorrectDisplay = document.getElementById("incorrect");
     </script>
   </body>
 </html>
