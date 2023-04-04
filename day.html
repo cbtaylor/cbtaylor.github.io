@@ -4,10 +4,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Day Of The Week Game</title>
     <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
       body {
         background-color: #f5f5f5;
-        font-family: Arial, sans-serif;
-        text-align: center;
+        font-family: 'Montserrat', sans-serif;
+      }
+      .container {
+          max-width: 600px;
+          margin: 0 auto;
+          text-align: center;
       }
 
       h1 {
@@ -55,6 +60,7 @@
     </style>
   </head>
   <body>
+    <div class="container">
     <h2>Do You Know The Day Of The Week?</h2>
     <p>
       <span id="generated-date"></span>
@@ -72,7 +78,7 @@
     <button class="button buttonAnother" onclick="reloadDate()">Another</button>
     <p>Correct: <span id="correct">0</span></p>
 	<p>Incorrect: <span id="incorrect">0</span></p>
-
+    </div>
     <script>
       let year, month, day, date, daysOfWeek, dayOfWeek, generatedDateElement, dayOfWeekElement;
 
