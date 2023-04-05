@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-    	<title>Prime or Composite?</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Prime or Composite?</title>
 	<style>
 		@import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
 		body {
@@ -30,6 +30,9 @@
 		button:hover {
 			background-color: #005D6E;
 		}
+		.digits:hover {
+		    background-color: #990000;
+		}
 		#number {
 			font-size: 32px;
 			margin-top: 20px;
@@ -46,6 +49,12 @@
 </head>
 <body>
 	<div class="container">
+	    <button class="button digits" onclick="setDigits(2)">2</button>
+	    <button class="button digits" onclick="setDigits(3)">3</button>
+	    <button class="button digits" onclick="setDigits(4)">4</button>
+	    <button class="button digits" onclick="setDigits(5)">5</button>
+	    <button class="button digits" onclick="setDigits(6)">6</button>
+	    
 		<h1>Prime or Composite?</h1>
 		<p>Is the following number prime or composite?</p>
 		<p id="number"></p>
@@ -59,11 +68,17 @@
 
 
 	<script>
+	    var digits=2;
+	    // function to set the number of digits
+		function setDigits(d) {
+		    digits = d;
+		}
+		
 		// function to generate random three-digit number
 		function generateNumber() {
 		    let n = 0;
 		    while ((n % 2 == 0) || (n % 3 == 0) || (n % 5 == 0)) {
-		        n = Math.floor(Math.random() * 900) + 100;
+		        n = Math.floor(Math.random() * 9 * 10**(digits-1)) + 10**(digits-1);
 		    }
 			return n;
 		}
@@ -90,9 +105,9 @@
 		}
 
 		// function to clear the 'result' element
-    		function clearResult() {
-	    		const resultElement = document.getElementById('result');
-	    		resultElement.textContent = '';
+    	function clearResult() {
+	    	const resultElement = document.getElementById('result');
+	    	resultElement.textContent = '';
     	}
 
 		// function to check if the selected option is correct or incorrect
@@ -128,19 +143,19 @@
 		}
 		
 		function incrementCorrect() {
-            		correct++;
-            		correctDisplay.textContent = correct;
+            correct++;
+            correctDisplay.textContent = correct;
 		}
 		
 		function incrementIncorrect() {
-            		incorrect++;
-            		incorrectDisplay.textContent = incorrect;
+            incorrect++;
+            incorrectDisplay.textContent = incorrect;
 		}
 
 		let correct = 0;
 		let incorrect = 0;
-        	const correctDisplay = document.getElementById("correct");
-        	const incorrectDisplay = document.getElementById("incorrect");
+        const correctDisplay = document.getElementById("correct");
+        const incorrectDisplay = document.getElementById("incorrect");
       
 		// generate a random three-digit number and display it on the page
 		const numberElement = document.getElementById('number');
