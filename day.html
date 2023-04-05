@@ -57,17 +57,20 @@
         font-weight: bold;
         color: #0317fc;
         margin-top: 30px;
-	height: 50px;
+        height: 50px;
       }
+      
     </style>
   </head>
   <body>
     <div class="container">
     <h2>Do You Know The Day Of The Week?</h2>
     <p>
-      <div id="generated-date"></div>
+      <span id="generated-date"></span>
     </p>
-    <p></p>
+    
+    <div id="day-of-week"></div>
+    
     <button class="button buttonDay" onclick="checkDay(0)">Su</button>
     <button class="button buttonDay" onclick="checkDay(1)">Mo</button>
     <button class="button buttonDay" onclick="checkDay(2)">Tu</button>
@@ -75,9 +78,9 @@
     <button class="button buttonDay" onclick="checkDay(4)">Th</button>
     <button class="button buttonDay" onclick="checkDay(5)">Fr</button>
     <button class="button buttonDay" onclick="checkDay(6)">Sa</button>
-    <p></p>
-    <p><span id="day-of-week"></span></p>
-    <button class="button buttonAnother" onclick="reloadDate()">Another</button>
+    
+    
+    <p><button class="button buttonAnother" onclick="reloadDate()">Another</button></p>
     <p>Correct: <span id="correct">0</span></p>
 	<p>Incorrect: <span id="incorrect">0</span></p>
     </div>
