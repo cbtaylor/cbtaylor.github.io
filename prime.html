@@ -56,7 +56,7 @@
 	    <button class="button digits" onclick="setDigits(6)">6</button>
 	    
 		<h1>Prime or Composite?</h1>
-		<p>Is the following number prime or composite?</p>
+		<p>Is the following <span id="digits"></span>-digit number prime or composite?</p>
 		<p id="number"></p>
 		<button onclick="checkPrime()">Prime</button>
 		<button onclick="checkComposite()">Composite</button>
@@ -68,10 +68,12 @@
 
 
 	<script>
-	    var digits=2;
+	    let digits=2;
 	    // function to set the number of digits
 		function setDigits(d) {
 		    digits = d;
+		    digitsDisplay.textContent = d
+		    generateNewNumber();
 		}
 		
 		// function to generate random three-digit number
@@ -156,8 +158,11 @@
 		let incorrect = 0;
         const correctDisplay = document.getElementById("correct");
         const incorrectDisplay = document.getElementById("incorrect");
+        
+        const digitsDisplay = document.getElementById("digits");
       
 		// generate a random three-digit number and display it on the page
+		setDigits(2);
 		const numberElement = document.getElementById('number');
 		const number = generateNumber();
 		numberElement.textContent = number;
