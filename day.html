@@ -35,15 +35,20 @@
       
       .buttonDay {
           width: 12%;
-          background-color: #4CAF50;
+          background-color: #39ac73;
       }
+      
+      .buttonDay:hover {
+          background-color: #2d8659;
+      }
+      
       .buttonAnother {
           width: 30%;
-          background-color: #fc5e03;
+          background-color: #ff6600;
       }
 
-      button:hover {
-        background-color: #3e8e41;
+      .buttonAnother:hover {
+        background-color: #cc5200;
       }
 
       #generated-date {
@@ -58,6 +63,22 @@
         color: #0317fc;
         margin-top: 30px;
         height: 50px;
+      }
+      
+      #correct {
+        font-size: 24px;
+      }
+      
+      #correct-label {
+        font-size: 24px;
+      }
+      
+      #incorrect {
+        font-size: 24px;
+      }
+      
+      #incorrect-label {
+        font-size: 24px;
       }
       
     </style>
@@ -81,8 +102,8 @@
     
     
     <p><button class="button buttonAnother" onclick="reloadDate()">Another</button></p>
-    <p>Correct: <span id="correct">0</span></p>
-	<p>Incorrect: <span id="incorrect">0</span></p>
+    <p><span id="correct-label">Correct: </span> <span id="correct">0</span></p>
+	<p><span id="incorrect-label">Incorrect: </span> <span id="incorrect">0</span></p>
     </div>
     <script>
       let year, month, day, date, daysOfWeek, dayOfWeek, generatedDateElement, dayOfWeekElement;
