@@ -15,18 +15,20 @@
     	C6: <span id='c6'></span><br>
     	C7: <span id='c7'></span><br>
 	<script>
+		var cs;
 		function fetchData() {
 			fetch('https://cbtaylor.pythonanywhere.com/card')
 			  .then(response => response.json())
 			  .then(data => {
 			  	document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+				cs = JSON.stringify(data, null, 2);
 			  	console.log(data);
 			  })
 			  .catch(error => console.error('Error:', error));
 		}
 		
 		cardElement = document.getElementById('c1');
-    		cardElement.textContent = result['cards'][0][0].concat(" ", data['cards'][0][1]);
+    		cardElement.textContent = cs['cards'][0][0].concat(" ", data['cards'][0][1]);
     
     		cardElement = document.getElementById('c2');
     		cardElement.textContent = data['cards'][1][0].concat(" ", data['cards'][1][1]);
