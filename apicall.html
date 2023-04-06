@@ -22,31 +22,30 @@
 			  .then(data => {
 			  	document.getElementById("result").innerText = JSON.stringify(data, null, 2);
 			  	console.log(data);
+
+			  	cardElement = document.getElementById('c1');
+		    		cardElement.textContent = data['cards'][0][0].concat(" ", data['cards'][0][1]);
+
+		    		cardElement = document.getElementById('c2');
+		    		cardElement.textContent = data['cards'][1][0].concat(" ", data['cards'][1][1]);
+
+		    		cardElement = document.getElementById('c3');
+		    		cardElement.textContent = data['cards'][2][0].concat(" ", data['cards'][2][1]);
+
+		    		cardElement = document.getElementById('c4');
+		    		cardElement.textContent = data['cards'][3][0].concat(" ", data['cards'][3][1]);
+
+		    		cardElement = document.getElementById('c5');
+		    		cardElement.textContent = data['cards'][4][0].concat(" ", data['cards'][4][1]);
+
+		    		cardElement = document.getElementById('c6');
+		    		cardElement.textContent = data['cards'][5][0].concat(" ", data['cards'][5][1]);
+
+		    		cardElement = document.getElementById('c7');
+		    		cardElement.textContent = data['cards'][6][0].concat(" ", data['cards'][6][1]);
 			  })
 			  .catch(error => console.error('Error:', error));
 		}
-		
-		cardElement = document.getElementById('c1');
-    		cardElement.textContent = data['cards'][0][0].concat(" ", data['cards'][0][1]);
-    
-    		cardElement = document.getElementById('c2');
-    		cardElement.textContent = data['cards'][1][0].concat(" ", data['cards'][1][1]);
-    
-    		cardElement = document.getElementById('c3');
-    		cardElement.textContent = data['cards'][2][0].concat(" ", data['cards'][2][1]);
-    
-    		cardElement = document.getElementById('c4');
-    		cardElement.textContent = data['cards'][3][0].concat(" ", data['cards'][3][1]);
-    
-    		cardElement = document.getElementById('c5');
-    		cardElement.textContent = data['cards'][4][0].concat(" ", data['cards'][4][1]);
-    
-    		cardElement = document.getElementById('c6');
-    		cardElement.textContent = data['cards'][5][0].concat(" ", data['cards'][5][1]);
-    
-    		cardElement = document.getElementById('c7');
-    		cardElement.textContent = data['cards'][6][0].concat(" ", data['cards'][6][1]);
-
 	</script>
 </body>
 </html>
