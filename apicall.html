@@ -8,12 +8,19 @@
 	
 	<p></p>
 	C1: <span id='c1'></span><br>
+	<img src=<span id='img1'></span></br>
     	C2: <span id='c2'></span><br>
+	<img src=<span id='img1'></span></br>
     	C3: <span id='c3'></span><br>
+	<img src=<span id='img1'></span></br>
     	C4: <span id='c4'></span><br>
+	<img src=<span id='img1'></span></br>
     	C5: <span id='c5'></span><br>
+	<img src=<span id='img1'></span></br>
     	C6: <span id='c6'></span><br>
+	<img src=<span id='img1'></span></br>
     	C7: <span id='c7'></span><br>
+	<img src=<span id='img1'></span></br>
 	<p></p>
 	<pre id="result"></pre>
 	<script>
@@ -27,6 +34,8 @@
 
 			  	cardElement = document.getElementById('c1');
 		    		cardElement.textContent = data['cards'][0][0].concat(" ", data['cards'][0][1]);
+				cardImage = document.getElementById('img1');
+				cardImage.textContent = data['deal'][0];
 
 		    		cardElement = document.getElementById('c2');
 		    		cardElement.textContent = data['cards'][1][0].concat(" ", data['cards'][1][1]);
