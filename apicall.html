@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Fetch and display data</title>
+</head>
+<body>
+	<button onclick="fetchData()">Fetch Data</button>
+	<pre id="result"></pre>
+
+	<script>
+		function fetchData() {
+			fetch('https://cbtaylor.pythonanywhere.com/card')
+			  .then(response => response.json())
+			  .then(data => {
+			  	document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+			  	console.log(data);
+			  })
+			  .catch(error => console.error('Error:', error));
+		}
+	</script>
+</body>
+</html>
