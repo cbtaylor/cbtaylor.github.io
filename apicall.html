@@ -8,7 +8,7 @@
 	
 	<p></p>
 	C1: <span id='c1'></span><br>
-	img1: <span id='img1'></span><br>
+	img1: <span id='img1'><img id="card-img" src=""></span><br>
 	<span id='img1'><img src=""></span><br>
 	
     	C2: <span id='c2'></span><br>
@@ -37,10 +37,8 @@
 			  	cardElement = document.getElementById('c1');
 				cardElement.textContent = data['cards'][0][0].concat(" ", data['cards'][0][1]);
 				
-				cardImage = document.getElementById('img1');
-				var img = document.createElement('img');
-				img.src = data['deal'][0];
-				cardImage.appendChild(img);
+				cardImage = document.getElementById('card-img');
+				cardImage.src = data['deal'][0];
 
 
 
