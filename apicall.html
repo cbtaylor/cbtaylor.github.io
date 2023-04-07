@@ -4,7 +4,7 @@
 	<title>Fetch and display data</title>
 </head>
 <body>
-	<button onclick="fetchData()">Fetch Data</button>
+	<button onclick="fetchData()">New Deal</button>
 	
 	<p></p>
 	C1: <span id='c1'></span><br>
@@ -38,7 +38,8 @@
 	<p></p>
 	<pre id="result"></pre>
 	<script>
-		var cs;
+		fetchData()
+		
 		function fetchData() {
 			fetch('https://cbtaylor.pythonanywhere.com/card')
 			  .then(response => response.json())
