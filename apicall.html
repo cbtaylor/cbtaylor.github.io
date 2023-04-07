@@ -8,20 +8,32 @@
 	
 	<p></p>
 	C1: <span id='c1'></span><br>
-	img1: <img id="card-img" src=""><br>
+	img1: <img id="card-img1" src=""><br>
 	<span id='img1'><img src=""></span><br>
 	
     	C2: <span id='c2'></span><br>
+	img2: <img id="card-img2" src=""><br>
+	<span id='img1'><img src=""></span><br>
 	
     	C3: <span id='c3'></span><br>
+	img3: <img id="card-img3" src=""><br>
+	<span id='img1'><img src=""></span><br>
 	
     	C4: <span id='c4'></span><br>
+	img4: <img id="card-img4" src=""><br>
+	<span id='img1'><img src=""></span><br>
 	
     	C5: <span id='c5'></span><br>
+	img5: <img id="card-img5" src=""><br>
+	<span id='img1'><img src=""></span><br>
 	
     	C6: <span id='c6'></span><br>
+	img6: <img id="card-img6" src=""><br>
+	<span id='img1'><img src=""></span><br>
 	
     	C7: <span id='c7'></span><br>
+	img7: <img id="card-img7" src=""><br>
+	<span id='img1'><img src=""></span><br>
 	
 	<p></p>
 	<pre id="result"></pre>
@@ -36,11 +48,6 @@
 
 			  	cardElement = document.getElementById('c1');
 				cardElement.textContent = data['cards'][0][0].concat(" ", data['cards'][0][1]);
-				
-				cardImage = document.getElementById('card-img');
-				cardImage.src = data['deal'][0];
-
-
 
 		    		cardElement = document.getElementById('c2');
 		    		cardElement.textContent = data['cards'][1][0].concat(" ", data['cards'][1][1]);
@@ -59,6 +66,30 @@
 
 		    		cardElement = document.getElementById('c7');
 		    		cardElement.textContent = data['cards'][6][0].concat(" ", data['cards'][6][1]);
+				
+				cardImage = document.getElementById('card-img1');
+				cardImage.src = data['deal'][0];
+				
+				cardImage = document.getElementById('card-img1');
+				cardImage.src = data['deal'][1];
+				
+				cardImage = document.getElementById('card-img2');
+				cardImage.src = data['deal'][2];
+				
+				cardImage = document.getElementById('card-img3');
+				cardImage.src = data['deal'][3];
+				
+				cardImage = document.getElementById('card-img4');
+				cardImage.src = data['deal'][4];
+				
+				cardImage = document.getElementById('card-img5');
+				cardImage.src = data['deal'][5];
+				
+				cardImage = document.getElementById('card-img6');
+				cardImage.src = data['deal'][6];
+				
+				cardImage = document.getElementById('card-img7');
+				cardImage.src = data['deal'][7];
 			  })
 			  .catch(error => console.error('Error:', error));
 		}
