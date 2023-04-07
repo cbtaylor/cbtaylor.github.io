@@ -36,9 +36,12 @@
 
 			  	cardElement = document.getElementById('c1');
 		    		cardElement.textContent = data['cards'][0][0].concat(" ", data['cards'][0][1]);
-				cardImage = document.getElementById('img1');
 				
-				cardImage.firstChild.src = data['deal'][0];
+				cardImage = document.getElementById('img1');
+				var img = document.createElement('img');
+				img.src = data['deal'][0];
+				cardImage.appendChild(img);
+
 
 		    		cardElement = document.getElementById('c2');
 		    		cardElement.textContent = data['cards'][1][0].concat(" ", data['cards'][1][1]);
