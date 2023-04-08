@@ -4,8 +4,6 @@
 	<title>Fetch and display data</title>
 
 
-
-
 <style>
   body {
     background-color: #f5f5f5;
@@ -18,10 +16,48 @@
     margin-top: 50px;
   }
 
-  img {
-	height: auto;
-	max-width: 100%
-  }
+	img {
+	  height: auto;
+	  max-width: 15%;
+	  position: absolute;
+	}
+
+	#card-img1 {
+	  top: 0;
+	  left: 0;
+	  z-index: 1;
+	}
+
+	#card-img2 {
+	  top: 0;
+	  left: 50%;
+	  margin-left: -50px;
+	  z-index: 2;
+	}
+
+	#card-img3 {
+	  top: 0;
+	  left: 100%;
+	  margin-left: -100px;
+	  z-index: 3;
+	}
+
+	#card-img4 {
+	  top: 50%;
+	  left: 25%;
+	  margin-top: -50px;
+	  z-index: 4;
+	}
+
+	#card-img5 {
+	  top: 50%;
+	  left: 75%;
+	  margin-top: -50px;
+	  margin-left: -100px;
+	  z-index: 5;
+	}
+
+
 
   button {
     background-color: #4CAF50;
@@ -90,15 +126,9 @@
 		<img id="card-img9" src="">
 	</div>
 	
-    
-	
-	
-    
-	
-	
-	
 	<p></p>
 	<pre id="result"></pre>
+
 	<script>
 		fetchData()
 		
