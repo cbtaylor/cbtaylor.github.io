@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Fetch and display data</title>
+
+
+<style>
+  body {
+    background-color: #f5f5f5;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    align-content: center;
+  }
+
+  h1 {
+    color: #555555;
+    margin-top: 50px;
+  }
+
+	img {
+	  height: auto;
+	  max-width: 22%;
+	  position: relative;
+	}
+
+	#card-img1 {
+	  top: 0px;
+	  left: 0px;
+	  z-index: 1;
+	}
+
+	#card-img2 {
+	  top: 0px;
+	  left: -60px;
+	  z-index: 2;
+	}
+
+	#card-img3 {
+	  top: 0px;
+	  left: 0px;
+	  z-index: 1;
+	}
+
+	#card-img4 {
+	  top: 0px;
+	  left: -60px;
+	  z-index: 2;
+	}
+
+	#card-img5 {
+	  top: 0px;
+	  left: -120px;
+	  z-index: 3;
+	}
+
+	#card-img6 {
+	  top: 0px;
+	  left: -180px;
+	  z-index: 4;
+	}
+
+	#card-img7 {
+	  top: 0px;
+	  left: -240px;
+	  z-index: 5;
+	}
+
+	#card-img8 {
+	  top: 0px;
+	  left: 0px;
+	  z-index: 1;
+	}
+
+	#card-img9 {
+	  top: 0px;
+	  left: -60px;
+	  z-index: 2;
+	}
+
+
+
+  button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin-top: 20px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #3e8e41;
+  }
+
+  #generated-date {
+    font-size: 24px;
+    font-weight: bold;
+    color: #555;
+  }
+
+  #day-of-week {
+    font-size: 36px;
+    font-weight: bold;
+    color: #4CAF50;
+    margin-top: 30px;
+  }
+
+</style>
+
+</head>
+
+<body>
+
+
+	<div>
+		<img id="card-img1" src="">
+		<img id="card-img2" src="">
+	</div>
+	
+	
+    <div>
+		<img id="card-img3" src="">
+		<img id="card-img4" src="">
+		<img id="card-img5" src="">
+		<img id="card-img6" src="">
+		<img id="card-img7" src="">
+	</div>
+
+
+	<div>
+		<img id="card-img8" src="">
+		<img id="card-img9" src="">
+	</div>
+	
+		<button onclick="fetchData()">New Deal</button>
+	
+	<p>
+		C1: <span id='c1'></span><br>
+		C2: <span id='c2'></span><br>
+		C3: <span id='c3'></span><br>
+		C4: <span id='c4'></span><br>
+		C5: <span id='c5'></span><br>
+		C6: <span id='c6'></span><br>
+		C7: <span id='c7'></span><br>
+	</p>
+	<pre id="result"></pre>
+
+	<script>
+		fetchData()
+		
+		function fetchData() {
+			fetch('https://cbtaylor.pythonanywhere.com/card')
+			  .then(response => response.json())
+			  .then(data => {
+			  	document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+			  	console.log(data);
+
+			  	cardElement = document.getElementById('c1');
+				cardElement.textContent = data['cards'][0][0].concat(" ", data['cards'][0][1]);
+
+		    	cardElement = document.getElementById('c2');
+		    	cardElement.textContent = data['cards'][1][0].concat(" ", data['cards'][1][1]);
+
+		    	cardElement = document.getElementById('c3');
+		    	cardElement.textContent = data['cards'][2][0].concat(" ", data['cards'][2][1]);
+
+		    	cardElement = document.getElementById('c4');
+		    	cardElement.textContent = data['cards'][3][0].concat(" ", data['cards'][3][1]);
+
+		    	cardElement = document.getElementById('c5');
+		    	cardElement.textContent = data['cards'][4][0].concat(" ", data['cards'][4][1]);
+
+		    	cardElement = document.getElementById('c6');
+		    	cardElement.textContent = data['cards'][5][0].concat(" ", data['cards'][5][1]);
+
+		    	cardElement = document.getElementById('c7');
+		    	cardElement.textContent = data['cards'][6][0].concat(" ", data['cards'][6][1]);
+				
+				cardImage = document.getElementById('card-img1');
+				cardImage.src = data['deal'][0];
+				
+				cardImage = document.getElementById('card-img2');
+				cardImage.src = data['deal'][1];
+				
+				cardImage = document.getElementById('card-img3');
+				cardImage.src = data['deal'][2];
+				
+				cardImage = document.getElementById('card-img4');
+				cardImage.src = data['deal'][3];
+				
+				cardImage = document.getElementById('card-img5');
+				cardImage.src = data['deal'][4];
+				
+				cardImage = document.getElementById('card-img6');
+				cardImage.src = data['deal'][5];
+				
+				cardImage = document.getElementById('card-img7');
+				cardImage.src = data['deal'][6];
+
+				cardImage = document.getElementById('card-img8');
+				cardImage.src = data['deal'][7];
+
+				cardImage = document.getElementById('card-img9');
+				cardImage.src = data['deal'][8];
+				
+			  })
+			  .catch(error => console.error('Error:', error));
+		}
+	</script>
+</body>
+</html>
