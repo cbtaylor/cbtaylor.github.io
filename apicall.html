@@ -6,34 +6,38 @@
 <body>
 	<button onclick="fetchData()">New Deal</button>
 	
-	<p></p>
-	C1: <span id='c1'></span><br>
-	img1: <img id="card-img1" src="">
-	img2: <img id="card-img2" src=""><br>
+	<p>
+		C1: <span id='c1'></span><br>
+		C2: <span id='c2'></span><br>
+		C3: <span id='c3'></span><br>
+		C4: <span id='c4'></span><br>
+		C5: <span id='c5'></span><br>
+		C6: <span id='c6'></span><br>
+		C7: <span id='c7'></span><br>
+	</p>
+
+	<div height: 100px>
+		img1: <img id="card-img1" src="">
+		img2: <img id="card-img2" src="">
+	</div>
 	
 	
-    	C2: <span id='c2'></span><br>
+    <div height: 150px>
+		img3: <img id="card-img3" src="">
+		img4: <img id="card-img4" src="">
+		img5: <img id="card-img5" src="">
+	</div>
+
+
+	<div height: 20%>
+		img6: <img id="card-img6" src="">
+		img7: <img id="card-img7" src="">
+	</div>
+	
+    
 	
 	
-	
-    	C3: <span id='c3'></span><br>
-	img3: <img id="card-img3" src="">
-	img4: <img id="card-img4" src="">
-	img5: <img id="card-img5" src=""><br>
-	
-    	C4: <span id='c4'></span><br>
-	
-	
-	
-    	C5: <span id='c5'></span><br>
-	
-	
-    	C6: <span id='c6'></span><br>
-	img6: <img id="card-img6" src="">
-	img7: <img id="card-img7" src=""><br>
-	
-	
-    	C7: <span id='c7'></span><br>
+    
 	
 	
 	
@@ -52,23 +56,23 @@
 			  	cardElement = document.getElementById('c1');
 				cardElement.textContent = data['cards'][0][0].concat(" ", data['cards'][0][1]);
 
-		    		cardElement = document.getElementById('c2');
-		    		cardElement.textContent = data['cards'][1][0].concat(" ", data['cards'][1][1]);
+		    	cardElement = document.getElementById('c2');
+		    	cardElement.textContent = data['cards'][1][0].concat(" ", data['cards'][1][1]);
 
-		    		cardElement = document.getElementById('c3');
-		    		cardElement.textContent = data['cards'][2][0].concat(" ", data['cards'][2][1]);
+		    	cardElement = document.getElementById('c3');
+		    	cardElement.textContent = data['cards'][2][0].concat(" ", data['cards'][2][1]);
 
-		    		cardElement = document.getElementById('c4');
-		    		cardElement.textContent = data['cards'][3][0].concat(" ", data['cards'][3][1]);
+		    	cardElement = document.getElementById('c4');
+		    	cardElement.textContent = data['cards'][3][0].concat(" ", data['cards'][3][1]);
 
-		    		cardElement = document.getElementById('c5');
-		    		cardElement.textContent = data['cards'][4][0].concat(" ", data['cards'][4][1]);
+		    	cardElement = document.getElementById('c5');
+		    	cardElement.textContent = data['cards'][4][0].concat(" ", data['cards'][4][1]);
 
-		    		cardElement = document.getElementById('c6');
-		    		cardElement.textContent = data['cards'][5][0].concat(" ", data['cards'][5][1]);
+		    	cardElement = document.getElementById('c6');
+		    	cardElement.textContent = data['cards'][5][0].concat(" ", data['cards'][5][1]);
 
-		    		cardElement = document.getElementById('c7');
-		    		cardElement.textContent = data['cards'][6][0].concat(" ", data['cards'][6][1]);
+		    	cardElement = document.getElementById('c7');
+		    	cardElement.textContent = data['cards'][6][0].concat(" ", data['cards'][6][1]);
 				
 				cardImage = document.getElementById('card-img1');
 				cardImage.src = data['deal'][0];
