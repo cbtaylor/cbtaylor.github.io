@@ -143,14 +143,20 @@
 	<div class="card-container">
 		<img id="card-img3" src="" alt="Card 3">
 		<img id="card-img4" src="" alt="Card 4">
-		<img id="card-img5" src="" alt="Card 5">
-		<img id="card-img6" src="" alt="Card 6">
-		<img id="card-img7" src="" alt="Card 7">
 	</div>
 
 	<div class="card-container">
+		<img id="card-img5" src="" alt="Card 5">
+		<img id="card-img6" src="" alt="Card 6">
+		<img id="card-img7" src="" alt="Card 7">
 		<img id="card-img8" src="" alt="Card 8">
 		<img id="card-img9" src="" alt="Card 9">
+	</div>
+
+	<div>
+		Hand 1 result: <span id="handValue1"></span>
+		Hand 2 result: <span id="handValue2"></span>
+		Winner: <span id="winner"></span>
 	</div>
 
 
@@ -225,6 +231,15 @@
 
 				cardImage = document.getElementById('card-img9');
 				cardImage.src = data['deal'][8];
+
+				handValue1 = document.getElementById('handValue1');
+				handValue1.textContent = data['hand1'];
+
+				handValue2 = document.getElementById('handValue2');
+				handValue2.textContent = data['hand2'];
+
+				winner = document.getElementById('winner');
+				winner.textContent = data['winner'];
 				
 			  })
 			  .catch(error => console.error('Error:', error));
