@@ -110,12 +110,42 @@
     margin-top: 30px;
   }
 
+  .card-container {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: scroll;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* hide scrollbar on desktop */
+  -ms-overflow-style: none; /* hide scrollbar on IE and Edge */
+}
+
+.card-container::-webkit-scrollbar {
+  display: none; /* hide scrollbar on Safari and Chrome */
+}
+
+.card-container img {
+  flex: 0 0 auto;
+  width: 20%;
+  margin-right: 1%;
+}
+
+
 </style>
 
 </head>
 
 <body>
 
+	<div class="card-container">
+		<img id="card-img3" src="" alt="Card 3">
+		<img id="card-img4" src="" alt="Card 4">
+		<img id="card-img5" src="" alt="Card 5">
+		<img id="card-img6" src="" alt="Card 6">
+		<img id="card-img7" src="" alt="Card 7">
+	</div>
+
+<p></p>
+<p></p>
 
 	<div>
 		<img id="card-img1" src="">
@@ -214,4 +244,3 @@
 	</script>
 </body>
 </html>
-
