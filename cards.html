@@ -26,26 +26,26 @@
 
 	#card-img1 {
 	  top: px;
-	  left: 100px;
+	  left: 0px;
 	  z-index: 1;
 	}
 
 	#card-img2 {
 	  top: 0px;
-	  left: 0px;
+	  left: -100px;
 	  z-index: 2;
 	}
 
 	#card-img3 {
 	  top: 0px;
-	  left: 200px;
-	  z-index: 1;
+	  left: -400px;
+	  z-index: 3;
 	}
 
 	#card-img4 {
 	  top: 0px;
-	  left: 0px;
-	  z-index: 2;
+	  left: -500px;
+	  z-index: 4;
 	}
 
 	#card-img5 {
@@ -77,8 +77,6 @@
 	  left: -400px;
 	  z-index: 5;
 	}
-
-
 
   button {
     background-color: #4CAF50;
@@ -184,35 +182,35 @@
 			fetch('https://cbtaylor.pythonanywhere.com/card')
 			  .then(response => response.json())
 			  .then(data => {
-			  	document.getElementById("result").innerText = JSON.stringify(data, null, 2);
-			  	console.log(data);
+				document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+				console.log(data);
 
-			  	cardElement = document.getElementById('c1');
+				cardElement = document.getElementById('c1');
 				cardElement.textContent = data['cards'][0][0].concat(" ", data['cards'][0][1]);
 
-		    	cardElement = document.getElementById('c2');
-		    	cardElement.textContent = data['cards'][1][0].concat(" ", data['cards'][1][1]);
+				cardElement = document.getElementById('c2');
+				cardElement.textContent = data['cards'][1][0].concat(" ", data['cards'][1][1]);
 
-		    	cardElement = document.getElementById('c3');
-		    	cardElement.textContent = data['cards'][2][0].concat(" ", data['cards'][2][1]);
+				cardElement = document.getElementById('c3');
+				cardElement.textContent = data['cards'][2][0].concat(" ", data['cards'][2][1]);
 
-		    	cardElement = document.getElementById('c4');
-		    	cardElement.textContent = data['cards'][3][0].concat(" ", data['cards'][3][1]);
+				cardElement = document.getElementById('c4');
+				cardElement.textContent = data['cards'][3][0].concat(" ", data['cards'][3][1]);
 
-		    	cardElement = document.getElementById('c5');
-		    	cardElement.textContent = data['cards'][4][0].concat(" ", data['cards'][4][1]);
+				cardElement = document.getElementById('c5');
+				cardElement.textContent = data['cards'][4][0].concat(" ", data['cards'][4][1]);
 
-		    	cardElement = document.getElementById('c6');
-		    	cardElement.textContent = data['cards'][5][0].concat(" ", data['cards'][5][1]);
+				cardElement = document.getElementById('c6');
+				cardElement.textContent = data['cards'][5][0].concat(" ", data['cards'][5][1]);
 
-		    	cardElement = document.getElementById('c7');
-		    	cardElement.textContent = data['cards'][6][0].concat(" ", data['cards'][6][1]);
+				cardElement = document.getElementById('c7');
+				cardElement.textContent = data['cards'][6][0].concat(" ", data['cards'][6][1]);
 
-		    	cardElement = document.getElementById('c8');
-		    	cardElement.textContent = data['cards'][7][0].concat(" ", data['cards'][7][1]);
+				cardElement = document.getElementById('c8');
+				cardElement.textContent = data['cards'][7][0].concat(" ", data['cards'][7][1]);
 
-		    	cardElement = document.getElementById('c9');
-		    	cardElement.textContent = data['cards'][8][0].concat(" ", data['cards'][8][1]);
+				cardElement = document.getElementById('c9');
+				cardElement.textContent = data['cards'][8][0].concat(" ", data['cards'][8][1]);
 				
 				cardImage = document.getElementById('card-img1');
 				cardImage.src = data['deal'][0];
