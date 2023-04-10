@@ -213,7 +213,7 @@
 				cardElement.textContent = data['cards'][8][0].concat(" ", data['cards'][8][1]);
 				
 				cardImage = document.getElementById('card-img1');
-				cardImage.src = data['deal'][0];
+				cardImage.src = "cards/".concat(data['cards'][0], ".png");
 				
 				cardImage = document.getElementById('card-img2');
 				cardImage.src = data['deal'][1];
