@@ -138,9 +138,7 @@
 	<div class="card-container">
 		<img id="card-img1" src="" alt="Card 1">
 		<img id="card-img2" src="" alt="Card 2">
-	</div>
 
-	<div class="card-container">
 		<img id="card-img3" src="" alt="Card 3">
 		<img id="card-img4" src="" alt="Card 4">
 	</div>
@@ -153,11 +151,11 @@
 		<img id="card-img9" src="" alt="Card 9">
 	</div>
 
-	<div>
-		Hand 1 result: <span id="handValue1"></span>
-		Hand 2 result: <span id="handValue2"></span>
+	<div><p>
+		Hand 1 result: <span id="handValue1"></span><br>
+		Hand 2 result: <span id="handValue2"></span><br>
 		Winner: <span id="winner"></span>
-	</div>
+	</p></div>
 
 
 	
@@ -209,6 +207,12 @@
 
 		    	cardElement = document.getElementById('c7');
 		    	cardElement.textContent = data['cards'][6][0].concat(" ", data['cards'][6][1]);
+
+		    	cardElement = document.getElementById('c8');
+		    	cardElement.textContent = data['cards'][7][0].concat(" ", data['cards'][7][1]);
+
+		    	cardElement = document.getElementById('c9');
+		    	cardElement.textContent = data['cards'][8][0].concat(" ", data['cards'][8][1]);
 				
 				cardImage = document.getElementById('card-img1');
 				cardImage.src = data['deal'][0];
