@@ -106,9 +106,10 @@
 	<p><span id="incorrect-label">Incorrect: </span> <span id="incorrect">0</span></p>
     </div>
     <script>
-      let year, month, day, date, daysOfWeek, dayOfWeek, generatedDateElement, dayOfWeekElement;
-
+      let check, year, month, day, date, daysOfWeek, dayOfWeek, generatedDateElement, dayOfWeekElement;
+      
       function generateRandomDate() {
+        check = 0;
         year = Math.floor(Math.random() * (2199 - 1753 + 1) + 1753);
         month = Math.floor(Math.random() * 12) + 1;
         day = Math.floor(Math.random() * 31) + 1;
@@ -144,16 +145,23 @@
           } else {
               incrementIncorrect();
           }
+          check = 1;
       }
       
 	  function incrementCorrect() {
-          correct++;
-          correctDisplay.textContent = correct;
+          if (check == 0) {
+              correct++;
+              correctDisplay.textContent = correct;
+              check = 1;
+            }
 		}
 		
 	  function incrementIncorrect() {
-          incorrect++;
-          incorrectDisplay.textContent = incorrect;
+            if (check == 0) {
+                incorrect++;
+                incorrectDisplay.textContent = incorrect;
+                check = 1;
+            }
 		}
       
       function reloadDate() {
