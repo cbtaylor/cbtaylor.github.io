@@ -31,5 +31,184 @@
 		<img class="card" src="https://cbtaylor.com/cards/JH.png" alt="Jack of Hearts">
 		<img class="card" src="https://cbtaylor.com/cards/TS.png" alt="10 of Spades">
 	</div>
-</body>
+
+	
+	
+	
+	 <button onclick="fetchData()">New Deal</button>
+  
+  <p>
+    <h2>Hand 1:</h2>
+    C1: <span id='c1'></span><br>
+    C2: <span id='c2'></span><br>
+    <h2>Hand 2:</h2>
+    C3: <span id='c3'></span><br>
+    C4: <span id='c4'></span><br>
+    <h2>Table:</h2>
+    C5: <span id='c5'></span><br>
+    C6: <span id='c6'></span><br>
+    C7: <span id='c7'></span><br>
+    C8: <span id='c8'></span><br>
+    C9: <span id='c9'></span><br>
+  </p>
+  <pre id="result"></pre>
+
+  <script>
+    fetchData()
+    
+    function fetchData() {
+      fetch('https://cbtaylor.pythonanywhere.com/card')
+        .then(response => response.json())
+        .then(data => {
+        document.getElementById("result").innerText = JSON.stringify(data, null, 2);
+        console.log(data);
+
+        cardElement = document.getElementById('c1');
+        cardElement.textContent = data['cards'][0];
+
+        cardElement = document.getElementById('c2');
+        cardElement.textContent = data['cards'][1];
+
+        cardElement = document.getElementById('c3');
+        cardElement.textContent = data['cards'][2];
+
+        cardElement = document.getElementById('c4');
+        cardElement.textContent = data['cards'][3];
+
+        cardElement = document.getElementById('c5');
+        cardElement.textContent = data['cards'][4];
+
+        cardElement = document.getElementById('c6');
+        cardElement.textContent = data['cards'][5];
+
+        cardElement = document.getElementById('c7');
+        cardElement.textContent = data['cards'][6];
+
+        cardElement = document.getElementById('c8');
+        cardElement.textContent = data['cards'][7];
+
+        cardElement = document.getElementById('c9');
+        cardElement.textContent = data['cards'][8];
+        
+        cardImage = document.getElementById('card-img1');
+        cardImage.src = "cards/".concat(data['cards'][0], ".png");
+        
+        cardImage = document.getElementById('card-img2');
+        cardImage.src = "cards/".concat(data['cards'][1], ".png");
+        
+        cardImage = document.getElementById('card-img3');
+        cardImage.src = "cards/".concat(data['cards'][2], ".png");
+        
+        cardImage = document.getElementById('card-img4');
+        cardImage.src = "cards/".concat(data['cards'][3], ".png");
+        
+        cardImage = document.getElementById('card-img5');
+        cardImage.src = "cards/".concat(data['cards'][4], ".png");
+        
+        cardImage = document.getElementById('card-img6');
+        cardImage.src = "cards/".concat(data['cards'][5], ".png");
+        
+        cardImage = document.getElementById('card-img7');
+        cardImage.src = "cards/".concat(data['cards'][6], ".png");
+
+        cardImage = document.getElementById('card-img8');
+        cardImage.src = "cards/".concat(data['cards'][7], ".png");
+
+        cardImage = document.getElementById('card-img9');
+        cardImage.src = "cards/".concat(data['cards'][8], ".png");
+
+        handValue1 = document.getElementById('handValue1');
+        handValue1.textContent = data['hand1'];
+
+        handValue2 = document.getElementById('handValue2');
+        handValue2.textContent = data['hand2'];
+
+        winner = document.getElementById('winner');
+        winner.textContent = data['winner'];
+        
+        })
+        .catch(error => console.error('Error:', error));
+    }
+  </script>
+	</body>
+</html>
+
+
+
+
+
+
+
+    <title>Hello, world!</title>
+
+    <style>
+      .no-gutters {
+        margin-right: 0;
+        margin-left: 0;
+
+        > .col,
+        > [class*="col-"] {
+        padding-right: 0;
+        padding-left: 0;
+        }
+      }
+
+
+    </style>
+  </head>
+  <body>
+    <center>
+    <h1>Headsup Hold'em!</h1>
+
+    <div class="container">
+
+      <div class="row">
+
+        <div class="col-sm">
+          <img id="card-img1" src="" class="img-fluid" alt="Card 1">
+        </div>
+        <div class="col-sm">
+          <img id="card-img2" src="" class="img-fluid" alt="Card 2">
+        </div>
+        <div class="col-sm">
+           
+        </div>
+        <div class="col-sm">
+          <img id="card-img3" src="" class="img-fluid" alt="Card 3">
+        </div>
+        <div class="col-sm">
+          <img id="card-img4" src="" class="img-fluid" alt="Card 4">
+        </div>
+      </div>
+      <br>
+      <div class="row">
+        <div class="col-sm">
+          <img id="card-img5" src="" class="img-fluid" alt="Card 5">
+        </div>
+        <div class="col-sm">
+          <img id="card-img6" src="" class="img-fluid" alt="Card 6">
+        </div>
+        <div class="col-sm">
+          <img id="card-img7" src="" class="img-fluid" alt="Card 7">
+        </div>
+        <div class="col-sm">
+          <img id="card-img8" src="" class="img-fluid" alt="Card 8">
+        </div>
+        <div class="col-sm">
+          <img id="card-img9" src="" class="img-fluid" alt="Card 9">
+        </div>
+      </div>
+
+    </div>
+
+
+  
+   
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+  </center>
+  </body>
 </html>
