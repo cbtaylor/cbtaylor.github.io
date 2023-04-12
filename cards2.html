@@ -6,15 +6,11 @@
     body {
       font-family: Arial, sans-serif;
     }
-    
     .card-row {
       display: flex;
       flex-wrap: nowrap;
       justify-content: center;
-      max-width: 800px;
-      margin: 0 auto;
     }
-
     .card {
       max-width: 20%;
       height: auto;
@@ -68,6 +64,11 @@
 		<img class="card" id="card-img9" src="" alt="card 9">
 	</div>
 	<p></p>
+	<div><p>
+		Hand 1 result: <span id="handValue1"></span><br>
+		Hand 2 result: <span id="handValue2"></span><br>
+		Winner: <span id="winner"></span>
+	</p></div>
 	 <button onclick="fetchData()">New Deal</button>
   
   <p>
@@ -165,5 +166,3 @@
   </script>
 	</body>
 </html>
-
-
