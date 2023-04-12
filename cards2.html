@@ -1,21 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Hold'em</title>
 	  <style>
     body {
       font-family: Arial, sans-serif;
-	background-color: #c2b699;
     }
     .card-row {
-	  display: flex;
-	  flex-wrap: nowrap;
-	  justify-content: center;
-	  max-width: 800px;
-	  margin: 0 auto;
-	}
-
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+    }
     .card {
       max-width: 20%;
       height: auto;
@@ -69,14 +64,13 @@
 		<img class="card" id="card-img9" src="" alt="card 9">
 	</div>
 	<p></p>
-	<div align="center"><p>
-		Hand 1 result: <span id="handValue1"></span><br>
-		Hand 2 result: <span id="handValue2"></span><br>
-		Winner: <span id="winner"></span>
-	</p></div>
 	 <button onclick="fetchData()">New Deal</button>
   
-  <p><div align="center">
+  <p>
+    Preflop: <span id='preflop'></span><br>
+    Flop: <span id='flop'></span><br>
+    Turn: <span id='turn'></span><br>
+    River: <span id='river'></span><br>
     <h2>Hand 1:</h2>
     C1: <span id='c1'></span><br>
     C2: <span id='c2'></span><br>
@@ -89,8 +83,7 @@
     C7: <span id='c7'></span><br>
     C8: <span id='c8'></span><br>
     C9: <span id='c9'></span><br>
-  </p></div>
-
+  </p>
   <pre id="result"></pre>
 
   <script>
@@ -165,6 +158,18 @@
 
         winner = document.getElementById('winner');
         winner.textContent = data['winner'];
+
+        preflop = document.getElementById('preflop');
+        preflop.textContent = data['preflop'];
+
+        flop = document.getElementById('flop');
+        flop.textContent = data['flop'];
+
+        turn = document.getElementById('turn');
+        turn.textContent = data['turn'];
+
+        river = document.getElementById('river');
+        river.textContent = data['river'];
         
         })
         .catch(error => console.error('Error:', error));
