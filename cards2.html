@@ -5,7 +5,6 @@
 	  <style>
     body {
       font-family: Arial, sans-serif;
-      justify-content: center;
     }
     .card-row {
 	  display: flex;
@@ -68,14 +67,14 @@
 		<img class="card" id="card-img9" src="" alt="card 9">
 	</div>
 	<p></p>
-	<div><p>
+	<div align="center"><p>
 		Hand 1 result: <span id="handValue1"></span><br>
 		Hand 2 result: <span id="handValue2"></span><br>
 		Winner: <span id="winner"></span>
 	</p></div>
 	 <button onclick="fetchData()">New Deal</button>
   
-  <p>
+  <p><div align="center">
     <h2>Hand 1:</h2>
     C1: <span id='c1'></span><br>
     C2: <span id='c2'></span><br>
@@ -88,7 +87,8 @@
     C7: <span id='c7'></span><br>
     C8: <span id='c8'></span><br>
     C9: <span id='c9'></span><br>
-  </p>
+  </p></div>
+  
   <pre id="result"></pre>
 
   <script>
