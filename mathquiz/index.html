@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>MathJax example</title>
+  <link href="style.css" rel="stylesheet" type="text/css" />
+  
+  
+  </script>
+</head>
+
+<body onload="fetchData();">
+  <h2>Five question quiz</h2>
+  <p><span id="question1"></span></p>
+    <div class="container">
+    <p><button class="answer button" onclick="checkAnswer(1,1)">a</button><span id="answer11"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(1,2)">b</button><span id="answer12"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(1,3)">c</button><span id="answer13"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(1,4)">d</button><span id="answer14"></span></p>
+    </div>
+    <hr>
+      
+  <p><span id="question2"></span></p>
+    <div class="container">
+    <p><button class="answer button" onclick="checkAnswer(2,1)">a</button><span id="answer21"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(2,2)">b</button><span id="answer22"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(2,3)">c</button><span id="answer23"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(2,4)">d</button><span id="answer24"></span></p>
+    </div>
+    <hr>
+       
+  <p><span id="question3"></span></p>
+    <div class="container">
+    <p><button class="answer button" onclick="checkAnswer(3,1)">a</button><span id="answer31"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(3,2)">b</button><span id="answer32"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(3,3)">c</button><span id="answer33"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(3,4)">d</button><span id="answer34"></span></p>
+    </div>
+    <hr>
+       
+  <p><span id="question4"></span></p>
+    <div class="container">
+    <p><button class="answer button" onclick="checkAnswer(4,1)">a</button><span id="answer41"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(4,2)">b</button><span id="answer42"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(4,3)">c</button><span id="answer43"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(4,4)">d</button><span id="answer44"></span></p>
+    </div>
+     <hr>
+       
+ <p><span id="question5"></span></p>
+    <div class="container">
+    <p><button class="answer button" onclick="checkAnswer(5,1)">a</button><span id="answer51"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(5,2)">b</button><span id="answer52"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(5,3)">c</button><span id="answer53"></span></p>
+    <p><button class="answer button" onclick="checkAnswer(5,4)">d</button><span id="answer54"></span></p>
+    </div>
+       <hr>
+  
+  <button onclick="fetchData()">Another?</button>
+         <p id="result"></p>
+  <script src="script.js"></script>
+</body>
+
+</html>
