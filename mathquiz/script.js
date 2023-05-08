@@ -24,7 +24,7 @@ function fetchData() {
         .then(response => response.json())
         .then(data => {
             document.getElementById("result").innerText = JSON.stringify(data, null, 2);
-            console.log(data);
+            // console.log(data);
             answers = data['answers'];
 
             question1 = document.getElementById("question1");
