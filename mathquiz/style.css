@@ -11,6 +11,14 @@ html {
   margin: 20px 0;
 }
 
+.choice {
+  background-color: #e3e3e3;
+  padding: 10px;
+  border: 2px;
+  border-radius: 5px;
+  border-color: #000;
+  font-size: 18px;
+}
 
 /* Styling for the answer buttons */
 .answer {
