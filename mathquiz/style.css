@@ -2,3 +2,63 @@ html {
   height: 100%;
   width: 100%;
 }
+
+/* Styling for the container of each question and answer options */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 20px 0;
+}
+
+/* Styling for the answer buttons */
+.answer {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Hover effect for the answer buttons */
+.answer:hover {
+  background-color: #0056b3;
+}
+
+/* Styling for the hr element */
+hr {
+  border: none;
+  border-top: 2px solid #007bff;
+  margin: 20px 0;
+}
+
+/* Styling for the "Another?" button */
+button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  margin: 20px 0;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Hover effect for the "Another?" button */
+button:hover {
+  background-color: #0056b3;
+}
+
+/* Styling for the result text */
+#result {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 20px;
+}
