@@ -2,13 +2,17 @@
 <html>
 <head>
     <title>Word Finder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;
             margin: 20px auto;
             padding: 0 20px;
+            font-size: 16px;
         }
+        h1 { font-size: 24px; }
+        h3 { font-size: 18px; }
         .input-section {
             background-color: #f5f5f5;
             padding: 20px;
@@ -16,15 +20,20 @@
             margin-bottom: 20px;
         }
         .letter-input {
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             text-align: center;
             margin: 0 5px;
             text-transform: uppercase;
+            font-size: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
         }
         #results {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             gap: 10px;
             margin-top: 20px;
         }
@@ -33,6 +42,7 @@
             padding: 8px;
             border-radius: 4px;
             text-align: center;
+            font-size: 16px;
         }
         .error {
             color: red;
@@ -63,8 +73,7 @@
     <div id="results"></div>
 
     <script>
-        const dictionary = 
-`a
+        const dictionary = `a
 aa
 aaa
 aachen
@@ -77781,7 +77790,12 @@ zygote
 zygotes
 zygotic
 zymology
-zymurgy`.split('\n').map(word => word.trim().toLowerCase());
+zymurgy
+ƒclat
+ƒlan
+ƒmigrƒs
+ƒpoque
+`.split('\n').map(word => word.trim().toLowerCase());
 
         function findWords() {
             const mandatoryLetter = document.getElementById('mandatoryLetter').value.toLowerCase();
