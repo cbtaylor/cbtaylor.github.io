@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            margin-top: 20px;
+        }
+
+        .board {
+            background-color: #0066cc;
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: row;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column-reverse;
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        .column:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            background-color: white;
+            border-radius: 50%;
+            margin: 5px;
+            display: inline-block;
+        }
+
+        .red {
+            background-color: #ff4136;
+        }
+
+        .yellow {
+            background-color: #ffdc00;
+        }
+
+        .status {
+            margin: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .reset-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #2ecc40;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .reset-button:hover {
+            background-color: #3d9970;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .starter-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #0074d9;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .starter-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="status" id="status">Your turn (Yellow)</div>
+        <div class="board" id="board"></div>
+        <div class="controls">
+            <button class="reset-button" onclick="resetGame()">New Game</button>
+            <button class="starter-button" onclick="toggleStarter()">Computer Starts</button>
+        </div>
+    </div>
+
+    <script>
+        const ROWS = 6;
+        const COLS = 7;
+        const EMPTY = 0;
+        const PLAYER = 1;
+        const COMPUTER = 2;
+        let currentBoard;
+        let gameOver;
+        let computerStarts = false;
+
+        function createBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            
+            for (let col = 0; col < COLS; col++) {
+                const column = document.createElement('div');
+                column.className = 'column';
+                column.setAttribute('data-col', col);
+                column.onclick = () => makeMove(col);
+                
+                for (let row = 0; row < ROWS; row++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.setAttribute('data-row', row);
+                    cell.setAttribute('data-col', col);
+                    column.appendChild(cell);
+                }
+                board.appendChild(column);
+            }
+        }
+
+        function updateBoard() {
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+                    cell.classList.remove('red', 'yellow');
+                    if (currentBoard[row][col] === PLAYER) {
+                        cell.classList.add('yellow');
+                    } else if (currentBoard[row][col] === COMPUTER) {
+                        cell.classList.add('red');
+                    }
+                }
+            }
+        }
+
+        function makeMove(col) {
+            if (gameOver) return;
+            
+            const row = getLowestEmptyRow(col);
+            if (row === -1) return;
+
+            currentBoard[row][col] = PLAYER;
+            updateBoard();
+
+            if (checkWin(row, col, PLAYER)) {
+                document.getElementById('status').textContent = 'You win!';
+                gameOver = true;
+                return;
+            }
+
+            if (isBoardFull()) {
+                document.getElementById('status').textContent = 'Draw!';
+                gameOver = true;
+                return;
+            }
+
+            document.getElementById('status').textContent = 'Computer thinking...';
+            setTimeout(computerMove, 500);
+        }
+
+        function computerMove() {
+            if (gameOver) return;
+
+            // Simple AI: Look for winning move or block player's winning move
+            let col = findBestMove();
+            const row = getLowestEmptyRow(col);
+
+            currentBoard[row][col] = COMPUTER;
+            updateBoard();
+
+            if (checkWin(row, col, COMPUTER)) {
+                document.getElementById('status').textContent = 'Computer wins!';
+                gameOver = true;
+                return;
+            }
+
+            if (isBoardFull()) {
+                document.getElementById('status').textContent = 'Draw!';
+                gameOver = true;
+                return;
+            }
+
+            document.getElementById('status').textContent = 'Your turn (Yellow)';
+        }
+
+        function findBestMove() {
+            // First, check for winning move
+            for (let col = 0; col < COLS; col++) {
+                const row = getLowestEmptyRow(col);
+                if (row === -1) continue;
+
+                currentBoard[row][col] = COMPUTER;
+                if (checkWin(row, col, COMPUTER)) {
+                    currentBoard[row][col] = EMPTY;
+                    return col;
+                }
+                currentBoard[row][col] = EMPTY;
+            }
+
+            // Then, block player's winning move
+            for (let col = 0; col < COLS; col++) {
+                const row = getLowestEmptyRow(col);
+                if (row === -1) continue;
+
+                currentBoard[row][col] = PLAYER;
+                if (checkWin(row, col, PLAYER)) {
+                    currentBoard[row][col] = EMPTY;
+                    return col;
+                }
+                currentBoard[row][col] = EMPTY;
+            }
+
+            // Otherwise, choose a random valid column
+            let validCols = [];
+            for (let col = 0; col < COLS; col++) {
+                if (getLowestEmptyRow(col) !== -1) {
+                    validCols.push(col);
+                }
+            }
+            return validCols[Math.floor(Math.random() * validCols.length)];
+        }
+
+        function getLowestEmptyRow(col) {
+            for (let row = 0; row < ROWS; row++) {
+                if (currentBoard[row][col] === EMPTY) {
+                    return row;
+                }
+            }
+            return -1;
+        }
+
+        function checkWin(row, col, player) {
+            // Check horizontal
+            for (let c = 0; c <= COLS - 4; c++) {
+                if (currentBoard[row][c] === player &&
+                    currentBoard[row][c + 1] === player &&
+                    currentBoard[row][c + 2] === player &&
+                    currentBoard[row][c + 3] === player) {
+                    return true;
+                }
+            }
+
+            // Check vertical
+            for (let r = 0; r <= ROWS - 4; r++) {
+                if (currentBoard[r][col] === player &&
+                    currentBoard[r + 1][col] === player &&
+                    currentBoard[r + 2][col] === player &&
+                    currentBoard[r + 3][col] === player) {
+                    return true;
+                }
+            }
+
+            // Check diagonal (positive slope)
+            for (let r = 0; r <= ROWS - 4; r++) {
+                for (let c = 0; c <= COLS - 4; c++) {
+                    if (currentBoard[r][c] === player &&
+                        currentBoard[r + 1][c + 1] === player &&
+                        currentBoard[r + 2][c + 2] === player &&
+                        currentBoard[r + 3][c + 3] === player) {
+                        return true;
+                    }
+                }
+            }
+
+            // Check diagonal (negative slope)
+            for (let r = 3; r < ROWS; r++) {
+                for (let c = 0; c <= COLS - 4; c++) {
+                    if (currentBoard[r][c] === player &&
+                        currentBoard[r - 1][c + 1] === player &&
+                        currentBoard[r - 2][c + 2] === player &&
+                        currentBoard[r - 3][c + 3] === player) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        function isBoardFull() {
+            return currentBoard.every(row => row.every(cell => cell !== EMPTY));
+        }
+
+        function resetGame() {
+            currentBoard = Array(ROWS).fill().map(() => Array(COLS).fill(EMPTY));
+            gameOver = false;
+            updateBoard();
+            if (computerStarts) {
+                document.getElementById('status').textContent = 'Computer thinking...';
+                setTimeout(computerMove, 500);
+            } else {
+                document.getElementById('status').textContent = 'Your turn (Yellow)';
+            }
+        }
+
+        function toggleStarter() {
+            computerStarts = !computerStarts;
+            const starterButton = document.querySelector('.starter-button');
+            starterButton.textContent = computerStarts ? 'Player Starts' : 'Computer Starts';
+            resetGame();
+        }
+
+        // Initialize the game
+        createBoard();
+        resetGame();
+    </script>
+</body>
+</html>
