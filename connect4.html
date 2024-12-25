@@ -16,7 +16,7 @@
 
         .board {
             background-color: #0066cc;
-            padding: 6px;
+            padding: 8px;
             border-radius: 10px;
             display: flex;
             flex-direction: row;
@@ -117,6 +117,7 @@
         let currentBoard;
         let gameOver;
         let computerStarts = false;
+        let isComputerThinking = false;
 
         function createBoard() {
             const board = document.getElementById('board');
@@ -154,7 +155,7 @@
         }
 
         function makeMove(col) {
-            if (gameOver) return;
+            if (gameOver || isComputerThinking) return;
             
             const row = getLowestEmptyRow(col);
             if (row === -1) return;
@@ -174,6 +175,7 @@
                 return;
             }
 
+            isComputerThinking = true;
             document.getElementById('status').textContent = 'Computer thinking...';
             setTimeout(computerMove, 500);
         }
@@ -190,16 +192,19 @@
             if (checkWin(row, col, COMPUTER)) {
                 document.getElementById('status').textContent = 'Computer wins!';
                 gameOver = true;
+                isComputerThinking = false;
                 return;
             }
 
             if (isBoardFull()) {
                 document.getElementById('status').textContent = 'Draw!';
                 gameOver = true;
+                isComputerThinking = false;
                 return;
             }
 
             document.getElementById('status').textContent = 'Your turn (Yellow)';
+            isComputerThinking = false;
         }
 
         function findBestMove() {
@@ -305,6 +310,7 @@
             gameOver = false;
             updateBoard();
             if (computerStarts) {
+                isComputerThinking = true;
                 document.getElementById('status').textContent = 'Computer thinking...';
                 setTimeout(computerMove, 500);
             } else {
