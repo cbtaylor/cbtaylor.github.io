@@ -103,6 +103,7 @@
         
         <div style="text-align: center;">
             <button id="dealButton" onclick="dealCards()">Deal Cards</button>
+            <button id="showButton" onclick="showComputerCards()" disabled>Show Computer's Cards</button>
         </div>
     </div>
 
@@ -128,10 +129,24 @@
             }
         }
 
+        let computerCardValues = [];
+
         function dealCards() {
             // Create and shuffle deck
             createDeck();
             shuffleDeck();
+
+            // Reset computer's cards to face down
+            const computerCards = document.getElementById('computerCards');
+            computerCards.innerHTML = '';
+            computerCardValues = [];
+            for (let i = 0; i < 2; i++) {
+                const card = deck.pop();
+                computerCardValues.push(card);
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card card-back';
+                computerCards.appendChild(cardElement);
+            }
 
             // Deal two cards to player
             const playerCards = document.getElementById('playerCards');
@@ -144,13 +159,31 @@
                 playerCards.appendChild(cardElement);
             }
 
-            // Disable deal button after dealing
+            // Disable deal button and enable show button
             document.getElementById('dealButton').disabled = true;
+            document.getElementById('showButton').disabled = false;
 
             // Enable deal button after 2 seconds
             setTimeout(() => {
                 document.getElementById('dealButton').disabled = false;
             }, 2000);
+        }
+
+        function showComputerCards() {
+            const computerCards = document.getElementById('computerCards');
+            computerCards.innerHTML = '';
+            
+            // Show computer's cards face up
+            for (let card of computerCardValues) {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.innerHTML = `<img src="cards/${card}.png" alt="${card}">`;
+                computerCards.appendChild(cardElement);
+            }
+
+            // Disable show button after revealing
+            document.getElementById('showButton').disabled = true;
+        }
         }
     </script>
 </body>
