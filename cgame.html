@@ -139,10 +139,10 @@
             // Reset computer's cards to face down
             const computerCards = document.getElementById('computerCards');
             computerCards.innerHTML = '';
-            computerCardValues = [];
+            gameState.computerCardValues = [];
             for (let i = 0; i < 2; i++) {
-                const card = deck.pop();
-                computerCardValues.push(card);
+                const card = gameState.deck.pop();
+                gameState.computerCardValues.push(card);
                 const cardElement = document.createElement('div');
                 cardElement.className = 'card card-back';
                 computerCards.appendChild(cardElement);
@@ -152,7 +152,7 @@
             const playerCards = document.getElementById('playerCards');
             playerCards.innerHTML = '';
             for (let i = 0; i < 2; i++) {
-                const card = deck.pop();
+                const card = gameState.deck.pop();
                 const cardElement = document.createElement('div');
                 cardElement.className = 'card';
                 cardElement.innerHTML = `<img src="cards/${card}.png" alt="${card}">`;
@@ -174,7 +174,7 @@
             computerCards.innerHTML = '';
             
             // Show computer's cards face up
-            for (let card of computerCardValues) {
+            for (let card of gameState.computerCardValues) {
                 const cardElement = document.createElement('div');
                 cardElement.className = 'card';
                 cardElement.innerHTML = `<img src="cards/${card}.png" alt="${card}">`;
