@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Game</title>
+    <title>Card Game v7</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -68,6 +68,7 @@
             color: white;
             cursor: pointer;
             transition: background-color 0.3s ease;
+            margin: 0 5px;
         }
 
         button:hover {
@@ -108,29 +109,33 @@
     </div>
 
     <script>
-        const suits = ['H', 'D', 'C', 'S'];
-        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-        let deck = [];
+        // Initialize game state
+        const gameState = {
+            deck: [],
+            computerCardValues: [],
+            suits: ['H', 'D', 'C', 'S'],
+            values: ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
+        };
 
+        // Create a fresh deck of cards
         function createDeck() {
-            deck = [];
-            for (let suit of suits) {
-                for (let value of values) {
-                    deck.push(value + suit);
+            gameState.deck = [];
+            for (let suit of gameState.suits) {
+                for (let value of gameState.values) {
+                    gameState.deck.push(value + suit);
                 }
             }
-            return deck;
         }
 
+        // Shuffle the deck
         function shuffleDeck() {
-            for (let i = deck.length - 1; i > 0; i--) {
+            for (let i = gameState.deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [deck[i], deck[j]] = [deck[j], deck[i]];
+                [gameState.deck[i], gameState.deck[j]] = [gameState.deck[j], gameState.deck[i]];
             }
         }
 
-        let computerCardValues = [];
-
+        // Deal cards to both players
         function dealCards() {
             // Create and shuffle deck
             createDeck();
@@ -169,6 +174,7 @@
             }, 2000);
         }
 
+        // Show computer's cards
         function showComputerCards() {
             const computerCards = document.getElementById('computerCards');
             computerCards.innerHTML = '';
@@ -183,7 +189,6 @@
 
             // Disable show button after revealing
             document.getElementById('showButton').disabled = true;
-        }
         }
     </script>
 </body>
