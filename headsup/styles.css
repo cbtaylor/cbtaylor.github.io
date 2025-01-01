@@ -41,11 +41,6 @@ body {
     transform: translateY(-5px);
 }
 
-.card-back {
-    background-color: #1a4ba5;
-    background-image: linear-gradient(45deg, #1a4ba5 25%, #153d87 25%, #153d87 50%, #1a4ba5 50%, #1a4ba5 75%, #153d87 75%, #153d87 100%);
-    background-size: 10px 10px;
-}
 
 .card img {
     width: 100%;
