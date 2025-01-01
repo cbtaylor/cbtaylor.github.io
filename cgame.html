@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Game v20</title>
+    <title>Card Game v24</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -279,6 +279,7 @@
             <button id="flopButton" onclick="dealFlop()" disabled>Flop</button>
             <button id="turnButton" onclick="dealTurn()" disabled>Turn</button>
             <button id="riverButton" onclick="dealRiver()" disabled>River</button>
+            <button id="evaluateButton" onclick="evaluateAndDisplayWinner()" disabled>Evaluate</button>
         </div>
     </div>
 
@@ -351,6 +352,7 @@
             // Disable deal button and enable show button
             document.getElementById('dealButton').disabled = true;
             document.getElementById('showButton').disabled = false;
+            document.getElementById('evaluateButton').disabled = true;
 
             // Reset community cards
             gameState.communityCards = [];
@@ -382,11 +384,6 @@
 
             // Disable show button after revealing
             document.getElementById('showButton').disabled = true;
-
-            // Evaluate hands if all community cards are dealt
-            if (gameState.communityCards.length === 5) {
-                evaluateAndDisplayWinner();
-            }
         }
 
         // Deal the flop (three community cards)
@@ -439,6 +436,7 @@
             
             // Update button states
             document.getElementById('riverButton').disabled = true;
+            document.getElementById('evaluateButton').disabled = false;
             
             // Enable show computer's cards button if not already shown
             if (document.getElementById('showButton').disabled === false) {
