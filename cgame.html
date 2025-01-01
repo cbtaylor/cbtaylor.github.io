@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Game v27</title>
+    <title>Card Game v29</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,15 +22,23 @@
                 existingResult.remove();
             }
 
+            // Only evaluate if we have all 5 community cards and computer's cards are shown
+            if (gameState.communityCards.length !== 5) {
+                return;
+            }
+
             const resultDiv = document.createElement('div');
             resultDiv.id = 'result-display';
             resultDiv.style.textAlign = 'center';
             resultDiv.style.marginTop = '20px';
             resultDiv.style.color = 'white';
             resultDiv.style.fontSize = '1.2em';
-            resultDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            resultDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
             resultDiv.style.padding = '15px';
             resultDiv.style.borderRadius = '10px';
+            resultDiv.style.width = '80%';
+            resultDiv.style.margin = '20px auto';
+            resultDiv.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
             
             // Get all cards for each player
             const playerHand = [...gameState.playerCards, ...gameState.communityCards];
@@ -45,15 +53,16 @@
             
             // Display results
             resultDiv.innerHTML = `
-                <p>Computer's hand: ${computerResult.name}</p>
-                <p>Your hand: ${playerResult.name}</p>
-                <p style="font-weight: bold; font-size: 1.2em; color: ${comparison === 1 ? '#90EE90' : comparison === -1 ? '#FFB6C1' : '#FFE4B5'}">
+                <p style="margin: 10px 0;"><strong>Computer's best hand:</strong> ${computerResult.name}</p>
+                <p style="margin: 10px 0;"><strong>Your best hand:</strong> ${playerResult.name}</p>
+                <p style="font-weight: bold; font-size: 1.3em; margin: 15px 0; color: ${comparison === 1 ? '#90EE90' : comparison === -1 ? '#FFB6C1' : '#FFE4B5'}">
                     ${comparison === 1 ? 'You win!' : comparison === -1 ? 'Computer wins!' : 'It\'s a tie!'}
                 </p>
             `;
             
             // Add result div to the page after the community cards
             document.querySelector('.community-area').appendChild(resultDiv);
+        }
         }
         }
 
