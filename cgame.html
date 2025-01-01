@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Game v31</title>
+    <title>Card Game v32</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,201 +14,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-        // Evaluate and display the winner
-        function evaluateAndDisplayWinner() {
-            // Remove any existing result div
-            const existingResult = document.getElementById('result-display');
-            if (existingResult) {
-                existingResult.remove();
-            document.addEventListener('DOMContentLoaded', function() {
-            // Add event listeners for all buttons
-            document.getElementById('dealButton').addEventListener('click', dealCards);
-            document.getElementById('showButton').addEventListener('click', showComputerCards);
-            document.getElementById('flopButton').addEventListener('click', dealFlop);
-            document.getElementById('turnButton').addEventListener('click', dealTurn);
-            document.getElementById('riverButton').addEventListener('click', dealRiver);
-            document.getElementById('evaluateButton').addEventListener('click', evaluateAndDisplayWinner);
-        });
-
-            // Only evaluate if we have all 5 community cards and computer's cards are shown
-            if (gameState.communityCards.length !== 5) {
-                return;
-            }
-
-            const resultDiv = document.createElement('div');
-            resultDiv.id = 'result-display';
-            resultDiv.style.textAlign = 'center';
-            resultDiv.style.marginTop = '20px';
-            resultDiv.style.color = 'white';
-            resultDiv.style.fontSize = '1.2em';
-            resultDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-            resultDiv.style.padding = '15px';
-            resultDiv.style.borderRadius = '10px';
-            resultDiv.style.width = '80%';
-            resultDiv.style.margin = '20px auto';
-            resultDiv.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
-            
-            // Check if computer's cards are face up by looking for img tags
-            const computerCards = document.getElementById('computerCards');
-            const hasComputerCardsRevealed = computerCards.querySelector('img') !== null;
-            
-            if (!hasComputerCardsRevealed) {
-                resultDiv.innerHTML = `
-                    <p style="color: #FFB6C1;">Please reveal computer's cards first by clicking 'Show Computer's Cards'</p>
-                `;
-                document.querySelector('.community-area').appendChild(resultDiv);
-                return;
-            }
-            
-            // Get all cards for each player
-            const playerHand = [...gameState.playerCards, ...gameState.communityCards];
-            const computerHand = [...gameState.computerCardValues, ...gameState.communityCards];
-            
-            // Evaluate both hands
-            const playerResult = evaluateHand(playerHand);
-            const computerResult = evaluateHand(computerHand);
-            
-            // Compare hands and determine winner
-            const comparison = compareHands(playerResult, computerResult);
-            
-            // Display results
-            resultDiv.innerHTML = `
-                <p style="margin: 10px 0;"><strong>Computer's best hand:</strong> ${computerResult.name}</p>
-                <p style="margin: 10px 0;"><strong>Your best hand:</strong> ${playerResult.name}</p>
-                <p style="font-weight: bold; font-size: 1.3em; margin: 15px 0; color: ${comparison === 1 ? '#90EE90' : comparison === -1 ? '#FFB6C1' : '#FFE4B5'}">
-                    ${comparison === 1 ? 'You win!' : comparison === -1 ? 'Computer wins!' : 'It\'s a tie!'}
-                </p>
-            `;
-            
-            // Add result div to the page after the community cards
-            document.querySelector('.community-area').appendChild(resultDiv);
-        }
-        }
-        }
-
-        // Evaluate a poker hand
-        function evaluateHand(cards) {
-            const values = cards.map(card => card[0]);
-            const suits = cards.map(card => card[1]);
-            const valueCounts = {};
-            const suitCounts = {};
-            
-            // Count frequencies
-            values.forEach(v => valueCounts[v] = (valueCounts[v] || 0) + 1);
-            suits.forEach(s => suitCounts[s] = (suitCounts[s] || 0) + 1);
-            
-            // Sort values by frequency then rank
-            const sortedValues = Object.entries(valueCounts)
-                .sort(([v1, c1], [v2, c2]) => {
-                    if (c1 !== c2) return c2 - c1;
-                    return valueRankings[v2] - valueRankings[v1];
-                });
-            
-            // Check for straight
-            const uniqueValues = [...new Set(values)]
-                .sort((a, b) => valueRankings[a] - valueRankings[b]);
-            let hasStraight = false;
-            let straightHigh = null;
-            
-            // Check for regular straight
-            for (let i = 0; i <= uniqueValues.length - 5; i++) {
-                if (valueRankings[uniqueValues[i + 4]] - valueRankings[uniqueValues[i]] === 4) {
-                    hasStraight = true;
-                    straightHigh = uniqueValues[i + 4];
-                }
-            }
-            
-            // Check for Ace-low straight
-            if (uniqueValues.includes('A') && uniqueValues.includes('2') && 
-                uniqueValues.includes('3') && uniqueValues.includes('4') && 
-                uniqueValues.includes('5')) {
-                hasStraight = true;
-                straightHigh = '5';
-            }
-            
-            // Check for flush
-            const hasFlush = Object.values(suitCounts).some(count => count >= 5);
-            const flushSuit = Object.entries(suitCounts)
-                .find(([suit, count]) => count >= 5)?.[0];
-            
-            // Determine hand
-            if (hasFlush && hasStraight) {
-                // Check if straight flush
-                const flushCards = cards
-                    .filter(card => card[1] === flushSuit)
-                    .map(card => card[0])
-                    .sort((a, b) => valueRankings[a] - valueRankings[b]);
-                
-                let isStraightFlush = false;
-                let straightFlushHigh = null;
-                
-                for (let i = 0; i <= flushCards.length - 5; i++) {
-                    if (valueRankings[flushCards[i + 4]] - valueRankings[flushCards[i]] === 4) {
-                        isStraightFlush = true;
-                        straightFlushHigh = flushCards[i + 4];
-                    }
-                }
-                
-                if (isStraightFlush) {
-                    if (straightFlushHigh === 'A') {
-                        return { type: 9, name: 'Royal Flush', values: ['A'] };
-                    }
-                    return { type: 8, name: 'Straight Flush', values: [straightFlushHigh] };
-                }
-            }
-            
-            if (sortedValues[0][1] === 4) {
-                return { type: 7, name: 'Four of a Kind', values: [sortedValues[0][0], sortedValues[1][0]] };
-            }
-            
-            if (sortedValues[0][1] === 3 && sortedValues[1][1] === 2) {
-                return { type: 6, name: 'Full House', values: [sortedValues[0][0], sortedValues[1][0]] };
-            }
-            
-            if (hasFlush) {
-                const flushCards = cards
-                    .filter(card => card[1] === flushSuit)
-                    .map(card => card[0])
-                    .sort((a, b) => valueRankings[b] - valueRankings[a])
-                    .slice(0, 5);
-                return { type: 5, name: 'Flush', values: flushCards };
-            }
-            
-            if (hasStraight) {
-                return { type: 4, name: 'Straight', values: [straightHigh] };
-            }
-            
-            if (sortedValues[0][1] === 3) {
-                return { type: 3, name: 'Three of a Kind', values: [sortedValues[0][0], sortedValues[1][0], sortedValues[2][0]] };
-            }
-            
-            if (sortedValues[0][1] === 2 && sortedValues[1][1] === 2) {
-                return { type: 2, name: 'Two Pair', values: [sortedValues[0][0], sortedValues[1][0], sortedValues[2][0]] };
-            }
-            
-            if (sortedValues[0][1] === 2) {
-                return { type: 1, name: 'One Pair', values: [sortedValues[0][0], ...sortedValues.slice(1, 4).map(v => v[0])] };
-            }
-            
-            return { type: 0, name: 'High Card', values: sortedValues.slice(0, 5).map(v => v[0]) };
-        }
-
-        // Compare two poker hands
-        function compareHands(hand1, hand2) {
-            if (hand1.type !== hand2.type) {
-                return hand1.type > hand2.type ? 1 : -1;
-            }
-            
-            // Compare kickers
-            for (let i = 0; i < hand1.values.length; i++) {
-                const value1 = valueRankings[hand1.values[i]];
-                const value2 = valueRankings[hand2.values[i]];
-                if (value1 !== value2) {
-                    return value1 > value2 ? 1 : -1;
-                }
-            }
-            
-            return 0; // Tie
         }
 
         .game-container {
@@ -216,11 +21,12 @@
             max-width: 800px;
         }
 
-        .player-area, .computer-area {
+        .player-area, .computer-area, .community-area {
             padding: 20px;
             margin: 20px 0;
             border-radius: 10px;
             background-color: rgba(255, 255, 255, 0.1);
+            position: relative;
         }
 
         .cards {
@@ -303,12 +109,12 @@
         </div>
         
         <div style="text-align: center;">
-            <button id="dealButton" onclick="dealCards()">Deal Cards</button>
-            <button id="showButton" onclick="showComputerCards()" disabled>Show Computer's Cards</button>
-            <button id="flopButton" onclick="dealFlop()" disabled>Flop</button>
-            <button id="turnButton" onclick="dealTurn()" disabled>Turn</button>
-            <button id="riverButton" onclick="dealRiver()" disabled>River</button>
-            <button id="evaluateButton" onclick="evaluateAndDisplayWinner()" disabled>Evaluate</button>
+            <button onclick="dealCards()">Deal Cards</button>
+            <button onclick="showComputerCards()" id="showButton" disabled>Show Computer's Cards</button>
+            <button onclick="dealFlop()" id="flopButton" disabled>Flop</button>
+            <button onclick="dealTurn()" id="turnButton" disabled>Turn</button>
+            <button onclick="dealRiver()" id="riverButton" disabled>River</button>
+            <button onclick="evaluateAndDisplayWinner()" id="evaluateButton" disabled>Evaluate</button>
         </div>
     </div>
 
@@ -329,7 +135,6 @@
             'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
         };
 
-        // Create a fresh deck of cards
         function createDeck() {
             gameState.deck = [];
             for (let suit of gameState.suits) {
@@ -339,7 +144,6 @@
             }
         }
 
-        // Shuffle the deck
         function shuffleDeck() {
             for (let i = gameState.deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -347,7 +151,6 @@
             }
         }
 
-        // Deal cards to both players
         function dealCards() {
             // Create and shuffle deck
             createDeck();
@@ -379,7 +182,6 @@
             }
 
             // Reset all buttons to initial state
-            document.getElementById('dealButton').disabled = true;
             document.getElementById('showButton').disabled = false;
             document.getElementById('evaluateButton').disabled = true;
             document.getElementById('flopButton').disabled = false;
@@ -395,14 +197,8 @@
             if (existingResult) {
                 existingResult.remove();
             }
-            
-            // Enable deal button after 2 seconds
-            setTimeout(() => {
-                document.getElementById('dealButton').disabled = false;
-            }, 2000);
         }
 
-        // Show computer's cards
         function showComputerCards() {
             const computerCards = document.getElementById('computerCards');
             computerCards.innerHTML = '';
@@ -424,7 +220,6 @@
             }
         }
 
-        // Deal the flop (three community cards)
         function dealFlop() {
             const communityCards = document.getElementById('communityCards');
             
@@ -443,7 +238,6 @@
             document.getElementById('turnButton').disabled = false;
         }
 
-        // Deal the turn (fourth community card)
         function dealTurn() {
             const communityCards = document.getElementById('communityCards');
             
@@ -460,7 +254,6 @@
             document.getElementById('riverButton').disabled = false;
         }
 
-        // Deal the river (fifth community card)
         function dealRiver() {
             const communityCards = document.getElementById('communityCards');
             
@@ -475,22 +268,124 @@
             // Update button states
             document.getElementById('riverButton').disabled = true;
             
-            // Enable show computer's cards button if not already shown
-            if (document.getElementById('showButton').disabled === false) {
-                document.getElementById('showButton').disabled = false;
-            }
-            
             // Clear any previous results
             const existingResult = document.getElementById('result-display');
             if (existingResult) {
                 existingResult.remove();
             }
-            
-            // Enable show computer's cards button if not already shown
-            if (document.getElementById('showButton').disabled === false) {
-                document.getElementById('showButton').disabled = false;
+
+            // Enable evaluate button if computer's cards are shown
+            if (document.getElementById('showButton').disabled) {
+                document.getElementById('evaluateButton').disabled = false;
             }
         }
-    </script>
-</body>
-</html>
+
+        function evaluateAndDisplayWinner() {
+            // Remove any existing result div
+            const existingResult = document.getElementById('result-display');
+            if (existingResult) {
+                existingResult.remove();
+            }
+
+            // Only evaluate if we have all 5 community cards
+            if (gameState.communityCards.length !== 5) {
+                return;
+            }
+
+            const resultDiv = document.createElement('div');
+            resultDiv.id = 'result-display';
+            resultDiv.style.textAlign = 'center';
+            resultDiv.style.marginTop = '20px';
+            resultDiv.style.color = 'white';
+            resultDiv.style.fontSize = '1.2em';
+            resultDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+            resultDiv.style.padding = '15px';
+            resultDiv.style.borderRadius = '10px';
+            resultDiv.style.width = '80%';
+            resultDiv.style.margin = '20px auto';
+            resultDiv.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+            
+            // Check if computer's cards are face up by looking for img tags
+            const computerCards = document.getElementById('computerCards');
+            const hasComputerCardsRevealed = computerCards.querySelector('img') !== null;
+            
+            if (!hasComputerCardsRevealed) {
+                resultDiv.innerHTML = `
+                    <p style="color: #FFB6C1;">Please reveal computer's cards first by clicking 'Show Computer's Cards'</p>
+                `;
+                document.querySelector('.community-area').appendChild(resultDiv);
+                return;
+            }
+            
+            // Get all cards for each player
+            const playerHand = [...gameState.playerCards, ...gameState.communityCards];
+            const computerHand = [...gameState.computerCardValues, ...gameState.communityCards];
+            
+            // Evaluate both hands
+            const playerResult = evaluateHand(playerHand);
+            const computerResult = evaluateHand(computerHand);
+            
+            // Compare hands and determine winner
+            const comparison = compareHands(playerResult, computerResult);
+            
+            // Display results
+            resultDiv.innerHTML = `
+                <p style="margin: 10px 0;"><strong>Computer's best hand:</strong> ${computerResult.name}</p>
+                <p style="margin: 10px 0;"><strong>Your best hand:</strong> ${playerResult.name}</p>
+                <p style="font-weight: bold; font-size: 1.3em; margin: 15px 0; color: ${comparison === 1 ? '#90EE90' : comparison === -1 ? '#FFB6C1' : '#FFE4B5'}">
+                    ${comparison === 1 ? 'You win!' : comparison === -1 ? 'Computer wins!' : 'It\'s a tie!'}
+                </p>
+            `;
+            
+            // Add result div to the page after the community cards
+            document.querySelector('.community-area').appendChild(resultDiv);
+        }
+
+        function evaluateHand(cards) {
+            const values = cards.map(card => card[0]);
+            const suits = cards.map(card => card[1]);
+            const valueCounts = {};
+            const suitCounts = {};
+            
+            // Count frequencies
+            values.forEach(v => valueCounts[v] = (valueCounts[v] || 0) + 1);
+            suits.forEach(s => suitCounts[s] = (suitCounts[s] || 0) + 1);
+            
+            // Sort values by frequency then rank
+            const sortedValues = Object.entries(valueCounts)
+                .sort(([v1, c1], [v2, c2]) => {
+                    if (c1 !== c2) return c2 - c1;
+                    return valueRankings[v2] - valueRankings[v1];
+                });
+            
+            // Check for straight
+            const uniqueValues = [...new Set(values)]
+                .sort((a, b) => valueRankings[a] - valueRankings[b]);
+            let hasStraight = false;
+            let straightHigh = null;
+            
+            // Check for regular straight
+            for (let i = 0; i <= uniqueValues.length - 5; i++) {
+                if (valueRankings[uniqueValues[i + 4]] - valueRankings[uniqueValues[i]] === 4) {
+                    hasStraight = true;
+                    straightHigh = uniqueValues[i + 4];
+                }
+            }
+            
+            // Check for Ace-low straight
+            if (uniqueValues.includes('A') && uniqueValues.includes('2') && 
+                uniqueValues.includes('3') && uniqueValues.includes('4') && 
+                uniqueValues.includes('5')) {
+                hasStraight = true;
+                straightHigh = '5';
+            }
+            
+            // Check for flush
+            const hasFlush = Object.values(suitCounts).some(count => count >= 5);
+            const flushSuit = Object.entries(suitCounts)
+                .find(([suit, count]) => count >= 5)?.[0];
+            
+            // Determine hand
+            if (hasFlush && hasStraight) {
+                // Check if straight flush
+                const flushCards
