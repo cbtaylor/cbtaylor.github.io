@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Game v29</title>
+    <title>Card Game v31</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,7 +20,15 @@
             const existingResult = document.getElementById('result-display');
             if (existingResult) {
                 existingResult.remove();
-            }
+            document.addEventListener('DOMContentLoaded', function() {
+            // Add event listeners for all buttons
+            document.getElementById('dealButton').addEventListener('click', dealCards);
+            document.getElementById('showButton').addEventListener('click', showComputerCards);
+            document.getElementById('flopButton').addEventListener('click', dealFlop);
+            document.getElementById('turnButton').addEventListener('click', dealTurn);
+            document.getElementById('riverButton').addEventListener('click', dealRiver);
+            document.getElementById('evaluateButton').addEventListener('click', evaluateAndDisplayWinner);
+        });
 
             // Only evaluate if we have all 5 community cards and computer's cards are shown
             if (gameState.communityCards.length !== 5) {
@@ -39,6 +47,18 @@
             resultDiv.style.width = '80%';
             resultDiv.style.margin = '20px auto';
             resultDiv.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+            
+            // Check if computer's cards are face up by looking for img tags
+            const computerCards = document.getElementById('computerCards');
+            const hasComputerCardsRevealed = computerCards.querySelector('img') !== null;
+            
+            if (!hasComputerCardsRevealed) {
+                resultDiv.innerHTML = `
+                    <p style="color: #FFB6C1;">Please reveal computer's cards first by clicking 'Show Computer's Cards'</p>
+                `;
+                document.querySelector('.community-area').appendChild(resultDiv);
+                return;
+            }
             
             // Get all cards for each player
             const playerHand = [...gameState.playerCards, ...gameState.communityCards];
