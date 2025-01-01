@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Game v18</title>
+    <title>Card Game v20</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,11 +16,21 @@
             align-items: center;
         // Evaluate and display the winner
         function evaluateAndDisplayWinner() {
+            // Remove any existing result div
+            const existingResult = document.getElementById('result-display');
+            if (existingResult) {
+                existingResult.remove();
+            }
+
             const resultDiv = document.createElement('div');
+            resultDiv.id = 'result-display';
             resultDiv.style.textAlign = 'center';
             resultDiv.style.marginTop = '20px';
             resultDiv.style.color = 'white';
             resultDiv.style.fontSize = '1.2em';
+            resultDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            resultDiv.style.padding = '15px';
+            resultDiv.style.borderRadius = '10px';
             
             // Get all cards for each player
             const playerHand = [...gameState.playerCards, ...gameState.communityCards];
@@ -37,11 +47,14 @@
             resultDiv.innerHTML = `
                 <p>Computer's hand: ${computerResult.name}</p>
                 <p>Your hand: ${playerResult.name}</p>
-                <p><strong>${comparison === 1 ? 'You win!' : comparison === -1 ? 'Computer wins!' : 'It\'s a tie!'}</strong></p>
+                <p style="font-weight: bold; font-size: 1.2em; color: ${comparison === 1 ? '#90EE90' : comparison === -1 ? '#FFB6C1' : '#FFE4B5'}">
+                    ${comparison === 1 ? 'You win!' : comparison === -1 ? 'Computer wins!' : 'It\'s a tie!'}
+                </p>
             `;
             
-            // Add result div to the page
-            document.querySelector('.game-container').appendChild(resultDiv);
+            // Add result div to the page after the community cards
+            document.querySelector('.community-area').appendChild(resultDiv);
+        }
         }
 
         // Evaluate a poker hand
@@ -427,8 +440,10 @@
             // Update button states
             document.getElementById('riverButton').disabled = true;
             
-            // Show computer's cards and evaluate hands
-            document.getElementById('showButton').click();
+            // Enable show computer's cards button if not already shown
+            if (document.getElementById('showButton').disabled === false) {
+                document.getElementById('showButton').disabled = false;
+            }
         }
     </script>
 </body>
