@@ -47,7 +47,8 @@ function dealCards() {
         const card = gameState.deck.pop();
         gameState.computerCardValues.push(card);
         const cardElement = document.createElement('div');
-        cardElement.className = 'card card-back';
+        cardElement.className = 'card';
+        cardElement.innerHTML = `<img src="cards/back_blue.png" alt="Card Back">`;
         computerCards.appendChild(cardElement);
     }
 
