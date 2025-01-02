@@ -218,11 +218,12 @@ function evaluateAndDisplayWinner() {
     } else if (computerScore.rank > playerScore.rank) {
         resultText += 'Computer Wins!';
     } else {
-        // If same hand rank, compare high cards
-        if (playerScore.highCard > computerScore.highCard) {
-            resultText += 'Player Wins with higher card!';
-        } else if (computerScore.highCard > playerScore.highCard) {
-            resultText += 'Computer Wins with higher card!';
+        // If same hand rank, do detailed comparison of all cards
+        const comparison = compareEqualRankHands(playerScore, computerScore, playerHand, computerHand);
+        if (comparison > 0) {
+            resultText += 'Player Wins with higher cards!';
+        } else if (comparison < 0) {
+            resultText += 'Computer Wins with higher cards!';
         } else {
             resultText += "It's a Tie!";
         }
@@ -439,6 +440,187 @@ function hasPair(values) {
         }
     }
     return { has: false, highCard: 0 };
+}
+
+// Compare hands of equal rank
+function compareEqualRankHands(playerScore, computerScore, playerHand, computerHand) {
+    const playerValues = playerHand.map(card => valueRankings[card[0]]);
+    const computerValues = computerHand.map(card => valueRankings[card[0]]);
+    
+    switch (playerScore.rank) {
+        case 8: // Four of a Kind
+            return compareFourOfAKind(playerValues, computerValues);
+        case 7: // Full House
+            return compareFullHouse(playerValues, computerValues);
+        case 6: // Flush
+            return compareFlush(playerValues, computerValues);
+        case 5: // Straight
+            return playerScore.highCard - computerScore.highCard;
+        case 4: // Three of a Kind
+            return compareThreeOfAKind(playerValues, computerValues);
+        case 3: // Two Pair
+            return compareTwoPair(playerValues, computerValues);
+        case 2: // One Pair
+            return compareOnePair(playerValues, computerValues);
+        case 1: // High Card
+            return compareHighCard(playerValues, computerValues);
+        default:
+            return playerScore.highCard - computerScore.highCard;
+    }
+}
+
+function compareFourOfAKind(playerValues, computerValues) {
+    const playerCounts = getCounts(playerValues);
+    const computerCounts = getCounts(computerValues);
+    
+    // Get the four of a kind values
+    const playerQuad = Number(Object.entries(playerCounts).find(([_, count]) => count === 4)[0]);
+    const computerQuad = Number(Object.entries(computerCounts).find(([_, count]) => count === 4)[0]);
+    
+    if (playerQuad !== computerQuad) {
+        return playerQuad - computerQuad;
+    }
+    
+    // Compare kickers
+    const playerKicker = Number(Object.entries(playerCounts).find(([_, count]) => count === 1)[0]);
+    const computerKicker = Number(Object.entries(computerCounts).find(([_, count]) => count === 1)[0]);
+    return playerKicker - computerKicker;
+}
+
+function compareFullHouse(playerValues, computerValues) {
+    const playerCounts = getCounts(playerValues);
+    const computerCounts = getCounts(computerValues);
+    
+    // Get the three of a kind values
+    const playerTrips = Number(Object.entries(playerCounts).find(([_, count]) => count === 3)[0]);
+    const computerTrips = Number(Object.entries(computerCounts).find(([_, count]) => count === 3)[0]);
+    
+    if (playerTrips !== computerTrips) {
+        return playerTrips - computerTrips;
+    }
+    
+    // Compare pair values
+    const playerPair = Number(Object.entries(playerCounts).find(([_, count]) => count === 2)[0]);
+    const computerPair = Number(Object.entries(computerCounts).find(([_, count]) => count === 2)[0]);
+    return playerPair - computerPair;
+}
+
+function compareFlush(playerValues, computerValues) {
+    const sortedPlayer = [...playerValues].sort((a, b) => b - a);
+    const sortedComputer = [...computerValues].sort((a, b) => b - a);
+    
+    // Compare each card from highest to lowest
+    for (let i = 0; i < 5; i++) {
+        if (sortedPlayer[i] !== sortedComputer[i]) {
+            return sortedPlayer[i] - sortedComputer[i];
+        }
+    }
+    return 0;
+}
+
+function compareThreeOfAKind(playerValues, computerValues) {
+    const playerCounts = getCounts(playerValues);
+    const computerCounts = getCounts(computerValues);
+    
+    // Compare three of a kind values
+    const playerTrips = Number(Object.entries(playerCounts).find(([_, count]) => count === 3)[0]);
+    const computerTrips = Number(Object.entries(computerCounts).find(([_, count]) => count === 3)[0]);
+    
+    if (playerTrips !== computerTrips) {
+        return playerTrips - computerTrips;
+    }
+    
+    // Get kickers in descending order
+    const playerKickers = Object.entries(playerCounts)
+        .filter(([_, count]) => count === 1)
+        .map(([value, _]) => Number(value))
+        .sort((a, b) => b - a);
+    const computerKickers = Object.entries(computerCounts)
+        .filter(([_, count]) => count === 1)
+        .map(([value, _]) => Number(value))
+        .sort((a, b) => b - a);
+    
+    // Compare kickers
+    for (let i = 0; i < playerKickers.length; i++) {
+        if (playerKickers[i] !== computerKickers[i]) {
+            return playerKickers[i] - computerKickers[i];
+        }
+    }
+    return 0;
+}
+
+function compareTwoPair(playerValues, computerValues) {
+    const playerCounts = getCounts(playerValues);
+    const computerCounts = getCounts(computerValues);
+    
+    // Get pairs in descending order
+    const playerPairs = Object.entries(playerCounts)
+        .filter(([_, count]) => count === 2)
+        .map(([value, _]) => Number(value))
+        .sort((a, b) => b - a);
+    const computerPairs = Object.entries(computerCounts)
+        .filter(([_, count]) => count === 2)
+        .map(([value, _]) => Number(value))
+        .sort((a, b) => b - a);
+    
+    // Compare higher pair
+    if (playerPairs[0] !== computerPairs[0]) {
+        return playerPairs[0] - computerPairs[0];
+    }
+    
+    // Compare lower pair
+    if (playerPairs[1] !== computerPairs[1]) {
+        return playerPairs[1] - computerPairs[1];
+    }
+    
+    // Compare kicker
+    const playerKicker = Number(Object.entries(playerCounts).find(([_, count]) => count === 1)[0]);
+    const computerKicker = Number(Object.entries(computerCounts).find(([_, count]) => count === 1)[0]);
+    return playerKicker - computerKicker;
+}
+
+function compareOnePair(playerValues, computerValues) {
+    const playerCounts = getCounts(playerValues);
+    const computerCounts = getCounts(computerValues);
+    
+    // Compare pair values
+    const playerPair = Number(Object.entries(playerCounts).find(([_, count]) => count === 2)[0]);
+    const computerPair = Number(Object.entries(computerCounts).find(([_, count]) => count === 2)[0]);
+    
+    if (playerPair !== computerPair) {
+        return playerPair - computerPair;
+    }
+    
+    // Get kickers in descending order
+    const playerKickers = Object.entries(playerCounts)
+        .filter(([_, count]) => count === 1)
+        .map(([value, _]) => Number(value))
+        .sort((a, b) => b - a);
+    const computerKickers = Object.entries(computerCounts)
+        .filter(([_, count]) => count === 1)
+        .map(([value, _]) => Number(value))
+        .sort((a, b) => b - a);
+    
+    // Compare each kicker
+    for (let i = 0; i < playerKickers.length; i++) {
+        if (playerKickers[i] !== computerKickers[i]) {
+            return playerKickers[i] - computerKickers[i];
+        }
+    }
+    return 0;
+}
+
+function compareHighCard(playerValues, computerValues) {
+    const sortedPlayer = [...playerValues].sort((a, b) => b - a);
+    const sortedComputer = [...computerValues].sort((a, b) => b - a);
+    
+    // Compare each card from highest to lowest
+    for (let i = 0; i < 5; i++) {
+        if (sortedPlayer[i] !== sortedComputer[i]) {
+            return sortedPlayer[i] - sortedComputer[i];
+        }
+    }
+    return 0;
 }
 
 // Utility function to count occurrences
