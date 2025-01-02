@@ -300,12 +300,50 @@ function hasRoyalFlush(values, suits) {
 }
 
 function hasStraightFlush(values, suits) {
-    const flush = hasFlush(suits);
-    const straight = hasStraight(values);
-    return {
-        has: flush && straight.has,
-        highCard: straight.highCard
-    };
+    // Group cards by suit
+    const suitGroups = {};
+    suits.forEach((suit, i) => {
+        if (!suitGroups[suit]) {
+            suitGroups[suit] = [];
+        }
+        suitGroups[suit].push(values[i]);
+    });
+    
+    // Check each suit group for a straight
+    for (let suit in suitGroups) {
+        const suitValues = suitGroups[suit];
+        if (suitValues.length >= 5) {  // Only check if we have enough cards of this suit
+            const sortedValues = [...new Set(suitValues)].sort((a, b) => a - b);
+            let maxLength = 1;
+            let currentLength = 1;
+            let highCard = sortedValues[0];
+            
+            for (let i = 1; i < sortedValues.length; i++) {
+                if (sortedValues[i] === sortedValues[i-1] + 1) {
+                    currentLength++;
+                    if (currentLength > maxLength) {
+                        maxLength = currentLength;
+                        highCard = sortedValues[i];
+                    }
+                } else {
+                    currentLength = 1;
+                }
+            }
+            
+            // Check for Ace-low straight flush
+            if (sortedValues.includes(14) && sortedValues.includes(2) && 
+                sortedValues.includes(3) && sortedValues.includes(4) && 
+                sortedValues.includes(5)) {
+                return { has: true, highCard: 5 };
+            }
+            
+            if (maxLength >= 5) {
+                return { has: true, highCard: highCard };
+            }
+        }
+    }
+    
+    return { has: false, highCard: 0 };
 }
 
 function hasFourOfAKind(values) {
