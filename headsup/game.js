@@ -77,7 +77,7 @@ function dealCards() {
 
     // Reset all buttons to initial state
     document.getElementById('dealButton').disabled = true;
-    document.getElementById('showButton').disabled = false;
+    document.getElementById('showButton').disabled = true;
     document.getElementById('evaluateButton').disabled = true;
     document.getElementById('flopButton').disabled = false;
     document.getElementById('turnButton').disabled = true;
@@ -178,15 +178,13 @@ function dealRiver() {
     setTimeout(() => {
         communityCards[4].className = 'card';
         communityCards[4].innerHTML = `<img src="cards/${card}.png" alt="${card}">`;
+        
+        // Only enable the show button after the last card is revealed
+        document.getElementById('showButton').disabled = false;
     }, 500);
     
     // Update button states
     document.getElementById('riverButton').disabled = true;
-    
-    // Enable show computer's cards button if not already shown
-    if (!document.getElementById('showButton').disabled) {
-        document.getElementById('showButton').disabled = false;
-    }
 }
 
 // Evaluate hands and display winner
