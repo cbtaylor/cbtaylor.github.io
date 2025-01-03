@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v19 Ship's Bells Watch Timer</title>
+    <title>Ship's Bells Watch Timer</title>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -244,13 +244,25 @@
                 const minutes = now.getMinutes();
                 
                 if (minutes % 30 === 0) {
-                    const hour = now.getHours() % 4;
-                    const halfHour = minutes === 30 ? 1 : 0;
-                    const currentBells = (hour * 2) + halfHour + 1;
-                    this.bellCount.textContent = `${currentBells} Bell${currentBells === 1 ? '' : 's'}`;
+                    // Calculate bells based on time within the 4-hour watch
+                    const hour = now.getHours() % 4;  // Get hour within current watch (0-3)
+                    const isHalfHour = minutes % 60 === 30;
                     
+                    // Calculate total bells (1-8)
+                    // First half hour = 1 bell
+                    // First hour = 2 bells
+                    // Third half hour = 3 bells
+                    // Second hour = 4 bells
+                    // Fifth half hour = 5 bells
+                    // Third hour = 6 bells
+                    // Seventh half hour = 7 bells
+                    // Fourth hour = 8 bells
+                    const currentBells = (hour * 2) + (isHalfHour ? 1 : 2);
+                    
+                    this.bellCount.textContent = `${currentBells} Bell${currentBells === 1 ? '' : 's'}`;
                     this.playBellSequence(currentBells);
                 }
+            }
             }
         }
 
