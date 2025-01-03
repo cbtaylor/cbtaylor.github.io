@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>v16 Ship's Bells Watch Timer</title>
+    <title>v19 Ship's Bells Watch Timer</title>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -23,6 +23,7 @@
             background-color: #2d4a7c;
             border-radius: 1rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 1rem;
         }
 
         h1 {
@@ -90,7 +91,6 @@
     <script>
         class ShipsBells {
             constructor() {
-                // Initialize properties
                 this.audioContext = null;
                 this.singleBell = null;
                 this.doubleBell = null;
@@ -118,13 +118,20 @@
             async initAudioContext() {
                 if (!this.audioContext) {
                     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    if (this.audioContext.state === 'suspended') {
+                        await this.audioContext.resume();
+                    }
                 }
             }
 
             async loadSound(filename) {
                 try {
-                    const response = await window.fs.readFile(filename);
-                    return await this.audioContext.decodeAudioData(response.buffer);
+                    const response = await fetch(filename);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const arrayBuffer = await response.arrayBuffer();
+                    return await this.audioContext.decodeAudioData(arrayBuffer);
                 } catch (error) {
                     console.error(`Error loading ${filename}:`, error);
                     throw error;
@@ -132,29 +139,11 @@
             }
 
             async loadSounds() {
-                try {
-                    const loadAttempt = async () => {
-                        if (!this.singleBell) {
-                            this.singleBell = await this.loadSound('bell_single.mp3');
-                        }
-                        if (!this.doubleBell) {
-                            this.doubleBell = await this.loadSound('bell_double.mp3');
-                        }
-                    };
-
-                    // First attempt
-                    try {
-                        await loadAttempt();
-                    } catch (error) {
-                        console.warn('First load attempt failed, retrying...', error);
-                        // Small delay before retry
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                        // Second attempt
-                        await loadAttempt();
-                    }
-                } catch (error) {
-                    console.error('Error loading sounds:', error);
-                    throw error;
+                if (!this.singleBell) {
+                    this.singleBell = await this.loadSound('bell_single.mp3');
+                }
+                if (!this.doubleBell) {
+                    this.doubleBell = await this.loadSound('bell_double.mp3');
                 }
             }
 
