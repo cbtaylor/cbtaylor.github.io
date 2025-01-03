@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>v16 Ship's Bells Watch Timer</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #1a365d;
+            color: #ffffff;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background-color: #2d4a7c;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+
+        .time-display {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            font-family: monospace;
+        }
+
+        .bells-display {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            background-color: #4a90e2;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #357abd;
+        }
+
+        button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+
+        .next-bell {
+            font-size: 1rem;
+            color: #cbd5e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ship's Bells Watch Timer</h1>
+        <div class="time-display" id="currentTime">00:00:00</div>
+        <div class="bells-display">Current Bells: <span id="bellCount">8 Bells</span></div>
+        <div class="controls">
+            <button id="startBtn">Start Watch</button>
+            <button id="stopBtn" disabled>Stop Watch</button>
+            <button id="testBtn">Test Bell</button>
+        </div>
+        <div class="next-bell" id="nextBell"></div>
+    </div>
+
+    <script>
+        class ShipsBells {
+            constructor() {
+                // Initialize properties
+                this.audioContext = null;
+                this.singleBell = null;
+                this.doubleBell = null;
+                this.isPlaying = false;
+                this.displayInterval = null;
+                this.bellInterval = null;
+
+                // DOM elements
+                this.startBtn = document.getElementById('startBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.testBtn = document.getElementById('testBtn');
+                this.timeDisplay = document.getElementById('currentTime');
+                this.bellCount = document.getElementById('bellCount');
+                this.nextBellDisplay = document.getElementById('nextBell');
+
+                // Event listeners
+                this.startBtn.addEventListener('click', () => this.start());
+                this.stopBtn.addEventListener('click', () => this.stop());
+                this.testBtn.addEventListener('click', () => this.test());
+
+                // Initial update
+                this.updateDisplay();
+            }
+
+            async initAudioContext() {
+                if (!this.audioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            async loadSound(filename) {
+                try {
+                    const response = await window.fs.readFile(filename);
+                    return await this.audioContext.decodeAudioData(response.buffer);
+                } catch (error) {
+                    console.error(`Error loading ${filename}:`, error);
+                    throw error;
+                }
+            }
+
+            async loadSounds() {
+                try {
+                    const loadAttempt = async () => {
+                        if (!this.singleBell) {
+                            this.singleBell = await this.loadSound('bell_single.mp3');
+                        }
+                        if (!this.doubleBell) {
+                            this.doubleBell = await this.loadSound('bell_double.mp3');
+                        }
+                    };
+
+                    // First attempt
+                    try {
+                        await loadAttempt();
+                    } catch (error) {
+                        console.warn('First load attempt failed, retrying...', error);
+                        // Small delay before retry
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        // Second attempt
+                        await loadAttempt();
+                    }
+                } catch (error) {
+                    console.error('Error loading sounds:', error);
+                    throw error;
+                }
+            }
+
+            async start() {
+                try {
+                    await this.initAudioContext();
+                    await this.loadSounds();
+                    
+                    this.isPlaying = true;
+                    this.startBtn.disabled = true;
+                    this.stopBtn.disabled = false;
+                    
+                    this.updateDisplay();
+                    this.checkAndPlayBells();
+                    
+                    this.displayInterval = setInterval(() => this.updateDisplay(), 1000);
+                    this.bellInterval = setInterval(() => this.checkAndPlayBells(), 60000);
+                } catch (error) {
+                    console.error('Error starting watch:', error);
+                    alert('Error starting the watch. Please ensure sound files are available.');
+                }
+            }
+
+            stop() {
+                this.isPlaying = false;
+                this.startBtn.disabled = false;
+                this.stopBtn.disabled = true;
+                clearInterval(this.displayInterval);
+                clearInterval(this.bellInterval);
+                this.updateDisplay();
+            }
+
+            async test() {
+                try {
+                    await this.initAudioContext();
+                    await this.loadSounds();
+                    await this.playBell(false);
+                } catch (error) {
+                    console.error('Error testing bell:', error);
+                    alert('Error playing test bell. Please ensure sound files are available.');
+                }
+            }
+
+            async playBell(isDouble = false) {
+                try {
+                    const source = this.audioContext.createBufferSource();
+                    source.buffer = isDouble ? this.doubleBell : this.singleBell;
+                    source.connect(this.audioContext.destination);
+                    source.start();
+                    await new Promise(resolve => setTimeout(resolve, isDouble ? 3000 : 2000));
+                } catch (error) {
+                    console.error('Error playing bell:', error);
+                    throw error;
+                }
+            }
+
+            async playBellSequence(count) {
+                const pairs = Math.floor(count / 2);
+                const single = count % 2;
+
+                for (let i = 0; i < pairs; i++) {
+                    await this.playBell(true);
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+
+                if (single) {
+                    await this.playBell(false);
+                }
+            }
+
+            updateDisplay() {
+                const now = new Date();
+                this.timeDisplay.textContent = now.toLocaleTimeString();
+                
+                if (this.isPlaying) {
+                    const minutes = now.getMinutes();
+                    const nextBellMinutes = Math.ceil(minutes / 30) * 30;
+                    const nextBellTime = new Date(now);
+                    nextBellTime.setMinutes(nextBellMinutes);
+                    nextBellTime.setSeconds(0);
+
+                    if (nextBellMinutes === 60) {
+                        nextBellTime.setHours(nextBellTime.getHours() + 1);
+                        nextBellTime.setMinutes(0);
+                    }
+
+                    const timeUntilNextBell = nextBellTime - now;
+                    const minutesUntil = Math.floor(timeUntilNextBell / 60000);
+                    const secondsUntil = Math.floor((timeUntilNextBell % 60000) / 1000);
+                    this.nextBellDisplay.textContent = `Next bell in: ${minutesUntil}m ${secondsUntil}s`;
+                } else {
+                    this.nextBellDisplay.textContent = 'Watch stopped';
+                }
+            }
+
+            checkAndPlayBells() {
+                const now = new Date();
+                const minutes = now.getMinutes();
+                
+                if (minutes % 30 === 0) {
+                    const hour = now.getHours() % 4;
+                    const halfHour = minutes === 30 ? 1 : 0;
+                    const currentBells = (hour * 2) + halfHour + 1;
+                    this.bellCount.textContent = `${currentBells} Bell${currentBells === 1 ? '' : 's'}`;
+                    
+                    this.playBellSequence(currentBells);
+                }
+            }
+        }
+
+        // Initialize the app
+        const shipsBells = new ShipsBells();
+    </script>
+</body>
+</html>
