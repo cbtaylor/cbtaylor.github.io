@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>v46 Ship's Bells Watch Timer</title>
+    <title>v47 Ship's Bells Watch Timer</title>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -304,9 +304,9 @@
                 const minutes = now.getMinutes();
                 const seconds = now.getSeconds();
                 
-                // Only trigger if we're within the first second of the half hour or hour
-                // This prevents multiple triggers due to timing issues
-                if (minutes % 30 === 0 && seconds === 0) {
+                // Allow a small window of time at the start of each minute to catch the bells
+                // This prevents missing the trigger due to slight timing differences
+                if (minutes % 30 === 0 && seconds <= 2) {
                     // Calculate bells based on time within the 4-hour watch
                     const hour = now.getHours() % 4;  // Get hour within current watch (0-3)
                     const isHalfHour = minutes % 60 === 30;
@@ -325,11 +325,16 @@
                     // Update display before playing the sequence
                     this.bellCount.textContent = `${currentBells} Bell${currentBells === 1 ? '' : 's'}`;
                     
-                    // Only play bells if we're not already playing them
-                    if (!this.isPlaying) {
-                        this.playBellSequence(currentBells).catch(error => {
-                            console.error('Error playing bell sequence:', error);
-                        });
+                    // Track if we're currently playing a sequence to prevent duplicates
+                    if (!this.playingSequence) {
+                        this.playingSequence = true;
+                        this.playBellSequence(currentBells)
+                            .finally(() => {
+                                this.playingSequence = false;
+                            })
+                            .catch(error => {
+                                console.error('Error playing bell sequence:', error);
+                            });
                     }
                 }
             }
