@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>Ship's Bells Watch Timer</title>
+    <title>v44 Ship's Bells Watch Timer</title>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -152,7 +152,7 @@
 
                 // Initial display update
                 this.updateDisplay();
-            },
+            }
 
             calculateCurrentBells() {
                 const now = new Date();
@@ -173,7 +173,7 @@
                 
                 // For times between the half hours, use the previous bell count
                 return currentBells;
-            },
+            }
 
             async initAudioContext() {
                 if (!this.audioContext) {
@@ -182,7 +182,7 @@
                         await this.audioContext.resume();
                     }
                 }
-            },
+            }
 
             async loadSound(filename) {
                 try {
@@ -196,7 +196,7 @@
                     console.error(`Error loading ${filename}:`, error);
                     throw error;
                 }
-            },
+            }
 
             async loadSounds() {
                 if (!this.singleBell) {
@@ -205,7 +205,7 @@
                 if (!this.doubleBell) {
                     this.doubleBell = await this.loadSound('bell_double.mp3');
                 }
-            },
+            }
 
             async start() {
                 try {
@@ -225,7 +225,7 @@
                     console.error('Error starting watch:', error);
                     alert('Error starting the watch. Please ensure sound files are available.');
                 }
-            },
+            }
 
             stop() {
                 this.isPlaying = false;
@@ -234,7 +234,7 @@
                 clearInterval(this.displayInterval);
                 clearInterval(this.bellInterval);
                 this.updateDisplay();
-            },
+            }
 
             async test() {
                 try {
@@ -245,7 +245,7 @@
                     console.error('Error testing bell:', error);
                     alert('Error playing test bell. Please ensure sound files are available.');
                 }
-            },
+            }
 
             async playBell(isDouble = false) {
                 try {
@@ -258,7 +258,7 @@
                     console.error('Error playing bell:', error);
                     throw error;
                 }
-            },
+            }
 
             async playBellSequence(count) {
                 const pairs = Math.floor(count / 2);
@@ -272,7 +272,7 @@
                 if (single) {
                     await this.playBell(false);
                 }
-            },
+            }
 
             updateDisplay() {
                 const now = new Date();
@@ -296,7 +296,7 @@
                 } else {
                     this.nextBellDisplay.textContent = 'Watch stopped';
                 }
-            },
+            }
 
             checkAndPlayBells() {
                 const now = new Date();
