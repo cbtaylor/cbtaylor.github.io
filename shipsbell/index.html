@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>v30 Ship's Bells Watch Timer</title>
+    <title>v31 Ship's Bells Watch Timer</title>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -256,19 +256,18 @@
                 
                 if (this.isPlaying) {
                     const minutes = now.getMinutes();
-                    const nextBellMinutes = Math.ceil(minutes / 30) * 30;
-                    const nextBellTime = new Date(now);
-                    nextBellTime.setMinutes(nextBellMinutes);
-                    nextBellTime.setSeconds(0);
-
-                    if (nextBellMinutes === 60) {
-                        nextBellTime.setHours(nextBellTime.getHours() + 1);
-                        nextBellTime.setMinutes(0);
+                    const seconds = now.getSeconds();
+                    
+                    // Calculate time until next bell
+                    let minutesUntil = 30 - (minutes % 30);
+                    let secondsUntil = 60 - seconds;
+                    
+                    if (secondsUntil === 60) {
+                        secondsUntil = 0;
+                    } else {
+                        minutesUntil--;
                     }
-
-                    const timeUntilNextBell = nextBellTime - now;
-                    const minutesUntil = Math.floor(timeUntilNextBell / 60000);
-                    const secondsUntil = Math.floor((timeUntilNextBell % 60000) / 1000);
+                    
                     this.nextBellDisplay.textContent = `Next bell in: ${minutesUntil}m ${secondsUntil}s`;
                 } else {
                     this.nextBellDisplay.textContent = 'Watch stopped';
