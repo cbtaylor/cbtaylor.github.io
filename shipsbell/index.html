@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>v31 Ship's Bells Watch Timer</title>
+    <title>v32 Ship's Bells Watch Timer</title>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -125,6 +125,27 @@
 
     <script>
         class ShipsBells {
+            calculateCurrentBells() {
+                const now = new Date();
+                const hour = now.getHours() % 4;  // Get hour within current watch (0-3)
+                const minutes = now.getMinutes();
+                const isHalfHour = minutes >= 30;
+                
+                let currentBells;
+                if (isHalfHour) {
+                    // At x:30, we want 1, 3, 5, or 7 bells depending on the hour
+                    currentBells = (hour * 2) + 1;
+                    if (hour === 0 && minutes >= 30) currentBells = 1;  // Special case for 4:30, 8:30, etc.
+                } else {
+                    // At x:00, we want 2, 4, 6, or 8 bells
+                    currentBells = (hour * 2) + 2;
+                    if (currentBells === 0 || hour === 0) currentBells = 8;  // At 4:00, 8:00, etc. we want 8 bells
+                }
+                
+                // For times between the half hours, use the previous bell count
+                return currentBells;
+            }
+
             constructor() {
                 this.audioContext = null;
                 this.singleBell = null;
@@ -146,8 +167,13 @@
                 this.stopBtn.addEventListener('click', () => this.stop());
                 this.testBtn.addEventListener('click', () => this.test());
 
-                // Initial update
+                // Set initial bell count based on current time
+                const initialBells = this.calculateCurrentBells();
+                this.bellCount.textContent = `${initialBells} Bell${initialBells === 1 ? '' : 's'}`;
+
+                // Initial display update
                 this.updateDisplay();
+            }
             }
 
             async initAudioContext() {
