@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-    <!-- version 49 -->
+    <!-- version 50 -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -287,6 +287,10 @@
             updateDisplay() {
                 const now = new Date();
                 this.timeDisplay.textContent = now.toLocaleTimeString();
+                
+                // Update current bell count based on time
+                const currentBells = this.calculateCurrentBells();
+                this.bellCount.textContent = `${currentBells} Bell${currentBells === 1 ? '' : 's'}`;
                 
                 if (this.isPlaying) {
                     const minutes = now.getMinutes();
