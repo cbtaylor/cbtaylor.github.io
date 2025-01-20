@@ -3,7 +3,7 @@ let correctAnswer;
 
 // Generate a random number less than 50
 function generateRandomNumber() {
-    currentNumber = Math.floor(Math.random() * 50);
+    currentNumber = Math.floor(Math.random() * 90 + 10);
     correctAnswer = currentNumber * currentNumber;
     document.getElementById('number-display').textContent = currentNumber;
 }
@@ -28,7 +28,7 @@ function submitAnswer() {
         resultMessage.textContent = 'Correct! Well done!';
         resultMessage.style.color = 'green';
     } else {
-        resultMessage.textContent = `Incorrect. The correct answer is ${correctAnswer}.`;
+        resultMessage.textContent = `Incorrect. ${currentNumber} squared is ${correctAnswer}.`;
         resultMessage.style.color = 'red';
     }
 
