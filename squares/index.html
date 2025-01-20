@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square Quiz</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="quiz-container">
+        <h1>Square Quiz</h1>
+        <p>What is the square of the number below?</p>
+        <div id="number-display" class="number-display"></div>
+        <input type="text" id="answer-input" readonly>
+        <div class="number-pad">
+            <button onclick="addNumber('1')">1</button>
+            <button onclick="addNumber('2')">2</button>
+            <button onclick="addNumber('3')">3</button>
+            <button onclick="addNumber('4')">4</button>
+            <button onclick="addNumber('5')">5</button>
+            <button onclick="addNumber('6')">6</button>
+            <button onclick="addNumber('7')">7</button>
+            <button onclick="addNumber('8')">8</button>
+            <button onclick="addNumber('9')">9</button>
+            <button onclick="addNumber('0')">0</button>
+            <button onclick="clearInput()">C</button>
+            <button onclick="submitAnswer()">Submit</button>
+        </div>
+        <div id="result-message" class="result-message"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
