@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buffon's Needle Experiment - Pi Day</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    
+    h1 {
+      color: #3498db;
+      text-align: center;
+    }
+    
+    .description {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    
+    .controls {
+      flex: 1;
+      min-width: 300px;
+      background-color: #f1f1f1;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    
+    .control-group {
+      margin-bottom: 15px;
+    }
+    
+    .control-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    
+    .slider-container {
+      display: flex;
+      align-items: center;
+    }
+    
+    .slider-container input {
+      flex: 1;
+    }
+    
+    .slider-value {
+      margin-left: 10px;
+      min-width: 50px;
+    }
+    
+    .canvas-container {
+      flex: 2;
+      min-width: 500px;
+    }
+    
+    #experimentCanvas {
+      border: 1px solid #ddd;
+      background-color: white;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    
+    .equation-container {
+      flex: 100%;
+      background-color: #f8f8f8;
+      border-radius: 5px;
+      padding: 15px;
+      margin-top: 20px;
+      text-align: center;
+      border-left: 4px solid #3498db;
+    }
+    
+    .equation {
+      font-size: 24px;
+      margin: 15px 0;
+      font-family: "Times New Roman", Times, serif;
+    }
+    
+    .fraction {
+      display: inline-block;
+      vertical-align: middle;
+      text-align: center;
+      margin: 0 5px;
+    }
+    
+    .numerator, .denominator {
+      display: block;
+    }
+    
+    .divider {
+      display: block;
+      border-top: 2px solid black;
+      margin: 3px 0;
+    }
+    
+    .equation-legend {
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    
+    .eq-variable {
+      font-style: italic;
+      font-weight: bold;
+      color: #3498db;
+    }
+    
+    .results {
+      flex: 100%;
+      padding: 15px;
+      background-color: #e8f4f8;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+    
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: space-around;
+      margin-top: 10px;
+    }
+    
+    .stat-box {
+      text-align: center;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: white;
+      min-width: 140px;
+      box-shadow: 0 0 3px rgba(0,0,0,0.1);
+    }
+    
+    .stat-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #3498db;
+    }
+    
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    button {
+      padding: 10px 15px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+    
+    #resetButton {
+      background-color: #e74c3c;
+    }
+    
+    #resetButton:hover {
+      background-color: #c0392b;
+    }
+    
+    #pauseButton {
+      background-color: #f39c12;
+    }
+    
+    #pauseButton:hover {
+      background-color: #d35400;
+    }
+  </style>
+</head>
+<body>
+  <h1>Buffon's Needle Experiment</h1>
+  
+  <div class="description">
+    <p>In the 18th century, Georges-Louis Leclerc, Comte de Buffon, discovered a relationship between randomly dropped needles and the value of π (pi). 
+       If we randomly drop needles on a surface with parallel lines, the probability of a needle crossing a line is related to π! 
+       This interactive experiment demonstrates how we can approximate π using this method.</p>
+  </div>
+  
+  <div class="container">
+    <div class="controls">
+      <div class="control-group">
+        <label for="lineSpacing">Line Spacing (d):</label>
+        <div class="slider-container">
+          <input type="range" id="lineSpacing" min="50" max="150" value="100" class="slider">
+          <span class="slider-value" id="lineSpacingValue">100</span>
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <label for="needleLength">Needle Length (l):</label>
+        <div class="slider-container">
+          <input type="range" id="needleLength" min="10" max="150" value="80" class="slider">
+          <span class="slider-value" id="needleLengthValue">80</span>
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <label for="totalNeedlesToDrop">Total Needles:</label>
+        <div class="slider-container">
+          <input type="range" id="totalNeedlesToDrop" min="10" max="5000" value="1000" class="slider">
+          <span class="slider-value" id="totalNeedlesToDropValue">1000</span>
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <label for="dropSpeed">Drop Speed (needles/sec):</label>
+        <div class="slider-container">
+          <input type="range" id="dropSpeed" min="1" max="100" value="20" class="slider">
+          <span class="slider-value" id="dropSpeedValue">20</span>
+        </div>
+      </div>
+      
+      <div class="buttons">
+        <button id="startButton">Start</button>
+        <button id="pauseButton">Pause</button>
+        <button id="resetButton">Reset</button>
+      </div>
+    </div>
+    
+    <div class="canvas-container">
+      <canvas id="experimentCanvas" width="500" height="400"></canvas>
+    </div>
+    
+    <div class="equation-container">
+      <h3>Buffon's Needle Formula:</h3>
+      <div class="equation">
+        π ≈ <span class="fraction"><span class="numerator">2 × l × n</span><span class="divider"></span><span class="denominator">d × h</span></span>
+      </div>
+      <div class="equation-legend">
+        where: <span class="eq-variable">l</span> = needle length, 
+        <span class="eq-variable">d</span> = line spacing, 
+        <span class="eq-variable">n</span> = total needles, 
+        <span class="eq-variable">h</span> = needles crossing lines
+      </div>
+    </div>
+    
+    <div class="results">
+      <h2>Results</h2>
+      <div class="stats">
+        <div class="stat-box">
+          <div class="stat-title">Total Needles</div>
+          <div id="totalNeedles">0</div>
+        </div>
+        
+        <div class="stat-box">
+          <div class="stat-title">Needles Crossing</div>
+          <div id="crossingNeedles">0</div>
+        </div>
+        
+
+        
+        <div class="stat-box">
+          <div class="stat-title">π Estimate (Decimal)</div>
+          <div id="piDecimal">-</div>
+        </div>
+        
+        <div class="stat-box">
+          <div class="stat-title">Actual π</div>
+          <div id="actualPi">3.14159...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Get elements from the DOM
+    const canvas = document.getElementById('experimentCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Control elements
+    const lineSpacingSlider = document.getElementById('lineSpacing');
+    const needleLengthSlider = document.getElementById('needleLength');
+    const totalNeedlesToDropSlider = document.getElementById('totalNeedlesToDrop');
+    const dropSpeedSlider = document.getElementById('dropSpeed');
+    
+    const lineSpacingValue = document.getElementById('lineSpacingValue');
+    const needleLengthValue = document.getElementById('needleLengthValue');
+    const totalNeedlesToDropValue = document.getElementById('totalNeedlesToDropValue');
+    const dropSpeedValue = document.getElementById('dropSpeedValue');
+    
+    const startButton = document.getElementById('startButton');
+    const pauseButton = document.getElementById('pauseButton');
+    const resetButton = document.getElementById('resetButton');
+    
+    // Result elements
+    const totalNeedlesEl = document.getElementById('totalNeedles');
+    const crossingNeedlesEl = document.getElementById('crossingNeedles');
+    const piFractionEl = document.getElementById('piFraction');
+    const piDecimalEl = document.getElementById('piDecimal');
+    const actualPiEl = document.getElementById('actualPi');
+    
+    // Variables for the experiment
+    let lineSpacing = parseInt(lineSpacingSlider.value);
+    let needleLength = parseInt(needleLengthSlider.value);
+    let totalNeedlesToDrop = parseInt(totalNeedlesToDropSlider.value);
+    let dropSpeed = parseInt(dropSpeedSlider.value);
+    
+    let totalNeedles = 0;
+    let crossingNeedles = 0;
+    let isRunning = false;
+    let animationId = null;
+    let needlesPerDrop = 10; // How many needles to drop in each animation frame
+    
+    // Array to store all needle positions
+    let needles = [];
+    
+    // Calculate the number of lines we need
+    function calculateLines() {
+      const numLines = Math.floor(canvas.height / lineSpacing) + 1;
+      const lines = [];
+      
+      for (let i = 0; i < numLines; i++) {
+        lines.push(i * lineSpacing);
+      }
+      
+      return lines;
+    }
+    
+    // Draw the parallel lines
+    function drawLines(lines) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1;
+      
+      for (let y of lines) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+    
+    // Create a needle with random position and angle
+    function createNeedle() {
+      const midX = Math.random() * canvas.width;
+      const midY = Math.random() * canvas.height;
+      const angle = Math.random() * Math.PI;
+      
+      const startX = midX - (needleLength / 2) * Math.cos(angle);
+      const startY = midY - (needleLength / 2) * Math.sin(angle);
+      const endX = midX + (needleLength / 2) * Math.cos(angle);
+      const endY = midY + (needleLength / 2) * Math.sin(angle);
+      
+      return {
+        startX,
+        startY,
+        endX,
+        endY,
+        angle,
+        crossing: false
+      };
+    }
+    
+    // Check if a needle crosses any of the lines
+    function checkCrossing(needle, lines) {
+      for (let lineY of lines) {
+        // If needle starts and ends on different sides of a line
+        if ((needle.startY <= lineY && needle.endY >= lineY) || 
+            (needle.startY >= lineY && needle.endY <= lineY)) {
+          return true;
+        }
+      }
+      return false;
+    }
+    
+    // Draw all the needles
+    function drawNeedles() {
+      for (let needle of needles) {
+        ctx.strokeStyle = needle.crossing ? 'red' : 'black';
+        ctx.lineWidth = 2;
+        
+        ctx.beginPath();
+        ctx.moveTo(needle.startX, needle.startY);
+        ctx.lineTo(needle.endX, needle.endY);
+        ctx.stroke();
+      }
+    }
+    
+    // Update the results
+    function updateResults() {
+      totalNeedlesEl.textContent = totalNeedles;
+      crossingNeedlesEl.textContent = crossingNeedles;
+      
+      if (totalNeedles > 0) {
+        // For Buffon's needle: π ≈ (2 * l * n) / (d * h)
+        // where l = needle length, d = line spacing, n = total needles, h = crossing needles
+        
+        const numerator = 2 * needleLength * totalNeedles;
+        const denominator = lineSpacing * crossingNeedles;
+        
+        if (crossingNeedles > 0) {
+          piDecimalEl.textContent = (numerator / denominator).toFixed(6);
+        } else {
+          piDecimalEl.textContent = "-";
+        }
+      }
+    }
+    
+    // Find the greatest common divisor for fraction simplification
+    function findGCD(a, b) {
+      a = Math.round(a);
+      b = Math.round(b);
+      return b === 0 ? a : findGCD(b, a % b);
+    }
+    
+    // Drop a batch of needles
+    function dropNeedles() {
+      const lines = calculateLines();
+      drawLines(lines);
+      
+      // Calculate how many needles to drop in this frame
+      let needlesToDrop = Math.min(needlesPerDrop, totalNeedlesToDrop - totalNeedles);
+      
+      for (let i = 0; i < needlesToDrop; i++) {
+        const needle = createNeedle();
+        needle.crossing = checkCrossing(needle, lines);
+        
+        if (needle.crossing) {
+          crossingNeedles++;
+        }
+        
+        needles.push(needle);
+        totalNeedles++;
+      }
+      
+      drawNeedles();
+      updateResults();
+      
+      // Stop if we've dropped all needles
+      if (totalNeedles >= totalNeedlesToDrop) {
+        isRunning = false;
+      }
+    }
+    
+    // Animation loop
+    function animate() {
+      if (!isRunning) return;
+      
+      dropNeedles();
+      
+      // Continue animation if not finished
+      if (isRunning) {
+        // Schedule the next drop based on drop speed
+        setTimeout(() => {
+          animationId = requestAnimationFrame(animate);
+        }, 1000 / dropSpeed);
+      }
+    }
+    
+    // Initialize the experiment
+    function init() {
+      const lines = calculateLines();
+      drawLines(lines);
+      
+      totalNeedles = 0;
+      crossingNeedles = 0;
+      needles = [];
+      
+      updateResults();
+      actualPiEl.textContent = Math.PI.toFixed(8);
+    }
+    
+    // Event listeners for sliders
+    lineSpacingSlider.addEventListener('input', () => {
+      lineSpacing = parseInt(lineSpacingSlider.value);
+      lineSpacingValue.textContent = lineSpacing;
+      
+      // Redraw the lines and recalculate crossings
+      if (!isRunning) {
+        const lines = calculateLines();
+        drawLines(lines);
+        
+        // Reset crossing count
+        crossingNeedles = 0;
+        
+        // Recalculate crossings for all needles
+        for (let needle of needles) {
+          needle.crossing = checkCrossing(needle, lines);
+          if (needle.crossing) {
+            crossingNeedles++;
+          }
+        }
+        
+        drawNeedles();
+        updateResults();
+      }
+    });
+    
+    needleLengthSlider.addEventListener('input', () => {
+      needleLength = parseInt(needleLengthSlider.value);
+      needleLengthValue.textContent = needleLength;
+    });
+    
+    totalNeedlesToDropSlider.addEventListener('input', () => {
+      totalNeedlesToDrop = parseInt(totalNeedlesToDropSlider.value);
+      totalNeedlesToDropValue.textContent = totalNeedlesToDrop;
+    });
+    
+    dropSpeedSlider.addEventListener('input', () => {
+      dropSpeed = parseInt(dropSpeedSlider.value);
+      dropSpeedValue.textContent = dropSpeed;
+    });
+    
+    // Button event listeners
+    startButton.addEventListener('click', () => {
+      if (!isRunning) {
+        isRunning = true;
+        animate();
+      }
+    });
+    
+    pauseButton.addEventListener('click', () => {
+      isRunning = false;
+      cancelAnimationFrame(animationId);
+    });
+    
+    resetButton.addEventListener('click', () => {
+      isRunning = false;
+      cancelAnimationFrame(animationId);
+      init();
+    });
+    
+    // Initialize on load
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
