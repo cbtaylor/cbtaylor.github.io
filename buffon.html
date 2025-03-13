@@ -366,6 +366,7 @@
         endX,
         endY,
         angle,
+        length: needleLength,
         crossing: false
       };
     }
@@ -404,14 +405,23 @@
         // For Buffon's needle: π ≈ (2 * l * n) / (d * h)
         // where l = needle length, d = line spacing, n = total needles, h = crossing needles
         
-        const numerator = 2 * needleLength * totalNeedles;
-        const denominator = lineSpacing * crossingNeedles;
+        // Use each needle's stored length to calculate pi
+        let piEstimate = "-";
         
         if (crossingNeedles > 0) {
-          piDecimalEl.textContent = (numerator / denominator).toFixed(6);
-        } else {
-          piDecimalEl.textContent = "-";
+          // Calculate formula for all dropped needles
+          let sum = 0;
+          for (let needle of needles) {
+            sum += needle.length;
+          }
+          const avgNeedleLength = sum / needles.length;
+          const numerator = 2 * avgNeedleLength * totalNeedles;
+          const denominator = lineSpacing * crossingNeedles;
+          
+          piEstimate = (numerator / denominator).toFixed(6);
         }
+        
+        piDecimalEl.textContent = piEstimate;
       }
     }
     
@@ -508,6 +518,38 @@
     needleLengthSlider.addEventListener('input', () => {
       needleLength = parseInt(needleLengthSlider.value);
       needleLengthValue.textContent = needleLength;
+      
+      // If the experiment is not running, update the existing needles
+      if (!isRunning && needles.length > 0) {
+        const lines = calculateLines();
+        
+        // Reset crossing count
+        crossingNeedles = 0;
+        
+        // Update each needle with the new length
+        for (let needle of needles) {
+          // Calculate new endpoints based on midpoint and angle
+          const midX = (needle.startX + needle.endX) / 2;
+          const midY = (needle.startY + needle.endY) / 2;
+          
+          needle.startX = midX - (needleLength / 2) * Math.cos(needle.angle);
+          needle.startY = midY - (needleLength / 2) * Math.sin(needle.angle);
+          needle.endX = midX + (needleLength / 2) * Math.cos(needle.angle);
+          needle.endY = midY + (needleLength / 2) * Math.sin(needle.angle);
+          needle.length = needleLength;
+          
+          // Recheck if needle crosses any line
+          needle.crossing = checkCrossing(needle, lines);
+          if (needle.crossing) {
+            crossingNeedles++;
+          }
+        }
+        
+        // Redraw and update results
+        drawLines(lines);
+        drawNeedles();
+        updateResults();
+      }
     });
     
     totalNeedlesToDropSlider.addEventListener('input', () => {
