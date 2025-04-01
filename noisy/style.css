@@ -21,13 +21,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1em;
-  
-  input {
-    padding: 0.5em;
-    background: #333;
-    font: inhrit;
-    color: #fff;
-  }
+}
+
+.settings input {
+  padding: 0.5em;
+  background: #333;
+  font: inherit;
+  color: #fff;
 }
 
 canvas {
