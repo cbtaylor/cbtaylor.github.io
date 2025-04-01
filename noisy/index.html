@@ -1,13 +1,25 @@
-<html>
-<canvas></canvas>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Colored Lines</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas></canvas>
 
-<div class="settings">
-  <label>
-    Line count:
-    <input type="number" min="2" max="16" step="2" value="10" id="count">
-  </label>
-  <label>
-    <input type="checkbox" id="mirror" checked>
-    Mirror lines
-</div>
+    <div class="settings">
+      <label>
+        Line count:
+        <input type="number" min="2" max="16" step="2" value="10" id="count">
+      </label>
+      <label>
+        <input type="checkbox" id="mirror" checked>
+        Mirror lines
+      </label>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
 </html>
