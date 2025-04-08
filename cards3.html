@@ -518,8 +518,9 @@
           
         case 'check':
           addToHistory("AI checks");
-          // Move to next betting round
-          advanceGameStage();
+          // AI's turn is done, now it's the player's turn
+          gameState.aiToAct = false;
+          updateUI();
           break;
           
         case 'call':
@@ -528,8 +529,12 @@
           gameState.potSize += betAmount;
           addToHistory("AI calls $" + betAmount);
           
-          // If this was a call to match player's bet, move to next stage
-          advanceGameStage();
+          // If this was a call to match player's bet, now check if both players have acted
+          // and advance to next stage if needed
+          if (gameState.gameStage !== 'showdown') {
+            // This was a call in response to player's bet
+            advanceGameStage();
+          }
           break;
           
         case 'raise':
@@ -537,7 +542,12 @@
           gameState.aiStack -= betAmount;
           gameState.potSize += betAmount;
           gameState.currentBet = betAmount;
-          addToHistory("AI bets/raises to $" + betAmount);
+          
+          if (gameState.currentBet === 0) {
+            addToHistory("AI bets $" + betAmount);
+          } else {
+            addToHistory("AI raises to $" + betAmount);
+          }
           
           // Player needs to act now
           gameState.aiToAct = false;
@@ -578,12 +588,14 @@
       // Reset current bet for new betting round
       gameState.currentBet = 0;
       
-      // Determine who acts first in this round
-      if (gameState.playerPosition === 'dealer') {
-        // Player is dealer, acts first in post-flop
+      // Determine who acts first in this round - in post-flop, the BB (out of position) acts first
+      // If player is BB, player acts first
+      // If AI is BB, AI acts first
+      if (gameState.playerPosition === 'bb') {
+        // Player is big blind, acts first in post-flop
         gameState.aiToAct = false;
       } else {
-        // AI is dealer, acts first in post-flop
+        // AI is big blind, acts first in post-flop
         gameState.aiToAct = true;
         setTimeout(aiAction, 1500);
       }
@@ -610,9 +622,16 @@
         gameState.aiStack += gameState.potSize;
         addToHistory("AI wins $" + gameState.potSize + " with " + document.getElementById('handValue2').textContent);
       } else {
-        // Fallback just in case
-        console.log("Unexpected winner value:", winner);
-        addToHistory("Game ended with unexpected result: " + winner);
+        // Try to handle the case you encountered
+        if (winner === "You") {
+          // Player wins
+          gameState.playerStack += gameState.potSize;
+          addToHistory("Player wins $" + gameState.potSize + " with " + document.getElementById('handValue1').textContent);
+        } else {
+          // Fallback just in case
+          console.log("Unexpected winner value:", winner);
+          addToHistory("Game ended with unexpected result: " + winner);
+        }
       }
       
       // Hand is complete
