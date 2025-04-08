@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Heads-up Hold'em</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #c2b699;
+    }
+    .card-row {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .card {
+      max-width: 20%;
+      height: auto;
+      margin: 1px;
+      flex-grow: 1;
+      flex-shrink: 1;
+      flex-basis: auto;
+      box-sizing: border-box;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    h1, h2 {
+      text-align: center;
+      font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+    }
+    button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #3e8e41;
+    }
+    .betting-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 10px 0;
+    }
+    .game-info {
+      display: flex;
+      justify-content: space-around;
+      max-width: 800px;
+      margin: 0 auto 15px;
+      background-color: #eee8d5;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .player-info {
+      text-align: center;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: #fdf6e3;
+      min-width: 150px;
+    }
+    .pot-info {
+      text-align: center;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: #fdf6e3;
+      min-width: 150px;
+    }
+    .action-history {
+      max-width: 800px;
+      margin: 20px auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      height: 100px;
+      overflow-y: auto;
+      background-color: #fdf6e3;
+      border-radius: 5px;
+    }
+    .hand-stage {
+      text-align: center;
+      font-weight: bold;
+      color: #073642;
+      margin: 10px 0;
+      font-size: 1.2em;
+    }
+    .ai-thinking {
+      background-color: #fdf6e3;
+      padding: 10px 15px;
+      border-radius: 5px;
+      margin: 0 auto 15px;
+      max-width: 800px;
+      border-left: 5px solid #268bd2;
+    }
+    .hidden {
+      display: none;
+    }
+    input[type=range] {
+      width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Heads-up Hold'em</h1>
+  
+  <div class="game-info">
+    <div class="player-info">
+      <strong>Your Stack</strong>
+      <div id="player-stack">$1000</div>
+    </div>
+    <div class="pot-info">
+      <strong>Pot</strong>
+      <div id="pot-size">$0</div>
+    </div>
+    <div class="player-info">
+      <strong>AI Stack</strong>
+      <div id="ai-stack">$1000</div>
+    </div>
+  </div>
+
+  <p class="hand-stage" id="hand-stage">Pre-Game</p>
+  
+  <div class="card-row">
+    <img class="card" id="card-img1" src="cards/back_red.png" alt="your 1">
+    <img class="card" id="card-img2" src="cards/back_red.png" alt="your 2">
+    <img class="card" id="card-spcr" src="cards/spacer.png" alt="spacer">
+    <img class="card" id="card-img3" src="cards/back_red.png" alt="AI 1">
+    <img class="card" id="card-img4" src="cards/back_red.png" alt="AI 2">
+  </div>
+  <div class="card-row">
+    <img class="card" id="card-img5" src="cards/back_red.png" alt="flop 1">
+    <img class="card" id="card-img6" src="cards/back_red.png" alt="flop 2">
+    <img class="card" id="card-img7" src="cards/back_red.png" alt="flop 3">
+    <img class="card" id="card-img8" src="cards/back_red.png" alt="turn">
+    <img class="card" id="card-img9" src="cards/back_red.png" alt="river">
+  </div>
+  
+  <div align="center">
+    <p>
+      Your hand: <span id="handValue1"></span><br>
+      AI hand: <span id="handValue2"></span><br>
+      Winner: <span id="winner"></span>
+    </p>
+  </div>
+  
+  <div class="ai-thinking" id="ai-thinking">
+    <strong>AI is thinking:</strong> <span id="ai-decision">Waiting for new hand...</span>
+  </div>
+
+  <div class="slider-container hidden" id="bet-slider-container">
+    <input type="range" id="bet-slider" min="0" max="1000" value="50">
+    <span id="bet-amount">$50</span>
+  </div>
+  
+  <div class="betting-controls">
+    <button id="new-hand-btn" onclick="fetchData()">New Hand</button>
+    <button id="fold-btn" class="hidden" onclick="playerAction('fold')">Fold</button>
+    <button id="check-call-btn" class="hidden" onclick="playerAction('check')">Check/Call</button>
+    <button id="bet-raise-btn" class="hidden" onclick="playerAction('raise')">Bet/Raise</button>
+  </div>
+  
+  <div class="action-history" id="action-history">
+    <div>Game started. Click "New Hand" to begin.</div>
+  </div>
+
+  <div align="center" class="probabilities">
+    <h2>Probabilities from AI point of view</h2>
+    Preflop: <span id='preflop'></span><br>
+    Flop: <span id='flop'></span><br>
+    Turn: <span id='turn'></span><br>
+    River: <span id='river'></span><br>
+  </div>
+
+  <script>
+    // Game state
+    const gameState = {
+      playerStack: 1000,
+      aiStack: 1000,
+      potSize: 0,
+      smallBlind: 5,
+      bigBlind: 10,
+      currentBet: 0,
+      playerPosition: 'dealer', // 'dealer' or 'bb'
+      gameStage: 'pre-game', // pre-game, pre-flop, flop, turn, river, showdown
+      cards: [],
+      handStrengths: {
+        preflop: 0,
+        flop: 0,
+        turn: 0,
+        river: 0
+      },
+      aiToAct: false,
+      handComplete: true
+    };
+
+    // Event listeners
+    document.getElementById('bet-slider').addEventListener('input', function() {
+      document.getElementById('bet-amount').textContent = '$' + this.value;
+    });
+
+    // Initialize UI
+    updateUI();
+
+    function updateUI() {
+      // Update stacks and pot
+      document.getElementById('player-stack').textContent = '$' + gameState.playerStack;
+      document.getElementById('ai-stack').textContent = '$' + gameState.aiStack;
+      document.getElementById('pot-size').textContent = '$' + gameState.potSize;
+      
+      // Update hand stage
+      document.getElementById('hand-stage').textContent = capitalize(gameState.gameStage);
+      
+      // Update betting controls visibility based on game state
+      const newHandBtn = document.getElementById('new-hand-btn');
+      const foldBtn = document.getElementById('fold-btn');
+      const checkCallBtn = document.getElementById('check-call-btn');
+      const betRaiseBtn = document.getElementById('bet-raise-btn');
+      const betSliderContainer = document.getElementById('bet-slider-container');
+      
+      if (gameState.handComplete) {
+        newHandBtn.classList.remove('hidden');
+        foldBtn.classList.add('hidden');
+        checkCallBtn.classList.add('hidden');
+        betRaiseBtn.classList.add('hidden');
+        betSliderContainer.classList.add('hidden');
+      } else {
+        newHandBtn.classList.add('hidden');
+        
+        if (!gameState.aiToAct) {
+          foldBtn.classList.remove('hidden');
+          checkCallBtn.classList.remove('hidden');
+          betRaiseBtn.classList.remove('hidden');
+          betSliderContainer.classList.remove('hidden');
+          
+          // Update betting slider max value based on player stack
+          const betSlider = document.getElementById('bet-slider');
+          betSlider.max = gameState.playerStack;
+          betSlider.value = Math.min(gameState.playerStack, gameState.currentBet * 2 || gameState.bigBlind);
+          document.getElementById('bet-amount').textContent = '$' + betSlider.value;
+        } else {
+          foldBtn.classList.add('hidden');
+          checkCallBtn.classList.add('hidden');
+          betRaiseBtn.classList.add('hidden');
+          betSliderContainer.classList.add('hidden');
+        }
+      }
+    }
+
+    function fetchData() {
+      // Reset game state for new hand
+      gameState.potSize = 0;
+      gameState.currentBet = 0;
+      gameState.handComplete = false;
+      
+      // Alternate positions
+      gameState.playerPosition = gameState.playerPosition === 'dealer' ? 'bb' : 'dealer';
+      
+      // Set game stage
+      gameState.gameStage = 'pre-flop';
+      
+      // Add blinds
+      if (gameState.playerPosition === 'dealer') {
+        // Player is dealer/small blind, AI is big blind
+        gameState.playerStack -= gameState.smallBlind;
+        gameState.aiStack -= gameState.bigBlind;
+        gameState.potSize = gameState.smallBlind + gameState.bigBlind;
+        gameState.currentBet = gameState.bigBlind;
+        addToHistory("Player posts small blind: $" + gameState.smallBlind);
+        addToHistory("AI posts big blind: $" + gameState.bigBlind);
+        gameState.aiToAct = false; // Player acts first
+      } else {
+        // AI is dealer/small blind, player is big blind
+        gameState.aiStack -= gameState.smallBlind;
+        gameState.playerStack -= gameState.bigBlind;
+        gameState.potSize = gameState.smallBlind + gameState.bigBlind;
+        gameState.currentBet = gameState.bigBlind;
+        addToHistory("AI posts small blind: $" + gameState.smallBlind);
+        addToHistory("Player posts big blind: $" + gameState.bigBlind);
+        gameState.aiToAct = true; // AI acts first
+      }
+      
+      // Fetch card data
+      fetch('https://cbtaylor.pythonanywhere.com/card')
+        .then(response => response.json())
+        .then(data => {
+          console.log(data);
+          gameState.cards = data.cards;
+          
+          // Update card images - show all cards as per your request
+          for (let i = 1; i <= 9; i++) {
+            const cardImage = document.getElementById('card-img' + i);
+            cardImage.src = "cards/" + data.cards[i-1] + ".png";
+          }
+          
+          // Update hand values
+          document.getElementById('handValue1').textContent = data.hand1;
+          document.getElementById('handValue2').textContent = data.hand2;
+          document.getElementById('winner').textContent = data.winner;
+          
+          // Update probabilities
+          document.getElementById('preflop').textContent = data.preflop;
+          document.getElementById('flop').textContent = data.flop;
+          document.getElementById('turn').textContent = data.turn;
+          document.getElementById('river').textContent = data.river;
+          
+          // Store hand strengths for AI decision making
+          gameState.handStrengths.preflop = parseFloat(data.preflop);
+          gameState.handStrengths.flop = parseFloat(data.flop);
+          gameState.handStrengths.turn = parseFloat(data.turn);
+          gameState.handStrengths.river = parseFloat(data.river);
+          
+          // Update UI
+          updateUI();
+          
+          // If AI acts first, let AI make decision
+          if (gameState.aiToAct) {
+            setTimeout(aiAction, 1500);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          addToHistory("Error fetching data: " + error.message);
+        });
+    }
+
+    function playerAction(action) {
+      if (gameState.handComplete) return;
+      
+      let betAmount = 0;
+      
+      switch(action) {
+        case 'fold':
+          addToHistory("Player folds");
+          // AI wins the pot
+          gameState.aiStack += gameState.potSize;
+          gameState.handComplete = true;
+          addToHistory("AI wins $" + gameState.potSize);
+          break;
+          
+        case 'check':
+          if (gameState.currentBet > 0) {
+            // This is actually a call
+            betAmount = Math.min(gameState.currentBet, gameState.playerStack);
+            gameState.playerStack -= betAmount;
+            gameState.potSize += betAmount;
+            addToHistory("Player calls $" + betAmount);
+          } else {
+            addToHistory("Player checks");
+          }
+          break;
+          
+        case 'raise':
+          betAmount = parseInt(document.getElementById('bet-slider').value);
+          if (betAmount < gameState.currentBet * 2 && betAmount < gameState.playerStack) {
+            betAmount = Math.min(gameState.currentBet * 2, gameState.playerStack);
+          }
+          
+          gameState.playerStack -= betAmount;
+          gameState.potSize += betAmount;
+          gameState.currentBet = betAmount;
+          addToHistory("Player bets/raises to $" + betAmount);
+          break;
+      }
+      
+      // Update UI
+      updateUI();
+      
+      // If hand is not complete, AI acts next
+      if (!gameState.handComplete) {
+        gameState.aiToAct = true;
+        updateUI();
+        setTimeout(aiAction, 1500);
+      }
+    }
+
+    function aiAction() {
+      if (gameState.handComplete) return;
+      
+      // Get current hand strength based on stage
+      let currentStrength;
+      switch(gameState.gameStage) {
+        case 'pre-flop':
+          currentStrength = gameState.handStrengths.preflop;
+          break;
+        case 'flop':
+          currentStrength = gameState.handStrengths.flop;
+          break;
+        case 'turn':
+          currentStrength = gameState.handStrengths.turn;
+          break;
+        case 'river':
+          currentStrength = gameState.handStrengths.river;
+          break;
+      }
+      
+      // Simple AI strategy based on hand strength and pot odds
+      let decision = '';
+      let betAmount = 0;
+      let decisionExplanation = '';
+      
+      // Calculate pot odds
+      const potOdds = gameState.currentBet / (gameState.potSize + gameState.currentBet);
+      
+      if (currentStrength < 0.3) {
+        // Weak hand
+        if (gameState.currentBet === 0) {
+          // No bet to call, check
+          decision = 'check';
+          decisionExplanation = 'Weak hand, checking to see another card.';
+        } else if (currentStrength < potOdds - 0.1) {
+          // Not worth calling
+          decision = 'fold';
+          decisionExplanation = 'Weak hand, not worth calling with these pot odds.';
+        } else {
+          // Call marginally
+          decision = 'call';
+          betAmount = gameState.currentBet;
+          decisionExplanation = 'Weak hand, but pot odds make it worth a call.';
+        }
+      } else if (currentStrength < 0.6) {
+        // Medium hand
+        if (Math.random() < 0.3) {
+          // Sometimes bluff with medium hands
+          decision = 'raise';
+          betAmount = Math.min(gameState.potSize, gameState.aiStack);
+          decisionExplanation = 'Medium strength, semi-bluffing with a bet.';
+        } else if (gameState.currentBet === 0) {
+          // No bet to call, check
+          decision = 'check';
+          decisionExplanation = 'Medium hand, checking for position.';
+        } else {
+          // Call
+          decision = 'call';
+          betAmount = gameState.currentBet;
+          decisionExplanation = 'Medium hand, calling to see more cards.';
+        }
+      } else {
+        // Strong hand
+        if (Math.random() < 0.7) {
+          // Usually raise with strong hands
+          decision = 'raise';
+          betAmount = Math.min(Math.max(gameState.potSize, gameState.currentBet * 3), gameState.aiStack);
+          decisionExplanation = 'Strong hand, betting for value.';
+        } else {
+          // Sometimes slow play
+          if (gameState.currentBet === 0) {
+            decision = 'check';
+            decisionExplanation = 'Strong hand, slow playing by checking.';
+          } else {
+            decision = 'call';
+            betAmount = gameState.currentBet;
+            decisionExplanation = 'Strong hand, slow playing with a call.';
+          }
+        }
+      }
+      
+      // Implement the decision
+      document.getElementById('ai-decision').textContent = decisionExplanation;
+      
+      switch(decision) {
+        case 'fold':
+          addToHistory("AI folds");
+          // Player wins the pot
+          gameState.playerStack += gameState.potSize;
+          gameState.handComplete = true;
+          addToHistory("Player wins $" + gameState.potSize);
+          break;
+          
+        case 'check':
+          addToHistory("AI checks");
+          // Move to next betting round
+          advanceGameStage();
+          break;
+          
+        case 'call':
+          betAmount = Math.min(gameState.currentBet, gameState.aiStack);
+          gameState.aiStack -= betAmount;
+          gameState.potSize += betAmount;
+          addToHistory("AI calls $" + betAmount);
+          
+          // If this was a call to match player's bet, move to next stage
+          advanceGameStage();
+          break;
+          
+        case 'raise':
+          betAmount = Math.min(betAmount, gameState.aiStack);
+          gameState.aiStack -= betAmount;
+          gameState.potSize += betAmount;
+          gameState.currentBet = betAmount;
+          addToHistory("AI bets/raises to $" + betAmount);
+          
+          // Player needs to act now
+          gameState.aiToAct = false;
+          break;
+      }
+      
+      // Update UI
+      updateUI();
+      
+      // Check if hand is complete
+      if (gameState.handComplete) {
+        return;
+      }
+    }
+
+    function advanceGameStage() {
+      // Move to the next stage of the hand
+      switch(gameState.gameStage) {
+        case 'pre-flop':
+          gameState.gameStage = 'flop';
+          addToHistory("--- FLOP ---");
+          break;
+        case 'flop':
+          gameState.gameStage = 'turn';
+          addToHistory("--- TURN ---");
+          break;
+        case 'turn':
+          gameState.gameStage = 'river';
+          addToHistory("--- RIVER ---");
+          break;
+        case 'river':
+          gameState.gameStage = 'showdown';
+          addToHistory("--- SHOWDOWN ---");
+          handleShowdown();
+          return;
+      }
+      
+      // Reset current bet for new betting round
+      gameState.currentBet = 0;
+      
+      // Determine who acts first in this round
+      if (gameState.playerPosition === 'dealer') {
+        // Player is dealer, acts first in post-flop
+        gameState.aiToAct = false;
+      } else {
+        // AI is dealer, acts first in post-flop
+        gameState.aiToAct = true;
+        setTimeout(aiAction, 1500);
+      }
+      
+      updateUI();
+    }
+
+    function handleShowdown() {
+      // Get the winner from the API data we already have
+      const winner = document.getElementById('winner').textContent;
+      
+      if (winner === "Tie") {
+        // Split pot
+        const halfPot = Math.floor(gameState.potSize / 2);
+        gameState.playerStack += halfPot;
+        gameState.aiStack += gameState.potSize - halfPot; // Handle odd chips
+        addToHistory("Pot split: Player and AI each win $" + halfPot);
+      } else if (winner === "Player 1") {
+        // Player wins
+        gameState.playerStack += gameState.potSize;
+        addToHistory("Player wins $" + gameState.potSize + " with " + document.getElementById('handValue1').textContent);
+      } else {
+        // AI wins
+        gameState.aiStack += gameState.potSize;
+        addToHistory("AI wins $" + gameState.potSize + " with " + document.getElementById('handValue2').textContent);
+      }
+      
+      // Hand is complete
+      gameState.handComplete = true;
+      updateUI();
+    }
+
+    function addToHistory(message) {
+      const history = document.getElementById('action-history');
+      const entry = document.createElement('div');
+      entry.textContent = message;
+      history.appendChild(entry);
+      history.scrollTop = history.scrollHeight;
+    }
+
+    function capitalize(string) {
+      return string.charAt(0).toUpperCase() + string.slice(1).replace(/-/g, ' ');
+    }
+  </script>
+</body>
+</html>
