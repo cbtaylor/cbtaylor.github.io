@@ -188,7 +188,7 @@
     Turn: <span id='turn'></span><br>
     River: <span id='river'></span><br>
   </div>
-
+  
   <script>
     // Game state
     const gameState = {
@@ -218,27 +218,6 @@
 
     // Initialize UI
     updateUI();
-
-    // Helper function to go straight to showdown when a player is all-in
-    function goToShowdown() {
-      // Move directly to showdown regardless of stage
-      addToHistory("--- ALL IN - GOING TO SHOWDOWN ---");
-      
-      // Show all community cards if needed
-      if (gameState.gameStage === 'pre-flop') {
-        addToHistory("--- FLOP, TURN AND RIVER DEALT ---");
-      } else if (gameState.gameStage === 'flop') {
-        addToHistory("--- TURN AND RIVER DEALT ---");
-      } else if (gameState.gameStage === 'turn') {
-        addToHistory("--- RIVER DEALT ---");
-      }
-      
-      // Set stage to showdown
-      gameState.gameStage = 'showdown';
-      
-      // Handle the showdown
-      handleShowdown();
-    }
 
     function updateUI() {
       // Update stacks and pot
@@ -550,22 +529,44 @@
           break;
           
         case 'call':
-          betAmount = Math.min(gameState.currentBet, gameState.aiStack);
-          gameState.aiStack -= betAmount;
-          gameState.potSize += betAmount;
+          // Calculate actual amount being added to the pot
+          let toCall = Math.min(gameState.currentBet, gameState.aiStack);
+          let alreadyIn = 0;
+          
+          // If we're in pre-flop and AI is small blind, it already has some money in
+          if (gameState.gameStage === 'pre-flop' && gameState.playerPosition === 'bb') {
+            alreadyIn = gameState.smallBlind;
+            toCall = Math.min(gameState.currentBet - alreadyIn, gameState.aiStack);
+          }
+          
+          // Check for all-in
+          if (toCall >= gameState.aiStack) {
+            allIn = true;
+            toCall = gameState.aiStack;
+            if (gameState.gameStage === 'pre-flop' && gameState.playerPosition === 'bb') {
+              addToHistory("AI calls $" + toCall + " more (ALL IN)");
+            } else {
+              addToHistory("AI calls $" + toCall + " (ALL IN)");
+            }
+          } else {
+            // Not all-in
+            if (gameState.gameStage === 'pre-flop' && gameState.playerPosition === 'bb') {
+              addToHistory("AI calls $" + toCall + " more");
+            } else {
+              addToHistory("AI calls $" + toCall);
+            }
+          }
+          
+          gameState.aiStack -= toCall;
+          gameState.potSize += toCall;
           
           if (allIn) {
-            addToHistory("AI calls $" + betAmount + " (ALL IN)");
             // If AI is all-in, go straight to showdown
             goToShowdown();
             return;
           } else {
-            addToHistory("AI calls $" + betAmount);
-            
-            // If this was a call to match player's bet, now check if both players have acted
-            // and advance to next stage if needed
+            // If this was a call to match player's bet, advance to next stage
             if (gameState.gameStage !== 'showdown') {
-              // This was a call in response to player's bet
               advanceGameStage();
             }
           }
@@ -640,6 +641,26 @@
       
       updateUI();
     }
+    
+    function goToShowdown() {
+      // Move directly to showdown regardless of stage
+      addToHistory("--- ALL IN - GOING TO SHOWDOWN ---");
+      
+      // Show all community cards if needed
+      if (gameState.gameStage === 'pre-flop') {
+        addToHistory("--- FLOP, TURN AND RIVER DEALT ---");
+      } else if (gameState.gameStage === 'flop') {
+        addToHistory("--- TURN AND RIVER DEALT ---");
+      } else if (gameState.gameStage === 'turn') {
+        addToHistory("--- RIVER DEALT ---");
+      }
+      
+      // Set stage to showdown
+      gameState.gameStage = 'showdown';
+      
+      // Handle the showdown
+      handleShowdown();
+    }
 
     function handleShowdown() {
       // Get the winner from the API data we already have
@@ -651,7 +672,7 @@
         gameState.playerStack += halfPot;
         gameState.aiStack += gameState.potSize - halfPot; // Handle odd chips
         addToHistory("Pot split: Player and AI each win $" + halfPot);
-      } else if (winner === "Player 1") {
+      } else if (winner === "Player 1" || winner === "You") {
         // Player wins (You are Player 1)
         gameState.playerStack += gameState.potSize;
         addToHistory("Player wins $" + gameState.potSize + " with " + document.getElementById('handValue1').textContent);
@@ -660,16 +681,9 @@
         gameState.aiStack += gameState.potSize;
         addToHistory("AI wins $" + gameState.potSize + " with " + document.getElementById('handValue2').textContent);
       } else {
-        // Try to handle the case you encountered
-        if (winner === "You") {
-          // Player wins
-          gameState.playerStack += gameState.potSize;
-          addToHistory("Player wins $" + gameState.potSize + " with " + document.getElementById('handValue1').textContent);
-        } else {
-          // Fallback just in case
-          console.log("Unexpected winner value:", winner);
-          addToHistory("Game ended with unexpected result: " + winner);
-        }
+        // Fallback just in case
+        console.log("Unexpected winner value:", winner);
+        addToHistory("Game ended with unexpected result: " + winner);
       }
       
       // Hand is complete
