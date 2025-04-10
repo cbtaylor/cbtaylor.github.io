@@ -219,6 +219,27 @@
     // Initialize UI
     updateUI();
 
+    // Helper function to go straight to showdown when a player is all-in
+    function goToShowdown() {
+      // Move directly to showdown regardless of stage
+      addToHistory("--- ALL IN - GOING TO SHOWDOWN ---");
+      
+      // Show all community cards if needed
+      if (gameState.gameStage === 'pre-flop') {
+        addToHistory("--- FLOP, TURN AND RIVER DEALT ---");
+      } else if (gameState.gameStage === 'flop') {
+        addToHistory("--- TURN AND RIVER DEALT ---");
+      } else if (gameState.gameStage === 'turn') {
+        addToHistory("--- RIVER DEALT ---");
+      }
+      
+      // Set stage to showdown
+      gameState.gameStage = 'showdown';
+      
+      // Handle the showdown
+      handleShowdown();
+    }
+
     function updateUI() {
       // Update stacks and pot
       document.getElementById('player-stack').textContent = '$' + gameState.playerStack;
@@ -360,6 +381,7 @@
       if (gameState.handComplete) return;
       
       let betAmount = 0;
+      let allIn = false;
       
       switch(action) {
         case 'fold':
@@ -374,11 +396,36 @@
           if (gameState.currentBet > 0) {
             // This is actually a call
             betAmount = Math.min(gameState.currentBet, gameState.playerStack);
+            
+            // Check if this is an all-in call
+            if (betAmount >= gameState.playerStack) {
+              allIn = true;
+              addToHistory("Player calls $" + betAmount + " (ALL IN)");
+            } else {
+              addToHistory("Player calls $" + betAmount);
+            }
+            
             gameState.playerStack -= betAmount;
             gameState.potSize += betAmount;
-            addToHistory("Player calls $" + betAmount);
+            
+            // Player has called, so both players have acted for this round
+            // If player is all-in, go straight to showdown (showing all cards)
+            if (allIn) {
+              goToShowdown();
+              return;
+            }
+            
+            // Otherwise move to the next stage
+            advanceGameStage();
+            return;
           } else {
             addToHistory("Player checks");
+            
+            // If AI has also checked (since currentBet is 0), move to next stage
+            if (gameState.aiToAct === false) { // AI has already acted
+              advanceGameStage();
+              return;
+            }
           }
           break;
           
@@ -400,15 +447,26 @@
             betAmount = Math.min(minBet, gameState.playerStack);
           }
           
+          // Check if this is an all-in bet
+          if (betAmount >= gameState.playerStack) {
+            allIn = true;
+            betAmount = gameState.playerStack; // Ensure we don't bet more than we have
+            if (gameState.currentBet === 0) {
+              addToHistory("Player bets $" + betAmount + " (ALL IN)");
+            } else {
+              addToHistory("Player raises to $" + betAmount + " (ALL IN)");
+            }
+          } else {
+            if (gameState.currentBet === 0) {
+              addToHistory("Player bets $" + betAmount);
+            } else {
+              addToHistory("Player raises to $" + betAmount);
+            }
+          }
+          
           gameState.playerStack -= betAmount;
           gameState.potSize += betAmount;
           gameState.currentBet = betAmount;
-          
-          if (gameState.currentBet === 0) {
-            addToHistory("Player bets $" + betAmount);
-          } else {
-            addToHistory("Player raises to $" + betAmount);
-          }
           break;
       }
       
@@ -426,81 +484,49 @@
     function aiAction() {
       if (gameState.handComplete) return;
       
-      // Get current hand strength based on stage
-      let currentStrength;
-      switch(gameState.gameStage) {
-        case 'pre-flop':
-          currentStrength = gameState.handStrengths.preflop;
-          break;
-        case 'flop':
-          currentStrength = gameState.handStrengths.flop;
-          break;
-        case 'turn':
-          currentStrength = gameState.handStrengths.turn;
-          break;
-        case 'river':
-          currentStrength = gameState.handStrengths.river;
-          break;
-      }
-      
-      // Simple AI strategy based on hand strength and pot odds
+      // Simplified AI strategy as requested
       let decision = '';
       let betAmount = 0;
       let decisionExplanation = '';
+      let allIn = false;
       
-      // Calculate pot odds
-      const potOdds = gameState.currentBet / (gameState.potSize + gameState.currentBet);
-      
-      if (currentStrength < 0.3) {
-        // Weak hand
+      // 50% chance to bet
+      if (Math.random() < 0.5 && gameState.currentBet === 0) {
+        // Bet twice the big blind
+        decision = 'raise';
+        betAmount = gameState.bigBlind * 2;
+        
+        // Check if this would be an all-in
+        if (betAmount >= gameState.aiStack) {
+          betAmount = gameState.aiStack;
+          allIn = true;
+          decisionExplanation = 'Going all-in for $' + betAmount + '!';
+        } else {
+          decisionExplanation = 'Betting ' + betAmount + ' (2x big blind).';
+        }
+      } else {
+        // Other 50% - check, call, or fold
         if (gameState.currentBet === 0) {
           // No bet to call, check
           decision = 'check';
-          decisionExplanation = 'Weak hand, checking to see another card.';
-        } else if (currentStrength < potOdds - 0.1) {
-          // Not worth calling
-          decision = 'fold';
-          decisionExplanation = 'Weak hand, not worth calling with these pot odds.';
-        } else {
-          // Call marginally
+          decisionExplanation = 'Checking.';
+        } else if (Math.random() < 0.5) {
+          // 50% chance to call when facing a bet
           decision = 'call';
           betAmount = gameState.currentBet;
-          decisionExplanation = 'Weak hand, but pot odds make it worth a call.';
-        }
-      } else if (currentStrength < 0.6) {
-        // Medium hand
-        if (Math.random() < 0.3) {
-          // Sometimes bluff with medium hands
-          decision = 'raise';
-          betAmount = Math.min(gameState.potSize, gameState.aiStack);
-          decisionExplanation = 'Medium strength, semi-bluffing with a bet.';
-        } else if (gameState.currentBet === 0) {
-          // No bet to call, check
-          decision = 'check';
-          decisionExplanation = 'Medium hand, checking for position.';
-        } else {
-          // Call
-          decision = 'call';
-          betAmount = gameState.currentBet;
-          decisionExplanation = 'Medium hand, calling to see more cards.';
-        }
-      } else {
-        // Strong hand
-        if (Math.random() < 0.7) {
-          // Usually raise with strong hands
-          decision = 'raise';
-          betAmount = Math.min(Math.max(gameState.potSize, gameState.currentBet * 3), gameState.aiStack);
-          decisionExplanation = 'Strong hand, betting for value.';
-        } else {
-          // Sometimes slow play
-          if (gameState.currentBet === 0) {
-            decision = 'check';
-            decisionExplanation = 'Strong hand, slow playing by checking.';
+          
+          // Check if this would be an all-in
+          if (betAmount >= gameState.aiStack) {
+            betAmount = gameState.aiStack;
+            allIn = true;
+            decisionExplanation = 'Calling ' + betAmount + ' (ALL IN).';
           } else {
-            decision = 'call';
-            betAmount = gameState.currentBet;
-            decisionExplanation = 'Strong hand, slow playing with a call.';
+            decisionExplanation = 'Calling ' + betAmount + '.';
           }
+        } else {
+          // 50% chance to fold when facing a bet
+          decision = 'fold';
+          decisionExplanation = 'Folding.';
         }
       }
       
@@ -527,13 +553,21 @@
           betAmount = Math.min(gameState.currentBet, gameState.aiStack);
           gameState.aiStack -= betAmount;
           gameState.potSize += betAmount;
-          addToHistory("AI calls $" + betAmount);
           
-          // If this was a call to match player's bet, now check if both players have acted
-          // and advance to next stage if needed
-          if (gameState.gameStage !== 'showdown') {
-            // This was a call in response to player's bet
-            advanceGameStage();
+          if (allIn) {
+            addToHistory("AI calls $" + betAmount + " (ALL IN)");
+            // If AI is all-in, go straight to showdown
+            goToShowdown();
+            return;
+          } else {
+            addToHistory("AI calls $" + betAmount);
+            
+            // If this was a call to match player's bet, now check if both players have acted
+            // and advance to next stage if needed
+            if (gameState.gameStage !== 'showdown') {
+              // This was a call in response to player's bet
+              advanceGameStage();
+            }
           }
           break;
           
@@ -543,10 +577,14 @@
           gameState.potSize += betAmount;
           gameState.currentBet = betAmount;
           
-          if (gameState.currentBet === 0) {
-            addToHistory("AI bets $" + betAmount);
+          if (allIn) {
+            addToHistory("AI bets $" + betAmount + " (ALL IN)");
           } else {
-            addToHistory("AI raises to $" + betAmount);
+            if (gameState.currentBet === 0) {
+              addToHistory("AI bets $" + betAmount);
+            } else {
+              addToHistory("AI raises to $" + betAmount);
+            }
           }
           
           // Player needs to act now
