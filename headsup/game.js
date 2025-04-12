@@ -1,632 +1,670 @@
-       // Initialize game state
-        const gameState = {
-            deck: [],
-            computerCardValues: [],
-            suits: ['H', 'D', 'C', 'S'],
-            values: ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'],
-            communityCards: [],
-            playerCards: []
-        };
+// Game state
+const gameState = {
+  playerStack: 1000,
+  aiStack: 1000,
+  potSize: 0,
+  smallBlind: 5,
+  bigBlind: 10,
+  currentBet: 0,
+  playerPosition: 'dealer', // 'dealer' (SB) or 'bb'
+  gameStage: 'pre-game', // pre-game, pre-flop, flop, turn, river, showdown
+  cards: [],
+  handStrengths: {
+    preflop: 0,
+    flop: 0,
+    turn: 0,
+    river: 0
+  },
+  aiToAct: false,
+  handComplete: true,
+  lastRaiseAmount: 0, // Track the last raise amount for min-raise calculations
+  playerBetAmount: 0,  // Track how much player has bet in current round
+  aiBetAmount: 0       // Track how much AI has bet in current round
+};
 
-        // Value rankings for comparing hands
-        const valueRankings = {
-            '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, 
-            'T': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14
-        };
+// Event listeners
+document.getElementById('bet-slider').addEventListener('input', function() {
+  document.getElementById('bet-amount').textContent = '$' + this.value;
+});
 
-        // Create a fresh deck of cards
-        function createDeck() {
-            gameState.deck = [];
-            for (let suit of gameState.suits) {
-                for (let value of gameState.values) {
-                    gameState.deck.push(value + suit);
-                }
-            }
-        }
+// Initialize UI
+updateUI();
 
-        // Shuffle the deck
-        function shuffleDeck() {
-            for (let i = gameState.deck.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [gameState.deck[i], gameState.deck[j]] = [gameState.deck[j], gameState.deck[i]];
-            }
-        }
-
-
-// Deal cards to both players
-function dealCards() {
-    // Create and shuffle deck
-    createDeck();
-    shuffleDeck();
-
-    // Reset computer's cards to face down
-    const computerCards = document.getElementById('computerCards');
-    computerCards.innerHTML = '';
-    gameState.computerCardValues = [];
-    for (let i = 0; i < 2; i++) {
-        const card = gameState.deck.pop();
-        gameState.computerCardValues.push(card);
-        const cardElement = document.createElement('div');
-        cardElement.className = 'card';
-        cardElement.innerHTML = `<img src="cards/back_blue.png" alt="Card Back">`;
-        computerCards.appendChild(cardElement);
-    }
-
-    // Deal two cards to player (face down initially)
-    const playerCards = document.getElementById('playerCards');
-    playerCards.innerHTML = '';
-    gameState.playerCards = [];
-    for (let i = 0; i < 2; i++) {
-        const card = gameState.deck.pop();
-        gameState.playerCards.push(card);
-        const cardElement = document.createElement('div');
-        cardElement.className = 'card card-back';
-        cardElement.setAttribute('data-card', card); // Store card value as data attribute
-        playerCards.appendChild(cardElement);
-    }
-
-    // Add 5 face-down community card placeholders
-    const communityCards = document.getElementById('communityCards');
-    communityCards.innerHTML = '';
-    gameState.communityCards = [];
-    for (let i = 0; i < 5; i++) {
-        const cardElement = document.createElement('div');
-        cardElement.className = 'card card-back';
-        communityCards.appendChild(cardElement);
-    }
-
-    // Reset all buttons to initial state
-    document.getElementById('dealButton').disabled = true;
-    document.getElementById('showButton').disabled = true;
-    document.getElementById('evaluateButton').disabled = true;
-    document.getElementById('flopButton').disabled = false;
-    document.getElementById('turnButton').disabled = true;
-    document.getElementById('riverButton').disabled = true;
-
-    // Remove any existing result display
-    const existingResult = document.getElementById('result-display');
-    if (existingResult) {
-        existingResult.remove();
-    }
-
-    // Reveal player's cards after a short delay
-    setTimeout(() => {
-        const playerCardElements = playerCards.children;
-        for (let i = 0; i < playerCardElements.length; i++) {
-            const cardElement = playerCardElements[i];
-            const cardValue = cardElement.getAttribute('data-card');
-            cardElement.className = 'card';
-            cardElement.innerHTML = `<img src="cards/${cardValue}.png" alt="${cardValue}">`;
-        }
-        // Enable deal button
-        document.getElementById('dealButton').disabled = false;
-    }, 1000);
-}
-
-// Show computer's cards
-function showComputerCards() {
-    const computerCards = document.getElementById('computerCards');
-    const cardElements = computerCards.children;
+function updateUI() {
+  // Update stacks and pot
+  document.getElementById('player-stack').textContent = '$' + gameState.playerStack;
+  document.getElementById('ai-stack').textContent = '$' + gameState.aiStack;
+  document.getElementById('pot-size').textContent = '$' + gameState.potSize;
+  
+  // Update hand stage
+  document.getElementById('hand-stage').textContent = capitalize(gameState.gameStage);
+  
+  // Update betting controls visibility based on game state
+  const newHandBtn = document.getElementById('new-hand-btn');
+  const foldBtn = document.getElementById('fold-btn');
+  const checkCallBtn = document.getElementById('check-call-btn');
+  const betRaiseBtn = document.getElementById('bet-raise-btn');
+  const completeBtn = document.getElementById('complete-btn');
+  const betSliderContainer = document.getElementById('bet-slider-container');
+  
+  if (gameState.handComplete) {
+    newHandBtn.classList.remove('hidden');
+    foldBtn.classList.add('hidden');
+    checkCallBtn.classList.add('hidden');
+    betRaiseBtn.classList.add('hidden');
+    completeBtn.classList.add('hidden');
+    betSliderContainer.classList.add('hidden');
+  } else {
+    newHandBtn.classList.add('hidden');
     
-    // Reveal computer's cards one by one
-    for (let i = 0; i < gameState.computerCardValues.length; i++) {
-        const card = gameState.computerCardValues[i];
-        setTimeout(() => {
-            cardElements[i].className = 'card';
-            cardElements[i].innerHTML = `<img src="cards/${card}.png" alt="${card}">`;
-        }, i * 500); // Add delay between each card reveal
-    }
-
-    // Disable show button after revealing
-    document.getElementById('showButton').disabled = true;
-
-    // Enable evaluate button if all community cards are dealt
-    if (gameState.communityCards.length === 5) {
-        document.getElementById('evaluateButton').disabled = false;
-    }
-}
-
-// Deal the flop (three community cards)
-function dealFlop() {
-    const communityCards = document.getElementById('communityCards').children;
-    
-    // Deal three cards
-    for (let i = 0; i < 3; i++) {
-        const card = gameState.deck.pop();
-        gameState.communityCards.push(card);
-        
-        // Reveal card with animation after a delay
-        setTimeout(() => {
-            communityCards[i].className = 'card';
-            communityCards[i].innerHTML = `<img src="cards/${card}.png" alt="${card}">`;
-        }, i * 500);
-    }
-    
-    // Update button states
-    document.getElementById('flopButton').disabled = true;
-    document.getElementById('turnButton').disabled = false;
-}
-
-// Deal the turn (fourth community card)
-function dealTurn() {
-    const communityCards = document.getElementById('communityCards').children;
-    
-    // Deal one card
-    const card = gameState.deck.pop();
-    gameState.communityCards.push(card);
-    
-    // Reveal the fourth card with animation
-    setTimeout(() => {
-        communityCards[3].className = 'card';
-        communityCards[3].innerHTML = `<img src="cards/${card}.png" alt="${card}">`;
-    }, 500);
-    
-    // Update button states
-    document.getElementById('turnButton').disabled = true;
-    document.getElementById('riverButton').disabled = false;
-}
-
-// Deal the river (fifth community card)
-function dealRiver() {
-    const communityCards = document.getElementById('communityCards').children;
-    
-    // Deal one card
-    const card = gameState.deck.pop();
-    gameState.communityCards.push(card);
-    
-    // Reveal the fifth card with animation
-    setTimeout(() => {
-        communityCards[4].className = 'card';
-        communityCards[4].innerHTML = `<img src="cards/${card}.png" alt="${card}">`;
-        
-        // Only enable the show button after the last card is revealed
-        document.getElementById('showButton').disabled = false;
-    }, 500);
-    
-    // Update button states
-    document.getElementById('riverButton').disabled = true;
-}
-
-// Evaluate hands and display winner
-function evaluateAndDisplayWinner() {
-    const playerHand = [...gameState.playerCards, ...gameState.communityCards];
-    const computerHand = [...gameState.computerCardValues, ...gameState.communityCards];
-    
-    const playerScore = evaluateHand(playerHand);
-    const computerScore = evaluateHand(computerHand);
-    
-    // Create result display
-    const resultDisplay = document.createElement('div');
-    resultDisplay.id = 'result-display';
-    resultDisplay.style.position = 'fixed';
-    resultDisplay.style.top = '50%';
-    resultDisplay.style.left = '50%';
-    resultDisplay.style.transform = 'translate(-50%, -50%)';
-    resultDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    resultDisplay.style.padding = '20px';
-    resultDisplay.style.borderRadius = '10px';
-    resultDisplay.style.color = 'white';
-    resultDisplay.style.fontSize = '20px';
-    resultDisplay.style.textAlign = 'center';
-    resultDisplay.style.zIndex = '1000';
-    
-    // Compare hands and determine winner
-    let resultText = `Player: ${playerScore.name}<br>Computer: ${computerScore.name}<br><br>`;
-    
-    if (playerScore.rank > computerScore.rank) {
-        resultText += 'Player Wins!';
-    } else if (computerScore.rank > playerScore.rank) {
-        resultText += 'Computer Wins!';
+    if (!gameState.aiToAct) {
+      // Show appropriate buttons for player
+      foldBtn.classList.remove('hidden');
+      
+      // Determine what the Check/Call button should say
+      if (gameState.currentBet > gameState.playerBetAmount) {
+        const callAmount = gameState.currentBet - gameState.playerBetAmount;
+        checkCallBtn.textContent = "Call $" + callAmount;
+      } else {
+        checkCallBtn.textContent = "Check";
+      }
+      checkCallBtn.classList.remove('hidden');
+      
+      // Pre-flop, player is SB, and no bets yet - show Complete option
+      if (gameState.gameStage === 'pre-flop' && 
+          gameState.playerPosition === 'dealer' && 
+          gameState.currentBet === gameState.bigBlind &&
+          gameState.playerBetAmount === gameState.smallBlind) {
+        completeBtn.textContent = "Complete $" + (gameState.bigBlind - gameState.smallBlind);
+        completeBtn.classList.remove('hidden');
+      } else {
+        completeBtn.classList.add('hidden');
+      }
+      
+      // Determine what the Bet/Raise button should say
+      if (gameState.currentBet > gameState.playerBetAmount) {
+        betRaiseBtn.textContent = "Raise";
+      } else {
+        betRaiseBtn.textContent = "Bet";
+      }
+      betRaiseBtn.classList.remove('hidden');
+      
+      // Update betting slider min and max values
+      const betSlider = document.getElementById('bet-slider');
+      betSlider.max = gameState.playerStack;
+      
+      // Set minimum bet/raise based on game rules
+      let minBet;
+      if (gameState.currentBet === 0) {
+        // No previous bet - minimum is big blind
+        minBet = gameState.bigBlind;
+      } else if (gameState.currentBet > gameState.playerBetAmount) {
+        // This is a raise - minimum is current bet + last raise (or big blind if no last raise)
+        const minRaise = Math.max(gameState.lastRaiseAmount, gameState.bigBlind);
+        minBet = gameState.currentBet + minRaise;
+      } else {
+        // This is a bet - minimum is big blind
+        minBet = gameState.bigBlind;
+      }
+      
+      // Set minimum value for slider (cap it at player's stack)
+      betSlider.min = Math.min(minBet, gameState.playerStack);
+      
+      // Default value is minimum bet or a reasonable raise
+      betSlider.value = Math.min(gameState.playerStack, minBet);
+      document.getElementById('bet-amount').textContent = '$' + betSlider.value;
+      
+      betSliderContainer.classList.remove('hidden');
     } else {
-        // If same hand rank, do detailed comparison of all cards
-        const comparison = compareEqualRankHands(playerScore, computerScore, playerHand, computerHand);
-        if (comparison > 0) {
-            resultText += 'Player Wins with higher cards!';
-        } else if (comparison < 0) {
-            resultText += 'Computer Wins with higher cards!';
-        } else {
-            resultText += "It's a Tie!";
-        }
+      // Hide player controls when AI is acting
+      foldBtn.classList.add('hidden');
+      checkCallBtn.classList.add('hidden');
+      betRaiseBtn.classList.add('hidden');
+      completeBtn.classList.add('hidden');
+      betSliderContainer.classList.add('hidden');
     }
-    
-    resultDisplay.innerHTML = resultText;
-    document.querySelector('.game-container').appendChild(resultDisplay);
-    
-    // Disable evaluate button after showing result
-    document.getElementById('evaluateButton').disabled = true;
-    // Enable deal button for next round
-    document.getElementById('dealButton').disabled = false;
+  }
+  
+  // Update button states and AI cards based on game stage
+  if (gameState.gameStage === 'showdown') {
+    // Show AI cards at showdown
+    for (let i = 3; i <= 4; i++) {
+      const cardImage = document.getElementById('card-img' + i);
+      if (gameState.cards && gameState.cards.length >= i) {
+        cardImage.src = "cards/" + gameState.cards[i-1] + ".png";
+      }
+    }
+  } else if (gameState.gameStage !== 'pre-game') {
+    // Hide AI cards during play
+    for (let i = 3; i <= 4; i++) {
+      const cardImage = document.getElementById('card-img' + i);
+      cardImage.src = "cards/back_red.png";
+    }
+  }
 }
 
-// Evaluate a poker hand
-function evaluateHand(cards) {
-    const values = cards.map(card => card[0]);
-    const suits = cards.map(card => card[1]);
-    
-    // Convert face cards to numerical values
-    const numericValues = values.map(value => valueRankings[value]);
-    
-    // Check for each hand type from highest to lowest
-    if (hasRoyalFlush(numericValues, suits)) {
-        return { rank: 10, name: 'Royal Flush', highCard: 14 };
-    }
-    
-    const straightFlush = hasStraightFlush(numericValues, suits);
-    if (straightFlush.has) {
-        return { rank: 9, name: 'Straight Flush', highCard: straightFlush.highCard };
-    }
-    
-    const fourKind = hasFourOfAKind(numericValues);
-    if (fourKind.has) {
-        return { rank: 8, name: 'Four of a Kind', highCard: fourKind.highCard };
-    }
-    
-    const fullHouse = hasFullHouse(numericValues);
-    if (fullHouse.has) {
-        return { rank: 7, name: 'Full House', highCard: fullHouse.highCard };
-    }
-    
-    if (hasFlush(suits)) {
-        return { rank: 6, name: 'Flush', highCard: Math.max(...numericValues) };
-    }
-    
-    const straight = hasStraight(numericValues);
-    if (straight.has) {
-        return { rank: 5, name: 'Straight', highCard: straight.highCard };
-    }
-    
-    const threeKind = hasThreeOfAKind(numericValues);
-    if (threeKind.has) {
-        return { rank: 4, name: 'Three of a Kind', highCard: threeKind.highCard };
-    }
-    
-    const twoPair = hasTwoPair(numericValues);
-    if (twoPair.has) {
-        return { rank: 3, name: 'Two Pair', highCard: twoPair.highCard };
-    }
-    
-    const pair = hasPair(numericValues);
-    if (pair.has) {
-        return { rank: 2, name: 'Pair', highCard: pair.highCard };
-    }
-    
-    return { rank: 1, name: 'High Card', highCard: Math.max(...numericValues) };
-}
-
-// Helper functions for checking different poker hands
-function hasRoyalFlush(values, suits) {
-    const royalValues = [10, 11, 12, 13, 14];
-    return hasStraightFlush(values, suits).has && 
-           royalValues.every(value => values.includes(value));
-}
-
-function hasStraightFlush(values, suits) {
-    // Group cards by suit
-    const suitGroups = {};
-    suits.forEach((suit, i) => {
-        if (!suitGroups[suit]) {
-            suitGroups[suit] = [];
-        }
-        suitGroups[suit].push(values[i]);
+function fetchData() {
+  // Reset game state for new hand
+  gameState.potSize = 0;
+  gameState.currentBet = 0;
+  gameState.handComplete = false;
+  gameState.lastRaiseAmount = 0;
+  gameState.playerBetAmount = 0;
+  gameState.aiBetAmount = 0;
+  
+  // Alternate positions
+  gameState.playerPosition = gameState.playerPosition === 'dealer' ? 'bb' : 'dealer';
+  
+  // Set game stage
+  gameState.gameStage = 'pre-flop';
+  
+  // Add blinds
+  if (gameState.playerPosition === 'dealer') {
+    // Player is dealer/small blind, AI is big blind
+    gameState.playerStack -= gameState.smallBlind;
+    gameState.aiStack -= gameState.bigBlind;
+    gameState.potSize = gameState.smallBlind + gameState.bigBlind;
+    gameState.currentBet = gameState.bigBlind;
+    gameState.playerBetAmount = gameState.smallBlind;
+    gameState.aiBetAmount = gameState.bigBlind;
+    addToHistory("Player posts small blind: $" + gameState.smallBlind);
+    addToHistory("AI posts big blind: $" + gameState.bigBlind);
+    gameState.aiToAct = false; // Player acts first in pre-flop
+  } else {
+    // AI is dealer/small blind, player is big blind
+    gameState.aiStack -= gameState.smallBlind;
+    gameState.playerStack -= gameState.bigBlind;
+    gameState.potSize = gameState.smallBlind + gameState.bigBlind;
+    gameState.currentBet = gameState.bigBlind;
+    gameState.playerBetAmount = gameState.bigBlind;
+    gameState.aiBetAmount = gameState.smallBlind;
+    addToHistory("AI posts small blind: $" + gameState.smallBlind);
+    addToHistory("Player posts big blind: $" + gameState.bigBlind);
+    gameState.aiToAct = true; // AI acts first in pre-flop
+  }
+  
+  // Fetch card data
+  fetch('https://cbtaylor.pythonanywhere.com/card')
+    .then(response => response.json())
+    .then(data => {
+      console.log(data);
+      gameState.cards = data.cards;
+      
+      // Update player's hole cards and community cards
+      for (let i = 1; i <= 2; i++) {
+        const cardImage = document.getElementById('card-img' + i);
+        cardImage.src = "cards/" + data.cards[i-1] + ".png";
+      }
+      
+      // Set community cards based on game stage
+      // For now, all cards are set to back side until revealed
+      for (let i = 5; i <= 9; i++) {
+        const cardImage = document.getElementById('card-img' + i);
+        cardImage.src = "cards/back_red.png";
+      }
+      
+      // Store hand values
+      document.getElementById('handValue1').textContent = data.hand1;
+      document.getElementById('handValue2').textContent = data.hand2;
+      document.getElementById('winner').textContent = data.winner;
+      
+      // Update probabilities
+      document.getElementById('preflop').textContent = data.preflop;
+      document.getElementById('flop').textContent = data.flop;
+      document.getElementById('turn').textContent = data.turn;
+      document.getElementById('river').textContent = data.river;
+      
+      // Store hand strengths for AI decision making
+      gameState.handStrengths.preflop = parseFloat(data.preflop);
+      gameState.handStrengths.flop = parseFloat(data.flop);
+      gameState.handStrengths.turn = parseFloat(data.turn);
+      gameState.handStrengths.river = parseFloat(data.river);
+      
+      // Update UI
+      updateUI();
+      
+      // If AI acts first, let AI make decision
+      if (gameState.aiToAct) {
+        setTimeout(aiAction, 1500);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      addToHistory("Error fetching data: " + error.message);
     });
-    
-    // Check each suit group for a straight
-    for (let suit in suitGroups) {
-        const suitValues = suitGroups[suit];
-        if (suitValues.length >= 5) {  // Only check if we have enough cards of this suit
-            const sortedValues = [...new Set(suitValues)].sort((a, b) => a - b);
-            let maxLength = 1;
-            let currentLength = 1;
-            let highCard = sortedValues[0];
-            
-            for (let i = 1; i < sortedValues.length; i++) {
-                if (sortedValues[i] === sortedValues[i-1] + 1) {
-                    currentLength++;
-                    if (currentLength > maxLength) {
-                        maxLength = currentLength;
-                        highCard = sortedValues[i];
-                    }
-                } else {
-                    currentLength = 1;
-                }
-            }
-            
-            // Check for Ace-low straight flush
-            if (sortedValues.includes(14) && sortedValues.includes(2) && 
-                sortedValues.includes(3) && sortedValues.includes(4) && 
-                sortedValues.includes(5)) {
-                return { has: true, highCard: 5 };
-            }
-            
-            if (maxLength >= 5) {
-                return { has: true, highCard: highCard };
-            }
-        }
-    }
-    
-    return { has: false, highCard: 0 };
 }
 
-function hasFourOfAKind(values) {
-    const counts = getCounts(values);
-    for (const [value, count] of Object.entries(counts)) {
-        if (count === 4) {
-            return { has: true, highCard: parseInt(value) };
-        }
-    }
-    return { has: false, highCard: 0 };
-}
-
-function hasFullHouse(values) {
-    const counts = getCounts(values);
-    let threeValue = 0;
-    let pairValue = 0;
-    
-    for (const [value, count] of Object.entries(counts)) {
-        if (count === 3) threeValue = parseInt(value);
-        if (count === 2) pairValue = parseInt(value);
-    }
-    
-    return {
-        has: threeValue > 0 && pairValue > 0,
-        highCard: threeValue
-    };
-}
-
-function hasFlush(suits) {
-    const suitCounts = getCounts(suits);
-    return Object.values(suitCounts).some(count => count >= 5);
-}
-
-function hasStraight(values) {
-    const uniqueValues = [...new Set(values)].sort((a, b) => a - b);
-    let maxLength = 1;
-    let currentLength = 1;
-    let highCard = uniqueValues[0];
-    
-    for (let i = 1; i < uniqueValues.length; i++) {
-        if (uniqueValues[i] === uniqueValues[i-1] + 1) {
-            currentLength++;
-            if (currentLength > maxLength) {
-                maxLength = currentLength;
-                highCard = uniqueValues[i];
-            }
+function playerAction(action) {
+  if (gameState.handComplete) return;
+  
+  let betAmount = 0;
+  let allIn = false;
+  let toCall = gameState.currentBet - gameState.playerBetAmount;
+  
+  switch(action) {
+    case 'fold':
+      addToHistory("Player folds");
+      // AI wins the pot
+      gameState.aiStack += gameState.potSize;
+      gameState.handComplete = true;
+      addToHistory("AI wins $" + gameState.potSize);
+      break;
+      
+    case 'check':
+      if (gameState.currentBet > gameState.playerBetAmount) {
+        // This is a call
+        betAmount = Math.min(toCall, gameState.playerStack);
+        
+        // Check if this is an all-in call
+        if (betAmount >= gameState.playerStack) {
+          allIn = true;
+          addToHistory("Player calls $" + betAmount + " (ALL IN)");
         } else {
-            currentLength = 1;
+          addToHistory("Player calls $" + betAmount);
         }
-    }
-    
-    // Check for Ace-low straight (A,2,3,4,5)
-    if (uniqueValues.includes(14) && uniqueValues.includes(2) && 
-        uniqueValues.includes(3) && uniqueValues.includes(4) && 
-        uniqueValues.includes(5)) {
-        return { has: true, highCard: 5 };
-    }
-    
-    return {
-        has: maxLength >= 5,
-        highCard: highCard
-    };
-}
-
-function hasThreeOfAKind(values) {
-    const counts = getCounts(values);
-    for (const [value, count] of Object.entries(counts)) {
-        if (count === 3) {
-            return { has: true, highCard: parseInt(value) };
+        
+        gameState.playerStack -= betAmount;
+        gameState.potSize += betAmount;
+        gameState.playerBetAmount += betAmount;
+        
+        // Player has called, so both players have bet the same amount this round
+        // If player is all-in, go straight to showdown
+        if (allIn) {
+          goToShowdown();
+          return;
         }
-    }
-    return { has: false, highCard: 0 };
-}
-
-function hasTwoPair(values) {
-    const counts = getCounts(values);
-    const pairs = Object.entries(counts)
-        .filter(([_, count]) => count === 2)
-        .map(([value, _]) => parseInt(value))
-        .sort((a, b) => b - a);
-    
-    return {
-        has: pairs.length >= 2,
-        highCard: pairs[0]
-    };
-}
-
-function hasPair(values) {
-    const counts = getCounts(values);
-    for (const [value, count] of Object.entries(counts)) {
-        if (count === 2) {
-            return { has: true, highCard: parseInt(value) };
+        
+        // Otherwise move to the next stage if both players have acted
+        advanceGameStage();
+        return;
+      } else {
+        addToHistory("Player checks");
+        
+        // If AI has also checked (since playerBetAmount == aiBetAmount), move to next stage
+        if (gameState.playerBetAmount === gameState.aiBetAmount && !gameState.aiToAct) {
+          advanceGameStage();
+          return;
         }
-    }
-    return { has: false, highCard: 0 };
-}
-
-// Compare hands of equal rank
-function compareEqualRankHands(playerScore, computerScore, playerHand, computerHand) {
-    const playerValues = playerHand.map(card => valueRankings[card[0]]);
-    const computerValues = computerHand.map(card => valueRankings[card[0]]);
-    
-    switch (playerScore.rank) {
-        case 8: // Four of a Kind
-            return compareFourOfAKind(playerValues, computerValues);
-        case 7: // Full House
-            return compareFullHouse(playerValues, computerValues);
-        case 6: // Flush
-            return compareFlush(playerValues, computerValues);
-        case 5: // Straight
-            return playerScore.highCard - computerScore.highCard;
-        case 4: // Three of a Kind
-            return compareThreeOfAKind(playerValues, computerValues);
-        case 3: // Two Pair
-            return compareTwoPair(playerValues, computerValues);
-        case 2: // One Pair
-            return compareOnePair(playerValues, computerValues);
-        case 1: // High Card
-            return compareHighCard(playerValues, computerValues);
-        default:
-            return playerScore.highCard - computerScore.highCard;
-    }
-}
-
-function compareFourOfAKind(playerValues, computerValues) {
-    const playerCounts = getCounts(playerValues);
-    const computerCounts = getCounts(computerValues);
-    
-    // Get the four of a kind values
-    const playerQuad = Number(Object.entries(playerCounts).find(([_, count]) => count === 4)[0]);
-    const computerQuad = Number(Object.entries(computerCounts).find(([_, count]) => count === 4)[0]);
-    
-    if (playerQuad !== computerQuad) {
-        return playerQuad - computerQuad;
-    }
-    
-    // Compare kickers
-    const playerKicker = Number(Object.entries(playerCounts).find(([_, count]) => count === 1)[0]);
-    const computerKicker = Number(Object.entries(computerCounts).find(([_, count]) => count === 1)[0]);
-    return playerKicker - computerKicker;
-}
-
-function compareFullHouse(playerValues, computerValues) {
-    const playerCounts = getCounts(playerValues);
-    const computerCounts = getCounts(computerValues);
-    
-    // Get the three of a kind values
-    const playerTrips = Number(Object.entries(playerCounts).find(([_, count]) => count === 3)[0]);
-    const computerTrips = Number(Object.entries(computerCounts).find(([_, count]) => count === 3)[0]);
-    
-    if (playerTrips !== computerTrips) {
-        return playerTrips - computerTrips;
-    }
-    
-    // Compare pair values
-    const playerPair = Number(Object.entries(playerCounts).find(([_, count]) => count === 2)[0]);
-    const computerPair = Number(Object.entries(computerCounts).find(([_, count]) => count === 2)[0]);
-    return playerPair - computerPair;
-}
-
-function compareFlush(playerValues, computerValues) {
-    const sortedPlayer = [...playerValues].sort((a, b) => b - a);
-    const sortedComputer = [...computerValues].sort((a, b) => b - a);
-    
-    // Compare each card from highest to lowest
-    for (let i = 0; i < 5; i++) {
-        if (sortedPlayer[i] !== sortedComputer[i]) {
-            return sortedPlayer[i] - sortedComputer[i];
+        
+        // AI needs to act now
+        gameState.aiToAct = true;
+        setTimeout(aiAction, 1500);
+      }
+      break;
+      
+    case 'complete':
+      // Complete the blind (add the difference between small and big blind)
+      betAmount = gameState.bigBlind - gameState.smallBlind;
+      addToHistory("Player completes to $" + gameState.bigBlind);
+      
+      gameState.playerStack -= betAmount;
+      gameState.potSize += betAmount;
+      gameState.playerBetAmount = gameState.bigBlind;
+      
+      // AI needs to act now
+      gameState.aiToAct = true;
+      setTimeout(aiAction, 1500);
+      break;
+      
+    case 'raise':
+      betAmount = parseInt(document.getElementById('bet-slider').value);
+      
+      // Calculate the actual amount being added to pot
+      let actualBet = betAmount;
+      
+      // Ensure minimum bet rules are followed
+      let minBet;
+      if (gameState.currentBet === 0) {
+        // This is an open - minimum is big blind
+        minBet = gameState.bigBlind;
+      } else {
+        // This is a raise - minimum is current bet + last raise (or big blind if no last raise)
+        const minRaise = Math.max(gameState.lastRaiseAmount, gameState.bigBlind);
+        minBet = gameState.currentBet + minRaise;
+      }
+      
+      // If selected bet is less than minimum, adjust it (shouldn't happen with slider constraints)
+      if (actualBet < minBet && actualBet < gameState.playerStack) {
+        actualBet = Math.min(minBet, gameState.playerStack);
+      }
+      
+      // Calculate the amount being added to the pot
+      let amountToAdd = actualBet - gameState.playerBetAmount;
+      
+      // Check if this is an all-in bet
+      if (amountToAdd >= gameState.playerStack) {
+        allIn = true;
+        amountToAdd = gameState.playerStack;
+        actualBet = gameState.playerBetAmount + amountToAdd;
+        
+        if (gameState.currentBet === 0) {
+          addToHistory("Player bets $" + actualBet + " (ALL IN)");
+        } else {
+          addToHistory("Player raises to $" + actualBet + " (ALL IN)");
         }
-    }
-    return 0;
-}
-
-function compareThreeOfAKind(playerValues, computerValues) {
-    const playerCounts = getCounts(playerValues);
-    const computerCounts = getCounts(computerValues);
-    
-    // Compare three of a kind values
-    const playerTrips = Number(Object.entries(playerCounts).find(([_, count]) => count === 3)[0]);
-    const computerTrips = Number(Object.entries(computerCounts).find(([_, count]) => count === 3)[0]);
-    
-    if (playerTrips !== computerTrips) {
-        return playerTrips - computerTrips;
-    }
-    
-    // Get kickers in descending order
-    const playerKickers = Object.entries(playerCounts)
-        .filter(([_, count]) => count === 1)
-        .map(([value, _]) => Number(value))
-        .sort((a, b) => b - a);
-    const computerKickers = Object.entries(computerCounts)
-        .filter(([_, count]) => count === 1)
-        .map(([value, _]) => Number(value))
-        .sort((a, b) => b - a);
-    
-    // Compare kickers
-    for (let i = 0; i < playerKickers.length; i++) {
-        if (playerKickers[i] !== computerKickers[i]) {
-            return playerKickers[i] - computerKickers[i];
+      } else {
+        if (gameState.currentBet === 0) {
+          addToHistory("Player bets $" + actualBet);
+        } else {
+          addToHistory("Player raises to $" + actualBet);
         }
-    }
-    return 0;
+      }
+      
+      // Track the last raise amount
+      gameState.lastRaiseAmount = actualBet - gameState.currentBet;
+      
+      // Update game state
+      gameState.playerStack -= amountToAdd;
+      gameState.potSize += amountToAdd;
+      gameState.currentBet = actualBet;
+      gameState.playerBetAmount = actualBet;
+      
+      // AI needs to act now
+      gameState.aiToAct = true;
+      setTimeout(aiAction, 1500);
+      break;
+  }
+  
+  // Update UI
+  updateUI();
 }
 
-function compareTwoPair(playerValues, computerValues) {
-    const playerCounts = getCounts(playerValues);
-    const computerCounts = getCounts(computerValues);
-    
-    // Get pairs in descending order
-    const playerPairs = Object.entries(playerCounts)
-        .filter(([_, count]) => count === 2)
-        .map(([value, _]) => Number(value))
-        .sort((a, b) => b - a);
-    const computerPairs = Object.entries(computerCounts)
-        .filter(([_, count]) => count === 2)
-        .map(([value, _]) => Number(value))
-        .sort((a, b) => b - a);
-    
-    // Compare higher pair
-    if (playerPairs[0] !== computerPairs[0]) {
-        return playerPairs[0] - computerPairs[0];
+function aiAction() {
+  if (gameState.handComplete) return;
+  
+  // AI decision based on hand strength and current bet
+  let decision = '';
+  let betAmount = 0;
+  let decisionExplanation = '';
+  let allIn = false;
+  let toCall = gameState.currentBet - gameState.aiBetAmount;
+  let handStrength = 0;
+  
+  // Get current hand strength based on stage
+  switch(gameState.gameStage) {
+    case 'pre-flop':
+      handStrength = gameState.handStrengths.preflop;
+      break;
+    case 'flop':
+      handStrength = gameState.handStrengths.flop;
+      break;
+    case 'turn':
+      handStrength = gameState.handStrengths.turn;
+      break;
+    case 'river':
+      handStrength = gameState.handStrengths.river;
+      break;
+  }
+  
+  // More advanced AI strategy based on hand strength
+  if (gameState.currentBet === gameState.aiBetAmount) {
+    // No bet to call - check or bet
+    if (handStrength > 0.6 || Math.random() < 0.3) {
+      // Strong hand or bluff - bet
+      decision = 'raise';
+      betAmount = Math.floor(gameState.bigBlind * (1 + handStrength * 5)); // Higher bet for stronger hand
+      
+      if (betAmount >= gameState.aiStack) {
+        betAmount = gameState.aiStack;
+        allIn = true;
+        decisionExplanation = 'Going all-in for $' + betAmount + '!';
+      } else {
+        decisionExplanation = 'Betting $' + betAmount + '.';
+      }
+    } else {
+      // Weak hand - check
+      decision = 'check';
+      decisionExplanation = 'Checking.';
     }
+  } else {
+    // Facing a bet - call, raise, or fold
     
-    // Compare lower pair
-    if (playerPairs[1] !== computerPairs[1]) {
-        return playerPairs[1] - computerPairs[1];
+    // Decision based on hand strength and pot odds
+    const potOdds = toCall / (gameState.potSize + toCall);
+    
+    if (handStrength > 0.8) {
+      // Very strong hand - raise
+      decision = 'raise';
+      let raiseAmount = Math.min(
+        Math.floor(gameState.currentBet + gameState.lastRaiseAmount * 2), 
+        gameState.aiStack
+      );
+      betAmount = raiseAmount;
+      
+      if (raiseAmount >= gameState.aiStack) {
+        allIn = true;
+        decisionExplanation = 'Raising all-in to $' + betAmount + '!';
+      } else {
+        decisionExplanation = 'Raising to $' + betAmount + '.';
+      }
+    } else if (handStrength > potOdds) {
+      // Hand strength better than pot odds - call
+      decision = 'call';
+      betAmount = Math.min(toCall, gameState.aiStack);
+      
+      if (betAmount >= gameState.aiStack) {
+        allIn = true;
+        decisionExplanation = 'Calling $' + betAmount + ' (ALL IN).';
+      } else {
+        decisionExplanation = 'Calling $' + betAmount + '.';
+      }
+    } else {
+      // Poor hand compared to pot odds - fold
+      decision = 'fold';
+      decisionExplanation = 'Folding.';
     }
-    
-    // Compare kicker
-    const playerKicker = Number(Object.entries(playerCounts).find(([_, count]) => count === 1)[0]);
-    const computerKicker = Number(Object.entries(computerCounts).find(([_, count]) => count === 1)[0]);
-    return playerKicker - computerKicker;
-}
-
-function compareOnePair(playerValues, computerValues) {
-    const playerCounts = getCounts(playerValues);
-    const computerCounts = getCounts(computerValues);
-    
-    // Compare pair values
-    const playerPair = Number(Object.entries(playerCounts).find(([_, count]) => count === 2)[0]);
-    const computerPair = Number(Object.entries(computerCounts).find(([_, count]) => count === 2)[0]);
-    
-    if (playerPair !== computerPair) {
-        return playerPair - computerPair;
-    }
-    
-    // Get kickers in descending order
-    const playerKickers = Object.entries(playerCounts)
-        .filter(([_, count]) => count === 1)
-        .map(([value, _]) => Number(value))
-        .sort((a, b) => b - a);
-    const computerKickers = Object.entries(computerCounts)
-        .filter(([_, count]) => count === 1)
-        .map(([value, _]) => Number(value))
-        .sort((a, b) => b - a);
-    
-    // Compare each kicker
-    for (let i = 0; i < playerKickers.length; i++) {
-        if (playerKickers[i] !== computerKickers[i]) {
-            return playerKickers[i] - computerKickers[i];
+  }
+  
+  // Show AI's thought process
+  document.getElementById('ai-decision').textContent = decisionExplanation;
+  
+  // Implement the decision
+  switch(decision) {
+    case 'fold':
+      addToHistory("AI folds");
+      // Player wins the pot
+      gameState.playerStack += gameState.potSize;
+      gameState.handComplete = true;
+      addToHistory("Player wins $" + gameState.potSize);
+      break;
+      
+    case 'check':
+      addToHistory("AI checks");
+      
+      // If both players have checked, move to next stage
+      if (gameState.playerBetAmount === gameState.aiBetAmount) {
+        advanceGameStage();
+      } else {
+        // AI's turn is done, now it's the player's turn
+        gameState.aiToAct = false;
+      }
+      break;
+      
+    case 'call':
+      // Calculate actual amount being called
+      let amountToCall = Math.min(toCall, gameState.aiStack);
+      
+      // Check for all-in
+      if (amountToCall >= gameState.aiStack) {
+        allIn = true;
+        addToHistory("AI calls $" + amountToCall + " (ALL IN)");
+      } else {
+        addToHistory("AI calls $" + amountToCall);
+      }
+      
+      gameState.aiStack -= amountToCall;
+      gameState.potSize += amountToCall;
+      gameState.aiBetAmount += amountToCall;
+      
+      if (allIn) {
+        // If AI is all-in, go straight to showdown
+        goToShowdown();
+        return;
+      } else {
+        // If this was a call to match player's bet, advance to next stage
+        advanceGameStage();
+      }
+      break;
+      
+    case 'raise':
+      // Calculate the amount being added to the pot
+      let amountToAdd = betAmount - gameState.aiBetAmount;
+      
+      // Check for all-in
+      if (amountToAdd >= gameState.aiStack) {
+        amountToAdd = gameState.aiStack;
+        betAmount = gameState.aiBetAmount + amountToAdd;
+        allIn = true;
+      }
+      
+      gameState.aiStack -= amountToAdd;
+      gameState.potSize += amountToAdd;
+      gameState.currentBet = betAmount;
+      gameState.aiBetAmount = betAmount;
+      
+      // Track the last raise amount
+      gameState.lastRaiseAmount = betAmount - Math.max(gameState.currentBet, gameState.aiBetAmount - amountToAdd);
+      
+      if (allIn) {
+        addToHistory("AI raises to $" + betAmount + " (ALL IN)");
+      } else {
+        if (gameState.currentBet === 0) {
+          addToHistory("AI bets $" + betAmount);
+        } else {
+          addToHistory("AI raises to $" + betAmount);
         }
-    }
-    return 0;
+      }
+      
+      // Player needs to act now
+      gameState.aiToAct = false;
+      break;
+  }
+  
+  // Update UI
+  updateUI();
 }
 
-function compareHighCard(playerValues, computerValues) {
-    const sortedPlayer = [...playerValues].sort((a, b) => b - a);
-    const sortedComputer = [...computerValues].sort((a, b) => b - a);
-    
-    // Compare each card from highest to lowest
-    for (let i = 0; i < 5; i++) {
-        if (sortedPlayer[i] !== sortedComputer[i]) {
-            return sortedPlayer[i] - sortedComputer[i];
-        }
-    }
-    return 0;
+function advanceGameStage() {
+  // Reset betting info for new stage
+  gameState.currentBet = 0;
+  gameState.playerBetAmount = 0;
+  gameState.aiBetAmount = 0;
+  gameState.lastRaiseAmount = 0;
+  
+  // Move to the next stage of the hand
+  switch(gameState.gameStage) {
+    case 'pre-flop':
+      gameState.gameStage = 'flop';
+      addToHistory("--- FLOP ---");
+      // Reveal flop cards
+      for (let i = 5; i <= 7; i++) {
+        const cardImage = document.getElementById('card-img' + i);
+        cardImage.src = "cards/" + gameState.cards[i-1] + ".png";
+      }
+      break;
+    case 'flop':
+      gameState.gameStage = 'turn';
+      addToHistory("--- TURN ---");
+      // Reveal turn card
+      const turnCardImage = document.getElementById('card-img8');
+      turnCardImage.src = "cards/" + gameState.cards[7] + ".png";
+      break;
+    case 'turn':
+      gameState.gameStage = 'river';
+      addToHistory("--- RIVER ---");
+      // Reveal river card
+      const riverCardImage = document.getElementById('card-img9');
+      riverCardImage.src = "cards/" + gameState.cards[8] + ".png";
+      break;
+    case 'river':
+      gameState.gameStage = 'showdown';
+      addToHistory("--- SHOWDOWN ---");
+      handleShowdown();
+      return;
+  }
+  
+  // Determine who acts first in this round
+  // In post-flop, the BB (out of position) acts first
+  if (gameState.playerPosition === 'bb') {
+    // Player is big blind, acts first in post-flop
+    gameState.aiToAct = false;
+  } else {
+    // AI is big blind, acts first in post-flop
+    gameState.aiToAct = true;
+    setTimeout(aiAction, 1500);
+  }
+  
+  // Update UI
+  updateUI();
 }
 
-// Utility function to count occurrences
-function getCounts(array) {
-    return array.reduce((counts, value) => {
-        counts[value] = (counts[value] || 0) + 1;
-        return counts;
-    }, {});
+function goToShowdown() {
+  // Move directly to showdown regardless of stage
+  addToHistory("--- ALL IN - GOING TO SHOWDOWN ---");
+  
+  // Reveal all community cards
+  if (gameState.gameStage === 'pre-flop') {
+    addToHistory("--- FLOP, TURN AND RIVER DEALT ---");
+    // Reveal flop, turn and river
+    for (let i = 5; i <= 9; i++) {
+      const cardImage = document.getElementById('card-img' + i);
+      cardImage.src = "cards/" + gameState.cards[i-1] + ".png";
+    }
+  } else if (gameState.gameStage === 'flop') {
+    addToHistory("--- TURN AND RIVER DEALT ---");
+    // Reveal turn and river
+    document.getElementById('card-img8').src = "cards/" + gameState.cards[7] + ".png";
+    document.getElementById('card-img9').src = "cards/" + gameState.cards[8] + ".png";
+  } else if (gameState.gameStage === 'turn') {
+    addToHistory("--- RIVER DEALT ---");
+    // Reveal river
+    document.getElementById('card-img9').src = "cards/" + gameState.cards[8] + ".png";
+  }
+  
+  // Set stage to showdown
+  gameState.gameStage = 'showdown';
+  
+  // Handle the showdown
+  handleShowdown();
+}
+
+function handleShowdown() {
+  // Get the winner from the API data we already have
+  const winner = document.getElementById('winner').textContent;
+  
+  if (winner === "Tie") {
+    // Split pot
+    const halfPot = Math.floor(gameState.potSize / 2);
+    gameState.playerStack += halfPot;
+    gameState.aiStack += gameState.potSize - halfPot; // Handle odd chips
+    addToHistory("Pot split: Player and AI each win $" + halfPot);
+  } else if (winner === "Player 1" || winner === "You") {
+    // Player wins (You are Player 1)
+    gameState.playerStack += gameState.potSize;
+    addToHistory("Player wins $" + gameState.potSize + " with " + document.getElementById('handValue1').textContent);
+  } else if (winner === "Player 2") {
+    // AI wins (AI is Player 2)
+    gameState.aiStack += gameState.potSize;
+    addToHistory("AI wins $" + gameState.potSize + " with " + document.getElementById('handValue2').textContent);
+  } else {
+    // Fallback just in case
+    console.log("Unexpected winner value:", winner);
+    addToHistory("Game ended with unexpected result: " + winner);
+  }
+  
+  // Hand is complete
+  gameState.handComplete = true;
+  updateUI();
+}
+
+function addToHistory(message) {
+  const history = document.getElementById('action-history');
+  const entry = document.createElement('div');
+  entry.textContent = message;
+  history.appendChild(entry);
+  history.scrollTop = history.scrollHeight;
+}
+
+function capitalize(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1).replace(/-/g, ' ');
 }
