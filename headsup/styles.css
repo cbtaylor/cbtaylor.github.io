@@ -1,76 +1,128 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #2c7a2c;
-    margin: 0;
-    padding: 20px;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  font-family: Arial, sans-serif;
+  background-color: #c2b699;
+  margin: 0;
+  padding: 20px;
 }
 
-.game-container {
-    width: 100%;
-    max-width: 800px;
-}
-
-.player-area, .computer-area, .community-area {
-    padding: 20px;
-    margin: 20px 0;
-    border-radius: 10px;
-    background-color: rgba(255, 255, 255, 0.1);
-    position: relative;
-}
-
-.cards {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
+.card-row {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .card {
-    width: 100px;
-    height: 140px;
-    border-radius: 10px;
-    background-color: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    transition: transform 0.3s ease;
+  max-width: 20%;
+  height: auto;
+  margin: 1px;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: auto;
+  box-sizing: border-box;
 }
 
-.card:hover {
-    transform: translateY(-5px);
+img {
+  max-width: 100%;
+  height: auto;
 }
 
-
-.card img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+h1, h2 {
+  text-align: center;
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
 }
 
 button {
-    padding: 10px 20px;
-    font-size: 16px;
-    border: none;
-    border-radius: 5px;
-    background-color: #4CAF50;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin: 0 5px;
+  display: block;
+  margin: 10px auto;
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
 }
 
 button:hover {
-    background-color: #45a049;
+  background-color: #3e8e41;
 }
 
-button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
+.betting-controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 15px 0;
 }
 
-h2 {
-    color: white;
-    text-align: center;
-    margin: 10px 0;
+.slider-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.game-info {
+  display: flex;
+  justify-content: space-around;
+  max-width: 800px;
+  margin: 0 auto 15px;
+  background-color: #eee8d5;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.player-info {
+  text-align: center;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #fdf6e3;
+  min-width: 150px;
+}
+
+.pot-info {
+  text-align: center;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #fdf6e3;
+  min-width: 150px;
+}
+
+.action-history {
+  max-width: 800px;
+  margin: 20px auto;
+  border: 1px solid #ddd;
+  padding: 10px;
+  height: 100px;
+  overflow-y: auto;
+  background-color: #fdf6e3;
+  border-radius: 5px;
+}
+
+.hand-stage {
+  text-align: center;
+  font-weight: bold;
+  color: #073642;
+  margin: 10px 0;
+  font-size: 1.2em;
+}
+
+.ai-thinking {
+  background-color: #fdf6e3;
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin: 0 auto 15px;
+  max-width: 800px;
+  border-left: 5px solid #268bd2;
+}
+
+.hidden {
+  display: none;
+}
+
+input[type=range] {
+  width: 200px;
 }
