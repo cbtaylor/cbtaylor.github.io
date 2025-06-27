@@ -2,10 +2,27 @@
 Some links to apps I've created and projects I've done.
 
 ### Apps
-[Day of the Week app](dayoftheweek/)
+[Day of the Week app](dayoftheweek/) - guess the day given any date
 
-### Tutorials
-[How to create slideshows from iPython notebooks](slideshow-creation.slides.html).
+[Buffon's Needle Experiment](buffon.html) - estimate the value of pi
+
+[Connect 4](connect4.html) - classic game
+
+[My Italian Greyhounds](igs.html) - some fancy CSS
+
+[Noisy](noisy/) - more fancy CSS
+
+[Prime or Composite](prime.html) - can you guess which?
+
+[Arithmetic Quizzes](https://mymath.page/) - get better at mental math
+
+[Squares](squares/) - practice squaring two-digit numbers
+
+[Word Finder](wordfind.html) - when you're stuck on Spelling Bee
+
+[Wordle 6](wordle6.html) - a Wordle clone, but with six letters
+
+[Ship's Bell](shipsbell/) - old fashioned ship's clock
 
 ![sunset](500by100pics/sunset2.png)
 
