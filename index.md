@@ -14,6 +14,8 @@ Some links to apps I've created and projects I've done.
 
 [Prime or Composite](prime.html) - can you guess which?
 
+[n-back](nback/) - a version of the classic memory test
+
 [Arithmetic Quizzes](https://mymath.page/) - get better at mental math
 
 [Squares](squares/) - practice squaring two-digit numbers
