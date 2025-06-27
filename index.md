@@ -26,6 +26,8 @@ Some links to apps I've created and projects I've done.
 
 [Noisy](noisy/) - more fancy CSS
 
+[SVG examples](svg.html)
+
 ![sunset](500by100pics/sunset2.png)
 
 ### Exploratory Data Analysis in R
@@ -42,5 +44,3 @@ I used pandas and a number of the Python graphing packages to explore some relat
 [An html version of the project](baseball.html)  
 
 ![mountains](500by100pics/mountains1.png)
-
-[SVG examples](svg.html)
