@@ -2,15 +2,7 @@
 Some links to apps I've created and projects I've done.
 
 ### Apps
-[Day of the Week app](dayoftheweek/) - guess the day given any date
-
-[Buffon's Needle Experiment](buffon.html) - estimate the value of pi
-
-[Connect 4](connect4.html) - classic game
-
-[My Italian Greyhounds](igs.html) - some fancy CSS
-
-[Noisy](noisy/) - more fancy CSS
+[Day of the Week game](dayoftheweek/) - guess the day given any date
 
 [Prime or Composite](prime.html) - can you guess which?
 
@@ -24,7 +16,15 @@ Some links to apps I've created and projects I've done.
 
 [Wordle 6](wordle6.html) - a Wordle clone, but with six letters
 
+[Buffon's Needle Experiment](buffon.html) - estimate the value of pi
+
+[Connect 4](connect4.html) - classic game
+
 [Ship's Bell](shipsbell/) - old fashioned ship's clock
+
+[My Italian Greyhounds](igs.html) - some fancy CSS
+
+[Noisy](noisy/) - more fancy CSS
 
 ![sunset](500by100pics/sunset2.png)
 
