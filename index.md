@@ -1,5 +1,8 @@
 ### Welcome to Brian's site.
-I've collected a few project samples and tutorials on this site.
+Some links to apps I've created and projects I've done.
+
+### Apps
+[Day of the Week app](dayoftheweek/)
 
 ### Tutorials
 [How to create slideshows from iPython notebooks](slideshow-creation.slides.html).
