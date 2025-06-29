@@ -12,6 +12,8 @@ Some links to apps I've created and projects I've done.
 
 [Squares](squares/) - practice squaring two-digit numbers
 
+[Modular Arithmetic](modulo.html) - practice modular equivalences
+
 [Word Finder](wordfind.html) - when you're stuck on Spelling Bee
 
 [Wordle 6](wordle6.html) - a Wordle clone, but with six letters
