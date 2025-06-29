@@ -163,8 +163,15 @@
             color: #8b6914;
         }
 
-        .keypad-btn.clear:hover {
-            background: #fdcb6e;
+        .keypad-btn.submit {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+
+        .keypad-btn.submit:hover {
+            background: #218838;
+            border-color: #218838;
         }
 
         .submit-btn {
@@ -300,7 +307,6 @@
             <div class="input-section">
                 <div class="answer-display">
                     <input type="text" class="answer-input" id="answerInput" placeholder="?" readonly>
-                    <button class="submit-btn" id="submitBtn">Check Answer</button>
                 </div>
                 
                 <div class="keypad" id="keypad">
@@ -313,9 +319,9 @@
                     <button class="keypad-btn" data-value="1">1</button>
                     <button class="keypad-btn" data-value="2">2</button>
                     <button class="keypad-btn" data-value="3">3</button>
-                    <button class="keypad-btn clear" data-value="clear">Clear</button>
+                    <button class="keypad-btn clear" data-value="clear">C</button>
                     <button class="keypad-btn" data-value="0">0</button>
-                    <button class="keypad-btn clear" data-value="backspace">←</button>
+                    <button class="keypad-btn submit" data-value="submit" id="keypadSubmit">✓</button>
                 </div>
             </div>
             
@@ -347,7 +353,6 @@
             initializeElements() {
                 this.problemEl = document.getElementById('problem');
                 this.answerInput = document.getElementById('answerInput');
-                this.submitBtn = document.getElementById('submitBtn');
                 this.feedbackEl = document.getElementById('feedback');
                 this.nextBtn = document.getElementById('nextBtn');
                 this.scoreEl = document.getElementById('score');
@@ -371,11 +376,6 @@
                     });
                 });
 
-                // Submit button listener
-                this.submitBtn.addEventListener('click', () => {
-                    this.checkAnswer();
-                });
-
                 // Next button listener
                 this.nextBtn.addEventListener('click', () => {
                     this.generateNewProblem();
@@ -386,13 +386,9 @@
                     if (e.key >= '0' && e.key <= '9') {
                         this.handleKeypadInput(e.key);
                     } else if (e.key === 'Enter') {
-                        if (!this.hasAnswered) {
-                            this.checkAnswer();
-                        } else {
-                            this.generateNewProblem();
-                        }
+                        this.handleKeypadInput('submit');
                     } else if (e.key === 'Backspace') {
-                        this.handleKeypadInput('backspace');
+                        this.handleKeypadInput('clear');
                     } else if (e.key === 'Delete' || e.key === 'Escape') {
                         this.handleKeypadInput('clear');
                     }
@@ -400,14 +396,19 @@
             }
 
             handleKeypadInput(value) {
-                if (this.hasAnswered) return;
+                if (this.hasAnswered && value !== 'submit') return;
 
                 const currentValue = this.answerInput.value;
 
                 if (value === 'clear') {
                     this.answerInput.value = '';
-                } else if (value === 'backspace') {
-                    this.answerInput.value = currentValue.slice(0, -1);
+                } else if (value === 'submit') {
+                    if (!this.hasAnswered) {
+                        this.checkAnswer();
+                    } else {
+                        this.generateNewProblem();
+                    }
+                    return;
                 } else {
                     // Add digit
                     const newValue = currentValue + value;
@@ -430,13 +431,26 @@
             updateKeypadStates() {
                 const keypadButtons = document.querySelectorAll('.keypad-btn[data-value]');
                 const currentValue = this.answerInput.value;
+                const keypadSubmit = document.getElementById('keypadSubmit');
                 
                 keypadButtons.forEach(btn => {
                     const value = btn.getAttribute('data-value');
                     
-                    if (value === 'clear' || value === 'backspace') {
+                    if (value === 'clear') {
                         btn.disabled = false;
                         btn.style.opacity = '1';
+                        return;
+                    }
+                    
+                    if (value === 'submit') {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        // Update submit button text based on state
+                        if (this.hasAnswered) {
+                            btn.textContent = '→';
+                        } else {
+                            btn.textContent = '✓';
+                        }
                         return;
                     }
                     
@@ -481,8 +495,6 @@
                 
                 // Reset input and buttons
                 this.answerInput.value = '';
-                this.submitBtn.disabled = false;
-                this.submitBtn.textContent = 'Check Answer';
                 this.nextBtn.style.display = 'none';
                 this.feedbackEl.className = 'feedback';
                 this.feedbackEl.textContent = '';
