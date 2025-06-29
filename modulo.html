@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modular Arithmetic Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            padding-top: 40px;
+        }
+
+        .quiz-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .title {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .modulo-selector {
+            margin-bottom: 30px;
+        }
+
+        .modulo-selector h3 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .modulo-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modulo-btn {
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 50px;
+        }
+
+        .modulo-btn:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
+        .modulo-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .problem-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 2px solid #e9ecef;
+        }
+
+        .problem {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        .answer-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .answer-input {
+            font-size: 2em;
+            padding: 15px 20px;
+            border: 3px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+            width: 120px;
+            transition: all 0.3s ease;
+            background: white;
+            cursor: default;
+        }
+
+        .answer-input:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 250px;
+            margin: 20px auto;
+        }
+
+        .keypad-btn {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 1.5em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .keypad-btn:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .keypad-btn:active {
+            transform: translateY(0);
+            background: #dee2e6;
+        }
+
+        .keypad-btn.clear {
+            background: #ffeaa7;
+            border-color: #fdcb6e;
+            color: #8b6914;
+        }
+
+        .keypad-btn.clear:hover {
+            background: #fdcb6e;
+        }
+
+        .submit-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .submit-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .feedback {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .next-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .next-btn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .score-section {
+            background: #e7f3ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid #b8daff;
+        }
+
+        .score {
+            font-size: 1.4em;
+            color: #0056b3;
+            font-weight: 600;
+        }
+
+        .explanation {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            color: #856404;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 600px) {
+            .quiz-container {
+                padding: 20px;
+            }
+            
+            .title {
+                font-size: 2em;
+            }
+            
+            .problem {
+                font-size: 2em;
+            }
+            
+            .answer-input {
+                font-size: 1.5em;
+                width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h1 class="title">Modular Arithmetic Quiz</h1>
+        
+        <div class="modulo-selector">
+            <h3>Select Modulus:</h3>
+            <div class="modulo-buttons">
+                <button class="modulo-btn active" data-modulo="2">2</button>
+                <button class="modulo-btn" data-modulo="3">3</button>
+                <button class="modulo-btn" data-modulo="4">4</button>
+                <button class="modulo-btn" data-modulo="5">5</button>
+                <button class="modulo-btn" data-modulo="6">6</button>
+                <button class="modulo-btn" data-modulo="7">7</button>
+                <button class="modulo-btn" data-modulo="8">8</button>
+                <button class="modulo-btn" data-modulo="9">9</button>
+            </div>
+        </div>
+
+        <div class="problem-section">
+            <div class="problem" id="problem">Loading...</div>
+            
+            <div class="input-section">
+                <div class="answer-display">
+                    <input type="text" class="answer-input" id="answerInput" placeholder="?" readonly>
+                    <button class="submit-btn" id="submitBtn">Check Answer</button>
+                </div>
+                
+                <div class="keypad" id="keypad">
+                    <button class="keypad-btn" data-value="7">7</button>
+                    <button class="keypad-btn" data-value="8">8</button>
+                    <button class="keypad-btn" data-value="9">9</button>
+                    <button class="keypad-btn" data-value="4">4</button>
+                    <button class="keypad-btn" data-value="5">5</button>
+                    <button class="keypad-btn" data-value="6">6</button>
+                    <button class="keypad-btn" data-value="1">1</button>
+                    <button class="keypad-btn" data-value="2">2</button>
+                    <button class="keypad-btn" data-value="3">3</button>
+                    <button class="keypad-btn clear" data-value="clear">Clear</button>
+                    <button class="keypad-btn" data-value="0">0</button>
+                    <button class="keypad-btn clear" data-value="backspace">←</button>
+                </div>
+            </div>
+            
+            <div class="feedback" id="feedback"></div>
+            <button class="next-btn" id="nextBtn" style="display: none;">Next Problem</button>
+            <div class="explanation" id="explanation" style="display: none;"></div>
+        </div>
+
+        <div class="score-section">
+            <div class="score" id="score">Score: 0/0 (0%)</div>
+        </div>
+    </div>
+
+    <script>
+        class ModularArithmeticQuiz {
+            constructor() {
+                this.currentModulo = 2;
+                this.currentNumber = 0;
+                this.correctAnswer = 0;
+                this.totalQuestions = 0;
+                this.correctAnswers = 0;
+                this.hasAnswered = false;
+                
+                this.initializeElements();
+                this.attachEventListeners();
+                this.generateNewProblem();
+            }
+
+            initializeElements() {
+                this.problemEl = document.getElementById('problem');
+                this.answerInput = document.getElementById('answerInput');
+                this.submitBtn = document.getElementById('submitBtn');
+                this.feedbackEl = document.getElementById('feedback');
+                this.nextBtn = document.getElementById('nextBtn');
+                this.scoreEl = document.getElementById('score');
+                this.explanationEl = document.getElementById('explanation');
+                this.moduloButtons = document.querySelectorAll('.modulo-btn');
+            }
+
+            attachEventListeners() {
+                // Modulo button listeners
+                this.moduloButtons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.selectModulo(parseInt(e.target.getAttribute('data-modulo')));
+                    });
+                });
+
+                // Keypad listeners
+                const keypadButtons = document.querySelectorAll('.keypad-btn');
+                keypadButtons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.handleKeypadInput(e.target.getAttribute('data-value'));
+                    });
+                });
+
+                // Submit button listener
+                this.submitBtn.addEventListener('click', () => {
+                    this.checkAnswer();
+                });
+
+                // Next button listener
+                this.nextBtn.addEventListener('click', () => {
+                    this.generateNewProblem();
+                });
+
+                // Keyboard listeners for physical keyboards
+                document.addEventListener('keydown', (e) => {
+                    if (e.key >= '0' && e.key <= '9') {
+                        this.handleKeypadInput(e.key);
+                    } else if (e.key === 'Enter') {
+                        if (!this.hasAnswered) {
+                            this.checkAnswer();
+                        } else {
+                            this.generateNewProblem();
+                        }
+                    } else if (e.key === 'Backspace') {
+                        this.handleKeypadInput('backspace');
+                    } else if (e.key === 'Delete' || e.key === 'Escape') {
+                        this.handleKeypadInput('clear');
+                    }
+                });
+            }
+
+            handleKeypadInput(value) {
+                if (this.hasAnswered) return;
+
+                const currentValue = this.answerInput.value;
+
+                if (value === 'clear') {
+                    this.answerInput.value = '';
+                } else if (value === 'backspace') {
+                    this.answerInput.value = currentValue.slice(0, -1);
+                } else {
+                    // Add digit
+                    const newValue = currentValue + value;
+                    const numValue = parseInt(newValue);
+                    
+                    // Validate against modulo
+                    if (numValue < this.currentModulo) {
+                        this.answerInput.value = newValue;
+                    }
+                    // If the number would be too big, replace it entirely if it's a single digit
+                    else if (value.length === 1 && parseInt(value) < this.currentModulo) {
+                        this.answerInput.value = value;
+                    }
+                }
+
+                // Update keypad button states
+                this.updateKeypadStates();
+            }
+
+            updateKeypadStates() {
+                const keypadButtons = document.querySelectorAll('.keypad-btn[data-value]');
+                const currentValue = this.answerInput.value;
+                
+                keypadButtons.forEach(btn => {
+                    const value = btn.getAttribute('data-value');
+                    
+                    if (value === 'clear' || value === 'backspace') {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        return;
+                    }
+                    
+                    const digit = parseInt(value);
+                    const wouldExceed = currentValue === '' ? 
+                        digit >= this.currentModulo : 
+                        parseInt(currentValue + value) >= this.currentModulo;
+                    
+                    if (wouldExceed) {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.3';
+                    } else {
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                    }
+                });
+            }
+
+            selectModulo(modulo) {
+                this.currentModulo = modulo;
+                
+                // Update button styles
+                this.moduloButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (parseInt(btn.getAttribute('data-modulo')) === modulo) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Generate new problem with new modulo
+                this.generateNewProblem();
+            }
+
+            generateNewProblem() {
+                // Generate random number from 0 to 99
+                this.currentNumber = Math.floor(Math.random() * 100);
+                this.correctAnswer = this.currentNumber % this.currentModulo;
+                this.hasAnswered = false;
+
+                // Update display
+                this.problemEl.textContent = `${this.currentNumber} mod ${this.currentModulo} ≡ ?`;
+                
+                // Reset input and buttons
+                this.answerInput.value = '';
+                this.submitBtn.disabled = false;
+                this.submitBtn.textContent = 'Check Answer';
+                this.nextBtn.style.display = 'none';
+                this.feedbackEl.className = 'feedback';
+                this.feedbackEl.textContent = '';
+                this.explanationEl.style.display = 'none';
+                
+                // Update keypad states
+                this.updateKeypadStates();
+            }
+
+            checkAnswer() {
+                if (this.hasAnswered) return;
+
+                const userAnswer = parseInt(this.answerInput.value);
+                
+                if (isNaN(userAnswer) || userAnswer < 0 || userAnswer >= this.currentModulo) {
+                    this.feedbackEl.className = 'feedback incorrect';
+                    this.feedbackEl.textContent = `Please enter a number between 0 and ${this.currentModulo - 1}`;
+                    return;
+                }
+
+                this.totalQuestions++;
+                this.hasAnswered = true;
+
+                if (userAnswer === this.correctAnswer) {
+                    this.correctAnswers++;
+                    this.feedbackEl.className = 'feedback correct';
+                    this.feedbackEl.textContent = '🎉 Correct! Well done!';
+                } else {
+                    this.feedbackEl.className = 'feedback incorrect';
+                    this.feedbackEl.textContent = `❌ Not quite. The correct answer is ${this.correctAnswer}`;
+                    
+                    // Show explanation
+                    this.showExplanation();
+                }
+
+                this.submitBtn.disabled = true;
+                this.nextBtn.style.display = 'inline-block';
+                this.updateScore();
+            }
+
+            showExplanation() {
+                const quotient = Math.floor(this.currentNumber / this.currentModulo);
+                const remainder = this.currentNumber % this.currentModulo;
+                
+                this.explanationEl.style.display = 'block';
+                this.explanationEl.innerHTML = `
+                    <strong>Explanation:</strong><br>
+                    ${this.currentNumber} ÷ ${this.currentModulo} = ${quotient} remainder ${remainder}<br>
+                    So ${this.currentNumber} ≡ ${remainder} (mod ${this.currentModulo})
+                `;
+            }
+
+            updateScore() {
+                const percentage = this.totalQuestions > 0 ? 
+                    Math.round((this.correctAnswers / this.totalQuestions) * 100) : 0;
+                
+                this.scoreEl.textContent = 
+                    `Score: ${this.correctAnswers}/${this.totalQuestions} (${percentage}%)`;
+            }
+        }
+
+        // Initialize the quiz when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new ModularArithmeticQuiz();
+        });
+    </script>
+</body>
+</html>
