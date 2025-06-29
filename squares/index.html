@@ -1,17 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Square Quiz</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
 <body>
     <div class="quiz-container">
         <h1>Square Quiz</h1>
+        
+        <div class="difficulty-controls">
+            <button id="two-digit-btn" class="difficulty-toggle active" onclick="setDifficulty('2digit')">2-Digit Numbers</button>
+            <button id="three-digit-btn" class="difficulty-toggle" onclick="setDifficulty('3digit')">3-Digit Numbers</button>
+        </div>
+        
         <p>What is the square of the number below?</p>
         <div id="number-display" class="number-display"></div>
         <input type="text" id="answer-input" readonly>
+        
         <div class="number-pad">
             <button onclick="addNumber('1')">1</button>
             <button onclick="addNumber('2')">2</button>
@@ -22,12 +21,18 @@
             <button onclick="addNumber('7')">7</button>
             <button onclick="addNumber('8')">8</button>
             <button onclick="addNumber('9')">9</button>
-            <button onclick="clearInput()">C</button>
+            <button class="orange" onclick="clearInput()">C</button>
             <button onclick="addNumber('0')">0</button>
-            <button onclick="submitAnswer()">Submit</button>
+            <button class="orange" onclick="submitAnswer()">Submit</button>
         </div>
+        
+        <div class="action-buttons">
+            <button class="next-button" onclick="nextProblem()">Next Problem</button>
+        </div>
+        
         <div id="result-message" class="result-message"></div>
     </div>
-    <script src="script.js"></script>
+
+
 </body>
 </html>
