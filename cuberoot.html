@@ -242,22 +242,15 @@
         </div>
         
         <div class="action-buttons">
-            <button class="btn next-btn" onclick="nextQuestion()" id="nextBtn" style="display: none;">Next</button>
+            <button class="btn next-btn" onclick="nextQuestion()" id="nextBtn">Next</button>
         </div>
         
         <div class="feedback" id="feedback"></div>
-        
-        <div class="score">
-            <strong>Score:</strong> <span id="correct">0</span> correct out of <span id="total">0</span> attempts
-            (<span id="percentage">0</span>%)
-        </div>
     </div>
 
     <script>
         let currentAnswer = '';
         let correctAnswer = 0;
-        let totalQuestions = 0;
-        let correctCount = 0;
         let questionAnswered = false;
 
         // Generate random two-digit number and its cube
@@ -269,14 +262,11 @@
             document.getElementById('cubeDisplay').textContent = cube.toLocaleString();
             document.getElementById('feedback').textContent = '';
             document.getElementById('feedback').className = 'feedback';
-            document.getElementById('nextBtn').style.display = 'none';
             questionAnswered = false;
             clearAnswer();
         }
 
-        function addDigit(digit) {
-            if (questionAnswered) return;
-            
+        function addDigit(digit) {            
             if (currentAnswer.length < 2) {
                 currentAnswer += digit;
                 updateDisplay();
@@ -293,20 +283,16 @@
         }
 
         function checkAnswer() {
-            if (questionAnswered || currentAnswer === '') return;
+            if (currentAnswer === '') return;
             
             const userAnswer = parseInt(currentAnswer);
             
             const feedbackElement = document.getElementById('feedback');
             
             if (userAnswer === correctAnswer) {
-                totalQuestions++;
-                correctCount++;
                 questionAnswered = true;
                 feedbackElement.textContent = `✓ Correct`;
                 feedbackElement.className = 'feedback correct';
-                document.getElementById('nextBtn').style.display = 'inline-block';
-                updateScore();
             } else {
                 feedbackElement.textContent = `❌ Incorrect`;
                 feedbackElement.className = 'feedback incorrect';
@@ -316,13 +302,6 @@
 
         function nextQuestion() {
             generateQuestion();
-        }
-
-        function updateScore() {
-            document.getElementById('correct').textContent = correctCount;
-            document.getElementById('total').textContent = totalQuestions;
-            const percentage = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
-            document.getElementById('percentage').textContent = percentage;
         }
 
         // Keyboard support
