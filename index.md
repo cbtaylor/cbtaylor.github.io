@@ -12,6 +12,8 @@ Some links to apps I've created and projects I've done.
 
 [Squares](squares/) - practice squaring two-digit numbers
 
+[Cube Roots](cuberoot.html) - guess the cube root
+
 [Modular Arithmetic](modulo.html) - practice modular equivalences
 
 [Word Finder](wordfind.html) - when you're stuck on Spelling Bee
