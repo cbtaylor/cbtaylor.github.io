@@ -18,38 +18,38 @@
         .container {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 20px;
-            padding: 30px;
+            padding: 25px;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
         
         h1 {
             text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
+            margin-bottom: 20px;
+            font-size: 1.8em;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
         
         .question-area {
             text-align: center;
-            margin-bottom: 30px;
-            padding: 25px;
+            margin-bottom: 20px;
+            padding: 20px;
             background: rgba(255, 255, 255, 0.15);
             border-radius: 15px;
             backdrop-filter: blur(5px);
         }
         
         .question {
-            font-size: 2em;
-            margin-bottom: 15px;
+            font-size: 1.4em;
+            margin-bottom: 10px;
             font-weight: bold;
         }
         
         .cube-display {
-            font-size: 3.5em;
+            font-size: 2.5em;
             color: #ffeb3b;
             text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
-            margin: 20px 0;
+            margin: 15px 0;
         }
         
         .input-area {
@@ -57,13 +57,13 @@
             justify-content: center;
             align-items: center;
             gap: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         .answer-display {
-            font-size: 2.5em;
-            min-width: 100px;
-            padding: 15px;
+            font-size: 2em;
+            min-width: 80px;
+            padding: 12px;
             background: rgba(255, 255, 255, 0.9);
             color: #333;
             border-radius: 10px;
@@ -75,18 +75,18 @@
         .keypad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            max-width: 300px;
-            margin: 0 auto 30px;
+            gap: 10px;
+            max-width: 240px;
+            margin: 0 auto 20px;
         }
         
         .key {
-            width: 80px;
-            height: 80px;
-            font-size: 1.8em;
+            width: 65px;
+            height: 65px;
+            font-size: 1.5em;
             font-weight: bold;
             border: none;
-            border-radius: 15px;
+            border-radius: 12px;
             background: rgba(255, 255, 255, 0.2);
             color: white;
             cursor: pointer;
@@ -108,20 +108,44 @@
         .action-buttons {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-bottom: 30px;
+            gap: 12px;
+            margin-bottom: 20px;
         }
         
         .btn {
-            padding: 15px 30px;
-            font-size: 1.2em;
+            padding: 12px 24px;
+            font-size: 1em;
             font-weight: bold;
             border: none;
-            border-radius: 25px;
+            border-radius: 20px;
             cursor: pointer;
             transition: all 0.3s;
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+        
+        .key.submit-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .key.submit-btn:hover {
+            background: linear-gradient(45deg, #45a049, #4CAF50);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+        
+        .key.clear-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .key.clear-btn:hover {
+            background: linear-gradient(45deg, #ee5a52, #ff6b6b);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
         }
         
         .submit-btn {
@@ -159,33 +183,29 @@
         
         .feedback {
             text-align: center;
-            font-size: 1.5em;
+            font-size: 1.2em;
             font-weight: bold;
-            margin: 20px 0;
-            padding: 15px;
-            border-radius: 10px;
-            min-height: 30px;
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 8px;
+            min-height: 25px;
         }
         
         .correct {
-            background: rgba(76, 175, 80, 0.3);
             color: #4CAF50;
-            border: 2px solid #4CAF50;
         }
         
         .incorrect {
-            background: rgba(244, 67, 54, 0.3);
             color: #f44336;
-            border: 2px solid #f44336;
         }
         
         .score {
             text-align: center;
-            font-size: 1.3em;
-            margin-top: 20px;
-            padding: 15px;
+            font-size: 1.1em;
+            margin-top: 15px;
+            padding: 12px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            border-radius: 8px;
         }
         
         .score strong {
@@ -195,7 +215,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🧮 Cube Root Quiz</h1>
+        <h1>Cube Root Quiz</h1>
         
         <div class="question-area">
             <div class="question">What is the cube root of:</div>
@@ -216,11 +236,12 @@
             <button class="key" onclick="addDigit('7')">7</button>
             <button class="key" onclick="addDigit('8')">8</button>
             <button class="key" onclick="addDigit('9')">9</button>
+            <button class="key clear-btn" onclick="clearAnswer()">C</button>
+            <button class="key" onclick="addDigit('0')">0</button>
+            <button class="key submit-btn" onclick="checkAnswer()">✓</button>
         </div>
         
         <div class="action-buttons">
-            <button class="btn clear-btn" onclick="clearAnswer()">Clear</button>
-            <button class="btn submit-btn" onclick="checkAnswer()">Submit</button>
             <button class="btn next-btn" onclick="nextQuestion()" id="nextBtn" style="display: none;">Next</button>
         </div>
         
@@ -275,22 +296,22 @@
             if (questionAnswered || currentAnswer === '') return;
             
             const userAnswer = parseInt(currentAnswer);
-            totalQuestions++;
-            questionAnswered = true;
             
             const feedbackElement = document.getElementById('feedback');
             
             if (userAnswer === correctAnswer) {
+                totalQuestions++;
                 correctCount++;
-                feedbackElement.textContent = `🎉 Correct! ${correctAnswer}³ = ${(correctAnswer ** 3).toLocaleString()}`;
+                questionAnswered = true;
+                feedbackElement.textContent = `✓ Correct`;
                 feedbackElement.className = 'feedback correct';
+                document.getElementById('nextBtn').style.display = 'inline-block';
+                updateScore();
             } else {
-                feedbackElement.textContent = `❌ Incorrect. The cube root of ${(correctAnswer ** 3).toLocaleString()} is ${correctAnswer}`;
+                feedbackElement.textContent = `❌ Incorrect`;
                 feedbackElement.className = 'feedback incorrect';
+                clearAnswer();
             }
-            
-            document.getElementById('nextBtn').style.display = 'inline-block';
-            updateScore();
         }
 
         function nextQuestion() {
@@ -306,7 +327,7 @@
 
         // Keyboard support
         document.addEventListener('keydown', function(event) {
-            if (event.key >= '1' && event.key <= '9') {
+            if (event.key >= '0' && event.key <= '9') {
                 addDigit(event.key);
             } else if (event.key === 'Enter') {
                 if (questionAnswered) {
