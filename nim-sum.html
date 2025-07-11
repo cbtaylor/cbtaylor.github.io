@@ -211,31 +211,8 @@
             </div>
         </div>
         
-        <div class="binary-explanation">
-            <div class="binary-column">
-                <div class="binary-header">4s place</div>
-                <div class="binary-digit" id="bit-2-a">0</div>
-                <div class="binary-digit" id="bit-2-b">1</div>
-                <div class="binary-digit" id="bit-2-c">1</div>
-                <div class="separator-line"></div>
-                <div class="binary-digit" id="nim-bit-2">0</div>
-            </div>
-            <div class="binary-column">
-                <div class="binary-header">2s place</div>
-                <div class="binary-digit" id="bit-1-a">1</div>
-                <div class="binary-digit" id="bit-1-b">0</div>
-                <div class="binary-digit" id="bit-1-c">0</div>
-                <div class="separator-line"></div>
-                <div class="binary-digit" id="nim-bit-1">1</div>
-            </div>
-            <div class="binary-column">
-                <div class="binary-header">1s place</div>
-                <div class="binary-digit" id="bit-0-a">1</div>
-                <div class="binary-digit" id="bit-0-b">0</div>
-                <div class="binary-digit" id="bit-0-c">1</div>
-                <div class="separator-line"></div>
-                <div class="binary-digit" id="nim-bit-0">0</div>
-            </div>
+        <div class="binary-explanation" id="binary-explanation">
+            <!-- Dynamically generated columns will go here -->
         </div>
         
         <div class="nim-sum-container" id="nim-sum-container">
@@ -253,15 +230,47 @@
     <script>
         let piles = { a: 3, b: 4, c: 5 };
         
+        function getRequiredBits() {
+            const maxPile = Math.max(piles.a, piles.b, piles.c);
+            return Math.max(3, Math.ceil(Math.log2(maxPile + 1)));
+        }
+        
         function toBinary(num) {
-            return num.toString(2).padStart(3, '0');
+            const bits = getRequiredBits();
+            return num.toString(2).padStart(bits, '0');
         }
         
         function calculateNimSum() {
             return piles.a ^ piles.b ^ piles.c;
         }
         
+        function updateBinaryTable() {
+            const bits = getRequiredBits();
+            const container = document.getElementById('binary-explanation');
+            container.innerHTML = '';
+            
+            for (let bitPos = bits - 1; bitPos >= 0; bitPos--) {
+                const placeValue = Math.pow(2, bitPos);
+                const column = document.createElement('div');
+                column.className = 'binary-column';
+                
+                column.innerHTML = `
+                    <div class="binary-header">${placeValue}s place</div>
+                    <div class="binary-digit" id="bit-${bitPos}-a"></div>
+                    <div class="binary-digit" id="bit-${bitPos}-b"></div>
+                    <div class="binary-digit" id="bit-${bitPos}-c"></div>
+                    <div class="separator-line"></div>
+                    <div class="binary-digit" id="nim-bit-${bitPos}"></div>
+                `;
+                
+                container.appendChild(column);
+            }
+        }
+        
         function updateDisplay() {
+            // Update binary table if needed
+            updateBinaryTable();
+            
             // Update pile values and binary representations
             document.getElementById('pile-a-value').textContent = piles.a;
             document.getElementById('pile-b-value').textContent = piles.b;
@@ -276,10 +285,11 @@
             document.getElementById('pile-c-binary').textContent = binaryC;
             
             // Update binary breakdown
-            for (let i = 0; i < 3; i++) {
-                document.getElementById(`bit-${i}-a`).textContent = binaryA[2-i];
-                document.getElementById(`bit-${i}-b`).textContent = binaryB[2-i];
-                document.getElementById(`bit-${i}-c`).textContent = binaryC[2-i];
+            const bits = getRequiredBits();
+            for (let i = 0; i < bits; i++) {
+                document.getElementById(`bit-${i}-a`).textContent = binaryA[bits-1-i];
+                document.getElementById(`bit-${i}-b`).textContent = binaryB[bits-1-i];
+                document.getElementById(`bit-${i}-c`).textContent = binaryC[bits-1-i];
             }
             
             // Calculate and display nim-sum
@@ -288,8 +298,8 @@
             document.getElementById('nim-sum').textContent = nimSumBinary;
             
             // Update nim-sum breakdown
-            for (let i = 0; i < 3; i++) {
-                document.getElementById(`nim-bit-${i}`).textContent = nimSumBinary[2-i];
+            for (let i = 0; i < bits; i++) {
+                document.getElementById(`nim-bit-${i}`).textContent = nimSumBinary[bits-1-i];
             }
             
             // Update winning/losing status
