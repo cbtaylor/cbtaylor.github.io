@@ -1,0 +1,257 @@
+import React, { useEffect, useRef } from 'react';
+import * as THREE from 'three';
+
+export default function TriangularPrism() {
+  const containerRef = useRef(null);
+  const sceneRef = useRef(null);
+  const cameraRef = useRef(null);
+  const rendererRef = useRef(null);
+  const prismRef = useRef(null);
+  const isDragging = useRef(false);
+  const previousMousePosition = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    // Scene setup
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1a2e);
+    sceneRef.current = scene;
+
+    // Get dimensions based on window size
+    const canvasWidth = window.innerWidth;
+    const canvasHeight = window.innerHeight * 0.6;
+
+    // Camera setup
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      canvasWidth / canvasHeight,
+      0.1,
+      1000
+    );
+    camera.position.z = 3;
+    cameraRef.current = camera;
+
+    // Renderer setup
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(canvasWidth, canvasHeight);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+
+    // Create triangular prism geometry
+    const shape = new THREE.Shape();
+    const height = 1.5;
+    const base = 1.5;
+    
+    // Define triangular base
+    shape.moveTo(0, height / 2);
+    shape.lineTo(-base / 2, -height / 2);
+    shape.lineTo(base / 2, -height / 2);
+    shape.lineTo(0, height / 2);
+
+    const extrudeSettings = {
+      depth: 2,
+      bevelEnabled: false
+    };
+
+    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    geometry.center();
+
+    // Create material with both solid color and wireframe
+    const material = new THREE.MeshPhongMaterial({
+      color: 0x4a90e2,
+      shininess: 100,
+      specular: 0x444444
+    });
+
+    const prism = new THREE.Mesh(geometry, material);
+    prismRef.current = prism;
+    scene.add(prism);
+
+    // Add wireframe
+    const wireframeGeometry = new THREE.EdgesGeometry(geometry);
+    const wireframeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+    const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+    prism.add(wireframe);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight1.position.set(5, 5, 5);
+    scene.add(directionalLight1);
+
+    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+    directionalLight2.position.set(-5, -5, -5);
+    scene.add(directionalLight2);
+
+    // Mouse event handlers
+    const handleMouseDown = (event) => {
+      isDragging.current = true;
+      previousMousePosition.current = {
+        x: event.clientX,
+        y: event.clientY
+      };
+    };
+
+    const handleMouseMove = (event) => {
+      if (isDragging.current && prismRef.current) {
+        const deltaX = event.clientX - previousMousePosition.current.x;
+        const deltaY = event.clientY - previousMousePosition.current.y;
+
+        prismRef.current.rotation.y += deltaX * 0.01;
+        prismRef.current.rotation.x += deltaY * 0.01;
+
+        previousMousePosition.current = {
+          x: event.clientX,
+          y: event.clientY
+        };
+      }
+    };
+
+    const handleMouseUp = () => {
+      isDragging.current = false;
+    };
+
+    // Touch event handlers for mobile
+    const handleTouchStart = (event) => {
+      if (event.touches.length === 1) {
+        isDragging.current = true;
+        previousMousePosition.current = {
+          x: event.touches[0].clientX,
+          y: event.touches[0].clientY
+        };
+      }
+    };
+
+    const handleTouchMove = (event) => {
+      if (isDragging.current && event.touches.length === 1 && prismRef.current) {
+        const deltaX = event.touches[0].clientX - previousMousePosition.current.x;
+        const deltaY = event.touches[0].clientY - previousMousePosition.current.y;
+
+        prismRef.current.rotation.y += deltaX * 0.01;
+        prismRef.current.rotation.x += deltaY * 0.01;
+
+        previousMousePosition.current = {
+          x: event.touches[0].clientX,
+          y: event.touches[0].clientY
+        };
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isDragging.current = false;
+    };
+
+    // Add event listeners
+    renderer.domElement.addEventListener('mousedown', handleMouseDown);
+    renderer.domElement.addEventListener('mousemove', handleMouseMove);
+    renderer.domElement.addEventListener('mouseup', handleMouseUp);
+    renderer.domElement.addEventListener('mouseleave', handleMouseUp);
+    renderer.domElement.addEventListener('touchstart', handleTouchStart);
+    renderer.domElement.addEventListener('touchmove', handleTouchMove);
+    renderer.domElement.addEventListener('touchend', handleTouchEnd);
+
+    // Handle window resize
+    const handleResize = () => {
+      const canvasWidth = window.innerWidth;
+      const canvasHeight = window.innerHeight * 0.6;
+      camera.aspect = canvasWidth / canvasHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(canvasWidth, canvasHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    // Animation loop
+    const animate = () => {
+      requestAnimationFrame(animate);
+      
+      // Gentle auto-rotation when not dragging
+      if (!isDragging.current && prismRef.current) {
+        prismRef.current.rotation.y += 0.002;
+      }
+      
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      renderer.domElement.removeEventListener('mousedown', handleMouseDown);
+      renderer.domElement.removeEventListener('mousemove', handleMouseMove);
+      renderer.domElement.removeEventListener('mouseup', handleMouseUp);
+      renderer.domElement.removeEventListener('mouseleave', handleMouseUp);
+      renderer.domElement.removeEventListener('touchstart', handleTouchStart);
+      renderer.domElement.removeEventListener('touchmove', handleTouchMove);
+      renderer.domElement.removeEventListener('touchend', handleTouchEnd);
+      
+      if (containerRef.current && renderer.domElement) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
+      geometry.dispose();
+      material.dispose();
+      wireframeGeometry.dispose();
+      wireframeMaterial.dispose();
+      renderer.dispose();
+    };
+  }, []);
+
+  return (
+    <div className="w-full min-h-screen flex flex-col bg-gray-900">
+      {/* 3D Prism Container */}
+      <div className="relative w-full" style={{ height: '60vh', overflow: 'hidden' }}>
+        <div ref={containerRef} className="w-full h-full" />
+        <div className="absolute top-4 left-4 bg-black bg-opacity-50 text-white p-4 rounded">
+          <h2 className="text-xl font-bold mb-2">Triangular Prism</h2>
+          <p className="text-sm">Click and drag to rotate</p>
+          <p className="text-xs mt-1 text-gray-300">Auto-rotates when idle</p>
+        </div>
+      </div>
+
+      {/* Net Diagram */}
+      <div className="flex-1 bg-gray-800 flex flex-col items-center justify-center p-8">
+        <h2 className="text-2xl font-bold text-white mb-6">Net of the Triangular Prism</h2>
+        <svg width="800" height="400" viewBox="0 0 800 400" className="max-w-full h-auto">
+          {/* Define colors and styles */}
+          <defs>
+            <style>{`
+              .face { fill: #4a90e2; stroke: #ffffff; stroke-width: 3; }
+              .triangle { fill: #6bb6ff; stroke: #ffffff; stroke-width: 3; }
+              .label { fill: white; font-size: 14px; font-family: Arial, sans-serif; }
+            `}</style>
+          </defs>
+
+          {/* Left Rectangle */}
+          <rect x="175" y="150" width="150" height="100" className="face" />
+          <text x="250" y="205" textAnchor="middle" className="label">Side 1</text>
+
+          {/* Middle Rectangle (with triangles attached) */}
+          <rect x="325" y="150" width="150" height="100" className="face" />
+          <text x="400" y="205" textAnchor="middle" className="label">Side 2</text>
+
+          {/* Top Triangle */}
+          <polygon points="400,50 325,150 475,150" className="triangle" />
+          <text x="400" y="125" textAnchor="middle" className="label">Base 1</text>
+
+          {/* Bottom Triangle */}
+          <polygon points="400,350 325,250 475,250" className="triangle" />
+          <text x="400" y="280" textAnchor="middle" className="label">Base 2</text>
+
+          {/* Right Rectangle */}
+          <rect x="475" y="150" width="150" height="100" className="face" />
+          <text x="550" y="205" textAnchor="middle" className="label">Side 3</text>
+
+          {/* Dashed fold lines */}
+          <line x1="325" y1="150" x2="325" y2="250" stroke="#ffff00" strokeWidth="2" strokeDasharray="5,5" />
+          <line x1="475" y1="150" x2="475" y2="250" stroke="#ffff00" strokeWidth="2" strokeDasharray="5,5" />
+          <line x1="400" y1="150" x2="400" y2="50" stroke="#ffff00" strokeWidth="2" strokeDasharray="5,5" />
+          <line x1="400" y1="250" x2="400" y2="350" stroke="#ffff00" strokeWidth="2" strokeDasharray="5,5" />
+        </svg>
+        <p className="text-gray-300 mt-4 text-center max-w-2xl">
+          The net shows how the triangular prism unfolds into a flat pattern. 
+          The two triangular bases (top and bottom) and three rectangular sides are connected along the fold lines (shown in yellow dashes).
+        </p>
+      </div>
+    </div>
+  );
+}
