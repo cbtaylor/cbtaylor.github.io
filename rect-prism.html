@@ -100,12 +100,6 @@
             stroke-width: 3;
         }
 
-        .face-back {
-            fill: #f97316;
-            stroke: #ffffff;
-            stroke-width: 3;
-        }
-
         .face-left {
             fill: #10b981;
             stroke: #ffffff;
@@ -145,35 +139,35 @@
             <h2>Rectangular Prism</h2>
             <p>Click and drag to rotate</p>
             <p class="hint">Auto-rotates when idle</p>
-            <p class="dimensions">Width: 2 | Height: 1.5 | Depth: 3</p>
+            <p class="dimensions">Width: 4 | Height: 3 | Depth: 6</p>
         </div>
     </div>
 
     <div id="net-section">
         <h2>Net of the Rectangular Prism</h2>
         <svg id="net-svg" width="900" height="500" viewBox="0 0 900 500">
-            <!-- Top face (blue) -->
-            <rect x="250" y="50" width="200" height="100" class="face-top" />
+            <!-- Top face (green) -->
+            <rect x="250" y="50" width="200" height="100" class="face-left" />
             <text x="350" y="105" text-anchor="middle" class="label">Top</text>
             
-            <!-- Left face (green) -->
-            <rect x="150" y="150" width="100" height="150" class="face-left" />
+            <!-- Left face (red) -->
+            <rect x="150" y="150" width="100" height="150" class="face-front" />
             <text x="200" y="230" text-anchor="middle" class="label">Left</text>
             
-            <!-- Front face (red) -->
-            <rect x="250" y="150" width="200" height="150" class="face-front" />
+            <!-- Front face (blue) -->
+            <rect x="250" y="150" width="200" height="150" class="face-top" />
             <text x="350" y="230" text-anchor="middle" class="label">Front</text>
             
-            <!-- Right face (teal) -->
-            <rect x="450" y="150" width="100" height="150" class="face-right" />
+            <!-- Right face (red) -->
+            <rect x="450" y="150" width="100" height="150" class="face-front" />
             <text x="500" y="230" text-anchor="middle" class="label">Right</text>
             
-            <!-- Back face (orange) -->
-            <rect x="550" y="150" width="200" height="150" class="face-back" />
+            <!-- Back face (blue) -->
+            <rect x="550" y="150" width="200" height="150" class="face-top" />
             <text x="650" y="230" text-anchor="middle" class="label">Back</text>
             
-            <!-- Bottom face (indigo) -->
-            <rect x="250" y="300" width="200" height="100" class="face-bottom" />
+            <!-- Bottom face (green) -->
+            <rect x="250" y="300" width="200" height="100" class="face-left" />
             <text x="350" y="355" text-anchor="middle" class="label">Bottom</text>
 
             <!-- Dashed fold lines -->
@@ -187,7 +181,7 @@
         <p class="net-description">
             The net shows how the rectangular prism unfolds into a flat pattern. 
             The six rectangular faces (top, bottom, front, back, left, and right) are connected along the fold lines (shown in yellow dashes).
-            Each face is colored differently to help identify it. Note that the length, width, and height are all different dimensions.
+            Opposite faces share the same color: front and back are blue (largest faces), top and bottom are green (smallest faces), and left and right are red (medium faces).
         </p>
     </div>
 
@@ -225,14 +219,15 @@
         
         const geometry = new THREE.BoxGeometry(width, height, depth);
 
-        // Create materials for each face with different colors
+        // Create materials for each face
+        // BoxGeometry material order: [right, left, top, bottom, front, back]
         const materials = [
-            new THREE.MeshPhongMaterial({ color: 0x14b8a6, shininess: 100 }), // right - teal
-            new THREE.MeshPhongMaterial({ color: 0x10b981, shininess: 100 }), // left - green
-            new THREE.MeshPhongMaterial({ color: 0x3b82f6, shininess: 100 }), // top - blue
-            new THREE.MeshPhongMaterial({ color: 0x6366f1, shininess: 100 }), // bottom - indigo
-            new THREE.MeshPhongMaterial({ color: 0xef4444, shininess: 100 }), // front - red
-            new THREE.MeshPhongMaterial({ color: 0xf97316, shininess: 100 })  // back - orange
+            new THREE.MeshPhongMaterial({ color: 0x10b981, shininess: 100 }), // right - green (3×1.5, medium)
+            new THREE.MeshPhongMaterial({ color: 0x10b981, shininess: 100 }), // left - green (3×1.5, medium)
+            new THREE.MeshPhongMaterial({ color: 0x3b82f6, shininess: 100 }), // top - blue (2×3, largest)
+            new THREE.MeshPhongMaterial({ color: 0x3b82f6, shininess: 100 }), // bottom - blue (2×3, largest)
+            new THREE.MeshPhongMaterial({ color: 0xef4444, shininess: 100 }), // front - red (2×1.5, smallest)
+            new THREE.MeshPhongMaterial({ color: 0xef4444, shininess: 100 })  // back - red (2×1.5, smallest)
         ];
 
         const prism = new THREE.Mesh(geometry, materials);
