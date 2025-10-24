@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Tic-Tac-Toe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .current-player {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        #current-player {
+            color: #667eea;
+            font-size: 1.3em;
+        }
+
+        .game-status {
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .mega-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .sub-game {
+            background: white;
+            border-radius: 10px;
+            padding: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .sub-game.active {
+            box-shadow: 0 0 0 4px #667eea;
+            transform: scale(1.02);
+        }
+
+        .sub-game.won {
+            pointer-events: none;
+        }
+
+        .sub-game-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cell:hover:not(.taken) {
+            background: #e9ecef;
+            transform: scale(1.05);
+        }
+
+        .cell.taken {
+            cursor: not-allowed;
+        }
+
+        .cell.X {
+            color: #667eea;
+        }
+
+        .cell.O {
+            color: #764ba2;
+        }
+
+        .winner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            font-weight: bold;
+            border-radius: 10px;
+            pointer-events: none;
+        }
+
+        .winner-overlay.X {
+            color: #667eea;
+        }
+
+        .winner-overlay.O {
+            color: #764ba2;
+        }
+
+        .winner-overlay.draw {
+            color: #999;
+            font-size: 2em;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #reset-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        #reset-button:hover {
+            background: #764ba2;
+        }
+
+        .instructions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .info-panel {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .mega-board {
+                gap: 10px;
+                padding: 10px;
+            }
+            
+            .cell {
+                font-size: 1.2em;
+            }
+            
+            .winner-overlay {
+                font-size: 3em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Super Tic-Tac-Toe</h1>
+        
+        <div class="info-panel">
+            <div class="current-player">
+                Current Player: <span id="current-player">X</span>
+            </div>
+            <div class="game-status" id="game-status">
+                First move: Click any cell
+            </div>
+        </div>
+
+        <div class="mega-board" id="mega-board">
+            <!-- The 9 sub-games will be generated by JavaScript -->
+        </div>
+
+        <div class="controls">
+            <button id="reset-button">New Game</button>
+        </div>
+
+        <div class="instructions">
+            <h3>How to Play:</h3>
+            <ul>
+                <li>Win three sub-games in a row to win the overall game</li>
+                <li>Your move in a sub-game determines which sub-game your opponent must play in next</li>
+                <li>If sent to a completed sub-game, you may play in any available sub-game</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let currentPlayer = 'X';
+        let activeBoard = null; // null means any board can be played
+        let subGames = []; // 9 sub-games, each with 9 cells
+        let subGameWinners = Array(9).fill(null); // Track winner of each sub-game
+        let gameOver = false;
+
+        // Initialize the game
+        function initGame() {
+            currentPlayer = 'X';
+            activeBoard = null;
+            subGames = Array(9).fill(null).map(() => Array(9).fill(null));
+            subGameWinners = Array(9).fill(null);
+            gameOver = false;
+            
+            createBoard();
+            updateStatus('First move: Click any cell');
+            updateCurrentPlayer();
+        }
+
+        // Create the game board
+        function createBoard() {
+            const megaBoard = document.getElementById('mega-board');
+            megaBoard.innerHTML = '';
+            
+            for (let i = 0; i < 9; i++) {
+                const subGame = document.createElement('div');
+                subGame.className = 'sub-game';
+                subGame.dataset.index = i;
+                
+                const subGameGrid = document.createElement('div');
+                subGameGrid.className = 'sub-game-grid';
+                
+                for (let j = 0; j < 9; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.subGame = i;
+                    cell.dataset.cell = j;
+                    cell.addEventListener('click', handleCellClick);
+                    subGameGrid.appendChild(cell);
+                }
+                
+                subGame.appendChild(subGameGrid);
+                megaBoard.appendChild(subGame);
+            }
+            
+            updateBoardHighlight();
+        }
+
+        // Handle cell click
+        function handleCellClick(e) {
+            if (gameOver) return;
+            
+            const subGameIndex = parseInt(e.target.dataset.subGame);
+            const cellIndex = parseInt(e.target.dataset.cell);
+            
+            // Check if this is a valid move
+            if (!isValidMove(subGameIndex, cellIndex)) return;
+            
+            // Make the move
+            makeMove(subGameIndex, cellIndex);
+        }
+
+        // Check if a move is valid
+        function isValidMove(subGameIndex, cellIndex) {
+            // Check if the cell is already taken
+            if (subGames[subGameIndex][cellIndex] !== null) return false;
+            
+            // Check if the sub-game is already won
+            if (subGameWinners[subGameIndex] !== null) return false;
+            
+            // Check if this is the active board (or if any board is allowed)
+            if (activeBoard !== null && activeBoard !== subGameIndex) return false;
+            
+            return true;
+        }
+
+        // Make a move
+        function makeMove(subGameIndex, cellIndex) {
+            // Update game state
+            subGames[subGameIndex][cellIndex] = currentPlayer;
+            
+            // Update UI
+            const cell = document.querySelector(`[data-sub-game="${subGameIndex}"][data-cell="${cellIndex}"]`);
+            cell.textContent = currentPlayer;
+            cell.classList.add('taken', currentPlayer);
+            
+            // Check if this sub-game is won
+            const subGameWinner = checkWin(subGames[subGameIndex]);
+            if (subGameWinner) {
+                subGameWinners[subGameIndex] = subGameWinner;
+                markSubGameWon(subGameIndex, subGameWinner);
+                
+                // Check if the overall game is won
+                const overallWinner = checkWin(subGameWinners);
+                if (overallWinner) {
+                    endGame(overallWinner);
+                    return;
+                }
+            } else if (isBoardFull(subGames[subGameIndex])) {
+                // Sub-game is a draw
+                subGameWinners[subGameIndex] = 'draw';
+                markSubGameWon(subGameIndex, 'draw');
+            }
+            
+            // Check if overall game is a draw (all sub-games finished, no winner)
+            if (subGameWinners.every(winner => winner !== null)) {
+                endGame('draw');
+                return;
+            }
+            
+            // Determine next active board
+            if (subGameWinners[cellIndex] === null) {
+                activeBoard = cellIndex;
+            } else {
+                activeBoard = null; // Any board can be played
+            }
+            
+            // Switch player
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            updateCurrentPlayer();
+            updateBoardHighlight();
+            updateStatus(activeBoard === null ? 
+                'Play in any available sub-game' : 
+                `Play in sub-game ${activeBoard + 1}`);
+        }
+
+        // Check if there's a winner in a 3x3 grid
+        function checkWin(board) {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+                [0, 4, 8], [2, 4, 6]             // Diagonals
+            ];
+            
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    return board[a];
+                }
+            }
+            
+            return null;
+        }
+
+        // Check if a board is full
+        function isBoardFull(board) {
+            return board.every(cell => cell !== null);
+        }
+
+        // Mark a sub-game as won
+        function markSubGameWon(subGameIndex, winner) {
+            const subGame = document.querySelector(`[data-index="${subGameIndex}"]`);
+            subGame.classList.add('won');
+            
+            const overlay = document.createElement('div');
+            overlay.className = `winner-overlay ${winner}`;
+            overlay.textContent = winner === 'draw' ? 'Draw' : winner;
+            subGame.appendChild(overlay);
+        }
+
+        // Update board highlighting
+        function updateBoardHighlight() {
+            const allSubGames = document.querySelectorAll('.sub-game');
+            allSubGames.forEach((subGame, index) => {
+                if (activeBoard === null) {
+                    // Any non-won board can be played
+                    if (subGameWinners[index] === null) {
+                        subGame.classList.add('active');
+                    } else {
+                        subGame.classList.remove('active');
+                    }
+                } else {
+                    // Only the active board can be played
+                    if (index === activeBoard) {
+                        subGame.classList.add('active');
+                    } else {
+                        subGame.classList.remove('active');
+                    }
+                }
+            });
+        }
+
+        // Update current player display
+        function updateCurrentPlayer() {
+            document.getElementById('current-player').textContent = currentPlayer;
+        }
+
+        // Update status message
+        function updateStatus(message) {
+            document.getElementById('game-status').textContent = message;
+        }
+
+        // End the game
+        function endGame(winner) {
+            gameOver = true;
+            if (winner === 'draw') {
+                updateStatus('Game Over: Draw!');
+            } else {
+                updateStatus(`Game Over: ${winner} wins!`);
+            }
+            
+            // Remove all highlighting
+            const allSubGames = document.querySelectorAll('.sub-game');
+            allSubGames.forEach(subGame => subGame.classList.remove('active'));
+        }
+
+        // Reset the game
+        document.getElementById('reset-button').addEventListener('click', initGame);
+
+        // Initialize game on load
+        initGame();
+    </script>
+</body>
+</html>
