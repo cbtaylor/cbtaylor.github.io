@@ -4,6 +4,8 @@ Some links to apps I've created and projects I've done.
 ### Apps
 [Day of the Week game](dayoftheweek/) - guess the day given any date
 
+[Linear equation quiz](linearquiz.hmtl) - guess the correct equation
+
 [Prime or Composite](prime.html) - can you guess which?
 
 [n-back](nback/) - a version of the classic memory test
@@ -50,3 +52,4 @@ I used pandas and a number of the Python graphing packages to explore some relat
 [An html version of the project](baseball.html)  
 
 ![mountains](500by100pics/mountains1.png)
+
