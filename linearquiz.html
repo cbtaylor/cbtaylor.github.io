@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Equation Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+
+        .difficulty-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .difficulty-btn {
+            padding: 8px 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .difficulty-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .difficulty-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .option {
+            padding: 15px 20px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .fraction {
+            display: inline-block;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .fraction .numerator {
+            display: block;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2px;
+        }
+
+        .fraction .denominator {
+            display: block;
+            padding-top: 2px;
+        }
+
+        .minus-sign {
+            font-weight: bold;
+            font-size: 1.2em;
+            padding: 0 2px;
+        }
+
+        .coefficient {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .option:hover {
+            background: #f0f0f0;
+            border-color: #667eea;
+        }
+
+        .option.selected {
+            background: #e3f2fd;
+            border-color: #2196F3;
+        }
+
+        .option.correct {
+            background: #c8e6c9;
+            border-color: #4caf50;
+            font-weight: bold;
+        }
+
+        .option.incorrect {
+            background: #ffcdd2;
+            border-color: #f44336;
+        }
+
+        .option.disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .feedback {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            min-height: 30px;
+        }
+
+        .feedback.correct {
+            color: #4caf50;
+        }
+
+        .feedback.incorrect {
+            color: #f44336;
+        }
+
+        .next-button {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .next-button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .next-button:active {
+            transform: translateY(0);
+        }
+
+        .score {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Line Equation Quiz</h1>
+        <div class="difficulty-toggle">
+            <button class="difficulty-btn active" id="easyBtn">Easy</button>
+            <button class="difficulty-btn" id="hardBtn">Hard</button>
+        </div>
+        <div class="canvas-container">
+            <canvas id="graphCanvas" width="400" height="400"></canvas>
+        </div>
+        <div class="feedback" id="feedback"></div>
+        <div class="options" id="options"></div>
+        <button class="next-button" id="nextButton">Next Question</button>
+        <div class="score">Score: <span id="score">0</span> / <span id="total">0</span></div>
+    </div>
+
+    <script>
+        let currentAnswer = null;
+        let answered = false;
+        let score = 0;
+        let total = 0;
+        let difficulty = 'easy'; // 'easy' or 'hard'
+
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        const optionsDiv = document.getElementById('options');
+        const feedbackDiv = document.getElementById('feedback');
+        const nextButton = document.getElementById('nextButton');
+        const easyBtn = document.getElementById('easyBtn');
+        const hardBtn = document.getElementById('hardBtn');
+
+        // Difficulty toggle handlers
+        easyBtn.addEventListener('click', () => {
+            difficulty = 'easy';
+            easyBtn.classList.add('active');
+            hardBtn.classList.remove('active');
+            generateQuestion();
+        });
+
+        hardBtn.addEventListener('click', () => {
+            difficulty = 'hard';
+            hardBtn.classList.add('active');
+            easyBtn.classList.remove('active');
+            generateQuestion();
+        });
+
+        // GCD function for reducing fractions
+        function gcd(a, b) {
+            a = Math.abs(a);
+            b = Math.abs(b);
+            while (b !== 0) {
+                let t = b;
+                b = a % b;
+                a = t;
+            }
+            return a;
+        }
+
+        // Reduce a fraction
+        function reduceFraction(numerator, denominator) {
+            if (denominator === 0) return { num: 0, den: 1 };
+            
+            const divisor = gcd(numerator, denominator);
+            let num = numerator / divisor;
+            let den = denominator / divisor;
+            
+            // Keep denominator positive
+            if (den < 0) {
+                num = -num;
+                den = -den;
+            }
+            
+            return { num, den };
+        }
+
+        // Format fraction as HTML
+        function formatFraction(numerator, denominator) {
+            const reduced = reduceFraction(numerator, denominator);
+            
+            if (reduced.den === 1) {
+                return reduced.num.toString();
+            }
+            
+            const absNum = Math.abs(reduced.num);
+            const sign = reduced.num < 0 ? '<span class="minus-sign">−</span>' : '';
+            
+            return `${sign}<span class="fraction"><span class="numerator">${absNum}</span><span class="denominator">${reduced.den}</span></span>`;
+        }
+
+        // Format equation
+        function formatEquation(m_num, m_den, b_num, b_den) {
+            let equation = 'y = ';
+            
+            // Handle slope
+            if (m_num === 0) {
+                equation += '0x';
+            } else if (m_den === 1) {
+                if (m_num === 1) {
+                    equation += 'x';
+                } else if (m_num === -1) {
+                    equation += '<span class="minus-sign">−</span>x';
+                } else if (m_num < 0) {
+                    equation += '<span class="minus-sign">−</span><span class="coefficient">' + Math.abs(m_num) + '</span>x';
+                } else {
+                    equation += '<span class="coefficient">' + m_num + '</span>x';
+                }
+            } else {
+                const mFrac = formatFraction(m_num, m_den);
+                equation += mFrac + 'x';
+            }
+            
+            // Handle y-intercept
+            if (b_num !== 0) {
+                const reduced_b = reduceFraction(b_num, b_den);
+                if (reduced_b.num > 0) {
+                    equation += ' + ';
+                } else {
+                    equation += ' <span class="minus-sign">−</span> ';
+                }
+                const bFrac = formatFraction(Math.abs(reduced_b.num), reduced_b.den);
+                equation += bFrac;
+            }
+            
+            return equation;
+        }
+
+        // Draw the graph
+        function drawGraph(x1, y1, x2, y2) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const scale = 18;
+            
+            // Draw grid
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            
+            for (let i = -10; i <= 10; i++) {
+                // Vertical lines
+                ctx.beginPath();
+                ctx.moveTo(centerX + i * scale, 0);
+                ctx.lineTo(centerX + i * scale, canvas.height);
+                ctx.stroke();
+                
+                // Horizontal lines
+                ctx.beginPath();
+                ctx.moveTo(0, centerY - i * scale);
+                ctx.lineTo(canvas.width, centerY - i * scale);
+                ctx.stroke();
+            }
+            
+            // Draw axes
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            
+            // X-axis
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.stroke();
+            
+            // Y-axis
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.stroke();
+            
+            // Draw axis labels
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            
+            for (let i = -10; i <= 10; i += 2) {
+                if (i !== 0) {
+                    ctx.fillText(i, centerX + i * scale, centerY + 5);
+                    ctx.fillText(i, centerX - 15, centerY - i * scale);
+                }
+            }
+            
+            // Draw the line extending across the entire graph
+            const slope = (y2 - y1) / (x2 - x1);
+            const intercept = y1 - slope * x1;
+            
+            const x_left = -10;
+            const y_left = slope * x_left + intercept;
+            const x_right = 10;
+            const y_right = slope * x_right + intercept;
+            
+            ctx.strokeStyle = '#2196F3';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(centerX + x_left * scale, centerY - y_left * scale);
+            ctx.lineTo(centerX + x_right * scale, centerY - y_right * scale);
+            ctx.stroke();
+            
+            // Draw points
+            ctx.fillStyle = '#f44336';
+            ctx.beginPath();
+            ctx.arc(centerX + x1 * scale, centerY - y1 * scale, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(centerX + x2 * scale, centerY - y2 * scale, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Label points with smart positioning to avoid line and overlaps
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 14px Arial';
+            
+            // Calculate line slope for smart positioning
+            const lineSlope = (y2 - y1) / (x2 - x1);
+            
+            // Function to find best label position
+            function findBestLabelPosition(x, y, otherLabel) {
+                const canvasX = centerX + x * scale;
+                const canvasY = centerY - y * scale;
+                const label = `(${x}, ${y})`;
+                const labelWidth = ctx.measureText(label).width;
+                const labelHeight = 16; // Approximate height
+                
+                // Define possible positions (offset from point)
+                // Order: prefer positions away from line
+                const positions = [];
+                
+                // Determine if line is going up or down
+                if (lineSlope > 0) {
+                    // Line going up-right, prefer top-left and bottom-right
+                    positions.push(
+                        { dx: -10, dy: -10, alignX: 'right', alignY: 'bottom' },  // top-left
+                        { dx: 10, dy: 10, alignX: 'left', alignY: 'top' },       // bottom-right
+                        { dx: 10, dy: -10, alignX: 'left', alignY: 'bottom' },   // top-right
+                        { dx: -10, dy: 10, alignX: 'right', alignY: 'top' }      // bottom-left
+                    );
+                } else {
+                    // Line going down-right, prefer top-right and bottom-left
+                    positions.push(
+                        { dx: 10, dy: -10, alignX: 'left', alignY: 'bottom' },   // top-right
+                        { dx: -10, dy: 10, alignX: 'right', alignY: 'top' },     // bottom-left
+                        { dx: -10, dy: -10, alignX: 'right', alignY: 'bottom' }, // top-left
+                        { dx: 10, dy: 10, alignX: 'left', alignY: 'top' }        // bottom-right
+                    );
+                }
+                
+                // Try each position
+                for (let pos of positions) {
+                    let labelX = canvasX + pos.dx;
+                    let labelY = canvasY + pos.dy;
+                    
+                    // Calculate label bounds
+                    let labelLeft = pos.alignX === 'left' ? labelX : labelX - labelWidth;
+                    let labelRight = labelLeft + labelWidth;
+                    let labelTop = pos.alignY === 'bottom' ? labelY - labelHeight : labelY;
+                    let labelBottom = labelTop + labelHeight;
+                    
+                    // Check if within canvas bounds
+                    if (labelLeft < 5 || labelRight > canvas.width - 5 || 
+                        labelTop < 5 || labelBottom > canvas.height - 5) {
+                        continue;
+                    }
+                    
+                    // Check if overlaps with y-axis (avoid labels on the y-axis)
+                    if (labelLeft < centerX + 5 && labelRight > centerX - 5) {
+                        continue;
+                    }
+                    
+                    // Check if overlaps with x-axis (avoid labels on the x-axis)
+                    if (labelTop < centerY + 5 && labelBottom > centerY - 5) {
+                        continue;
+                    }
+                    
+                    // Check if overlaps with other label (if provided)
+                    if (otherLabel) {
+                        const overlapX = !(labelRight < otherLabel.left || labelLeft > otherLabel.right);
+                        const overlapY = !(labelBottom < otherLabel.top || labelTop > otherLabel.bottom);
+                        if (overlapX && overlapY) {
+                            continue;
+                        }
+                    }
+                    
+                    // This position is good
+                    return {
+                        x: labelX,
+                        y: labelY,
+                        alignX: pos.alignX,
+                        alignY: pos.alignY,
+                        left: labelLeft,
+                        right: labelRight,
+                        top: labelTop,
+                        bottom: labelBottom
+                    };
+                }
+                
+                // Fallback to default position if no good position found
+                return {
+                    x: canvasX + 10,
+                    y: canvasY - 10,
+                    alignX: 'left',
+                    alignY: 'bottom',
+                    left: canvasX + 10,
+                    right: canvasX + 10 + labelWidth,
+                    top: canvasY - 10 - labelHeight,
+                    bottom: canvasY - 10
+                };
+            }
+            
+            // Position first label
+            const label1 = `(${x1}, ${y1})`;
+            const pos1 = findBestLabelPosition(x1, y1, null);
+            
+            // Position second label (avoiding first)
+            const label2 = `(${x2}, ${y2})`;
+            const pos2 = findBestLabelPosition(x2, y2, pos1);
+            
+            // Draw first label
+            ctx.textAlign = pos1.alignX;
+            ctx.textBaseline = pos1.alignY;
+            ctx.fillText(label1, pos1.x, pos1.y);
+            
+            // Draw second label
+            ctx.textAlign = pos2.alignX;
+            ctx.textBaseline = pos2.alignY;
+            ctx.fillText(label2, pos2.x, pos2.y);
+        }
+
+        // Generate distractor equations
+        function generateDistractors(m_num, m_den, b_num, b_den) {
+            const distractors = [];
+            
+            // Distractor 1: wrong slope, same y-intercept
+            let d1_m_num;
+            do {
+                d1_m_num = m_num + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 1);
+            } while (d1_m_num === 0); // Prevent zero coefficient
+            
+            distractors.push({
+                m_num: d1_m_num,
+                m_den: m_den,
+                b_num: b_num,
+                b_den: b_den
+            });
+            
+            // Distractor 2: same slope, wrong y-intercept
+            let d2_b_num = b_num + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 5) + 1);
+            distractors.push({
+                m_num: m_num,
+                m_den: m_den,
+                b_num: d2_b_num,
+                b_den: b_den
+            });
+            
+            return distractors;
+        }
+
+        // Generate a new question
+        function generateQuestion() {
+            answered = false;
+            feedbackDiv.textContent = '';
+            feedbackDiv.className = 'feedback';
+            
+            let x1, y1, x2, y2, m_num, m_den, b_num, b_den;
+            
+            if (difficulty === 'easy') {
+                // Easy mode: integer slope and y-intercept
+                do {
+                    x1 = Math.floor(Math.random() * 19) - 9; // -9 to 9
+                    x2 = Math.floor(Math.random() * 19) - 9;
+                } while (x1 === x2 || Math.abs(x1 - x2) < 2);
+                
+                // Pick integer slope (avoid 0 for horizontal lines)
+                let m;
+                do {
+                    m = Math.floor(Math.random() * 13) - 6; // -6 to 6
+                } while (m === 0);
+                
+                // Pick integer y-intercept
+                const b = Math.floor(Math.random() * 19) - 9; // -9 to 9
+                
+                // Calculate y values from equation y = mx + b
+                y1 = m * x1 + b;
+                y2 = m * x2 + b;
+                
+                // Make sure y values are in range, if not regenerate
+                if (y1 < -9 || y1 > 9 || y2 < -9 || y2 > 9) {
+                    generateQuestion(); // Regenerate if out of bounds
+                    return;
+                }
+                
+                m_num = m;
+                m_den = 1;
+                b_num = b;
+                b_den = 1;
+                
+            } else {
+                // Hard mode: allow fractional coefficients (original behavior)
+                do {
+                    x1 = Math.floor(Math.random() * 19) - 9; // -9 to 9
+                    y1 = Math.floor(Math.random() * 19) - 9;
+                    x2 = Math.floor(Math.random() * 19) - 9;
+                    y2 = Math.floor(Math.random() * 19) - 9;
+                } while (x1 === x2 || y1 === y2 || Math.abs(x1 - x2) < 2); // Ensure different x and y values, reasonable spacing
+                
+                // Calculate slope as a fraction
+                m_num = y2 - y1;
+                m_den = x2 - x1;
+                
+                // Calculate y-intercept: b = y1 - m*x1 = (y1*m_den - m_num*x1) / m_den
+                b_num = y1 * m_den - m_num * x1;
+                b_den = m_den;
+            }
+            
+            // Draw the graph
+            drawGraph(x1, y1, x2, y2);
+            
+            // Generate options
+            const correctEquation = formatEquation(m_num, m_den, b_num, b_den);
+            const distractors = generateDistractors(m_num, m_den, b_num, b_den);
+            
+            const options = [
+                { equation: correctEquation, correct: true },
+                { equation: formatEquation(distractors[0].m_num, distractors[0].m_den, distractors[0].b_num, distractors[0].b_den), correct: false },
+                { equation: formatEquation(distractors[1].m_num, distractors[1].m_den, distractors[1].b_num, distractors[1].b_den), correct: false }
+            ];
+            
+            // Shuffle options
+            for (let i = options.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [options[i], options[j]] = [options[j], options[i]];
+            }
+            
+            // Display options
+            optionsDiv.innerHTML = '';
+            options.forEach((option, index) => {
+                const div = document.createElement('div');
+                div.className = 'option';
+                div.innerHTML = option.equation;
+                div.dataset.correct = option.correct;
+                div.addEventListener('click', () => selectOption(div, option.correct));
+                optionsDiv.appendChild(div);
+            });
+            
+            currentAnswer = options.findIndex(opt => opt.correct);
+        }
+
+        // Handle option selection
+        function selectOption(element, isCorrect) {
+            if (answered) return;
+            
+            answered = true;
+            total++;
+            
+            // Disable all options
+            const allOptions = document.querySelectorAll('.option');
+            allOptions.forEach(opt => {
+                opt.classList.add('disabled');
+                if (opt.dataset.correct === 'true') {
+                    opt.classList.add('correct');
+                }
+            });
+            
+            if (isCorrect) {
+                score++;
+                element.classList.add('correct');
+                feedbackDiv.textContent = '✓ Correct!';
+                feedbackDiv.className = 'feedback correct';
+            } else {
+                element.classList.add('incorrect');
+                feedbackDiv.textContent = '✗ Incorrect';
+                feedbackDiv.className = 'feedback incorrect';
+            }
+            
+            // Update score
+            document.getElementById('score').textContent = score;
+            document.getElementById('total').textContent = total;
+        }
+
+        // Next button handler
+        nextButton.addEventListener('click', generateQuestion);
+
+        // Initialize
+        generateQuestion();
+    </script>
+</body>
+</html>
