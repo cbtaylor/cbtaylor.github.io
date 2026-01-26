@@ -121,16 +121,9 @@
 
         .targets-section {
             background: #f3f4f6;
-            padding: 15px;
+            padding: 12px;
             border-radius: 12px;
             margin-bottom: 15px;
-        }
-
-        .targets-label {
-            font-size: 1em;
-            font-weight: 600;
-            margin-bottom: 12px;
-            color: #667eea;
         }
 
         .targets {
@@ -343,7 +336,6 @@
             <!-- Center: Game area -->
             <div class="center-panel">
                 <div class="targets-section">
-                    <div class="targets-label">Target Numbers:</div>
                     <div class="targets" id="targets"></div>
                 </div>
 
@@ -403,14 +395,16 @@
             // Addition
             operations.push({num1: a, op: '+', num2: b, result: a + b});
             
-            // Subtraction (b - a, always positive)
-            operations.push({num1: b, op: '-', num2: a, result: b - a});
+            // Subtraction (b - a, should be positive)
+            if (b - a > 0) {
+                operations.push({num1: b, op: '-', num2: a, result: b - a});
+            }
             
             // Multiplication
             operations.push({num1: a, op: '×', num2: b, result: a * b});
             
-            // Division (if exact)
-            if (b % a === 0) {
+            // Division (if exact and positive)
+            if (b % a === 0 && b / a > 0) {
                 operations.push({num1: b, op: '÷', num2: a, result: b / a});
             }
             
