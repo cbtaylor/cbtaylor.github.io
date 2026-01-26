@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kumi-Suji Puzzle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .game-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .side-panel {
+            flex-shrink: 0;
+        }
+
+        .center-panel {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tiles-section {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .tiles-label {
+            font-size: 0.95em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #374151;
+            text-align: center;
+        }
+
+        .tiles-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .targets-section {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .targets-label {
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #667eea;
+        }
+
+        .targets {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .target {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #667eea;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-width: 70px;
+            text-align: center;
+        }
+
+        .workspace {
+            margin-bottom: 15px;
+        }
+
+        .equation-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #fafafa;
+            border-radius: 10px;
+            min-height: 70px;
+        }
+
+        .drop-zone {
+            width: 70px;
+            height: 70px;
+            border: 3px dashed #cbd5e1;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .drop-zone.number {
+            width: 70px;
+        }
+
+        .drop-zone.operator {
+            width: 60px;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #667eea;
+            background: #e0e7ff;
+            transform: scale(1.05);
+        }
+
+        .drop-zone.filled {
+            border-style: solid;
+            border-color: #667eea;
+        }
+
+        .equation-symbol {
+            font-size: 1.8em;
+            color: #9ca3af;
+            font-weight: bold;
+        }
+
+        .equation-result {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .tile {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            font-weight: bold;
+            cursor: grab;
+            user-select: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .tile:active {
+            cursor: grabbing;
+        }
+
+        .tile.number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tile.operator {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .tile.used {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .tile.in-slot {
+            font-size: 1.6em;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-align: center;
+            font-size: 1.1em;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feedback.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 3px solid #10b981;
+        }
+
+        .feedback.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 3px solid #ef4444;
+        }
+
+        @media (max-width: 1024px) {
+            .game-layout {
+                flex-direction: column;
+            }
+
+            .tiles-column {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .side-panel {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .equation-row {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .targets {
+                gap: 10px;
+            }
+
+            .target {
+                padding: 12px 18px;
+                font-size: 1.3em;
+                min-width: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kumi-Suji Puzzle</h1>
+        <p class="subtitle">Pair numbers 1-10 using operators to create the target numbers</p>
+        
+        <div class="header-row">
+            <div class="controls">
+                <button class="btn-secondary" onclick="clearBoard()">Clear</button>
+                <button class="btn-primary" onclick="newPuzzle()">New Puzzle</button>
+            </div>
+        </div>
+
+        <div class="game-layout">
+            <!-- Left side: Number tiles -->
+            <div class="side-panel">
+                <div class="tiles-section">
+                    <div class="tiles-label">Numbers</div>
+                    <div class="tiles-column" id="number-tiles"></div>
+                </div>
+            </div>
+
+            <!-- Center: Game area -->
+            <div class="center-panel">
+                <div class="targets-section">
+                    <div class="targets-label">Target Numbers:</div>
+                    <div class="targets" id="targets"></div>
+                </div>
+
+                <div class="workspace" id="workspace"></div>
+
+                <div class="feedback" id="feedback"></div>
+            </div>
+
+            <!-- Right side: Operator tiles -->
+            <div class="side-panel">
+                <div class="tiles-section">
+                    <div class="tiles-label">Operators</div>
+                    <div class="tiles-column" id="operator-tiles"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPuzzle = null;
+        let usedNumbers = new Set();
+
+        // Random puzzle generator
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function partitionIntoPairs(numbers) {
+            // Recursively partition a list into pairs
+            if (numbers.length === 0) return [];
+            if (numbers.length === 2) return [[numbers[0], numbers[1]]];
+            
+            const first = numbers[0];
+            const rest = numbers.slice(1);
+            
+            // Pick a random partner for the first number
+            const partnerIndex = Math.floor(Math.random() * rest.length);
+            const partner = rest[partnerIndex];
+            
+            // Create the pair (smaller first)
+            const pair = [Math.min(first, partner), Math.max(first, partner)];
+            
+            // Recursively partition remaining numbers
+            const remaining = [...rest.slice(0, partnerIndex), ...rest.slice(partnerIndex + 1)];
+            return [pair, ...partitionIntoPairs(remaining)];
+        }
+
+        function getValidOperations(a, b) {
+            // Get all valid operations for pair (a, b) where a <= b
+            const operations = [];
+            
+            // Addition
+            operations.push({num1: a, op: '+', num2: b, result: a + b});
+            
+            // Subtraction (b - a, always positive)
+            operations.push({num1: b, op: '-', num2: a, result: b - a});
+            
+            // Multiplication
+            operations.push({num1: a, op: '×', num2: b, result: a * b});
+            
+            // Division (if exact)
+            if (b % a === 0) {
+                operations.push({num1: b, op: '÷', num2: a, result: b / a});
+            }
+            
+            return operations;
+        }
+
+        function generateRandomPuzzle() {
+            // Start with shuffled numbers to increase randomness
+            const numbers = shuffleArray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            
+            // Partition into 5 pairs
+            const pairs = partitionIntoPairs(numbers);
+            
+            // For each pair, randomly select an operation
+            const equations = [];
+            const targets = [];
+            
+            for (const pair of pairs) {
+                const validOps = getValidOperations(pair[0], pair[1]);
+                const chosen = validOps[Math.floor(Math.random() * validOps.length)];
+                equations.push(chosen);
+                targets.push(chosen.result);
+            }
+            
+            return {
+                targets: targets,
+                solution: equations
+            };
+        }
+
+        function newPuzzle() {
+            currentPuzzle = generateRandomPuzzle();
+            usedNumbers.clear();
+            
+            // Display targets
+            const targetsDiv = document.getElementById('targets');
+            targetsDiv.innerHTML = currentPuzzle.targets.map(t => 
+                `<div class="target">${t}</div>`
+            ).join('');
+            
+            // Create workspace with equation rows
+            const workspace = document.getElementById('workspace');
+            workspace.innerHTML = currentPuzzle.targets.map((target, i) => `
+                <div class="equation-row">
+                    <div class="drop-zone number" data-slot="num1-${i}" data-type="number"></div>
+                    <div class="drop-zone operator" data-slot="op-${i}" data-type="operator"></div>
+                    <div class="drop-zone number" data-slot="num2-${i}" data-type="number"></div>
+                    <span class="equation-symbol">=</span>
+                    <div class="equation-result">${target}</div>
+                </div>
+            `).join('');
+            
+            // Create number tiles
+            const numberTiles = document.getElementById('number-tiles');
+            numberTiles.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const tile = createTile(i, 'number');
+                numberTiles.appendChild(tile);
+            }
+            
+            // Create operator tiles
+            const operators = ['+', '-', '×', '÷'];
+            const operatorTiles = document.getElementById('operator-tiles');
+            operatorTiles.innerHTML = '';
+            operators.forEach(op => {
+                const tile = createTile(op, 'operator');
+                operatorTiles.appendChild(tile);
+            });
+            
+            // Setup drop zones
+            setupDropZones();
+            
+            // Clear feedback
+            document.getElementById('feedback').style.display = 'none';
+        }
+
+        function createTile(value, type) {
+            const tile = document.createElement('div');
+            tile.className = `tile ${type}`;
+            tile.textContent = value;
+            tile.draggable = true;
+            tile.dataset.value = value;
+            tile.dataset.type = type;
+            
+            tile.addEventListener('dragstart', (e) => {
+                if (type === 'number' && usedNumbers.has(value)) {
+                    e.preventDefault();
+                    return;
+                }
+                e.dataTransfer.setData('text/plain', JSON.stringify({value, type}));
+                tile.classList.add('dragging');
+            });
+            
+            tile.addEventListener('dragend', () => {
+                tile.classList.remove('dragging');
+            });
+            
+            return tile;
+        }
+
+        function setupDropZones() {
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    zone.classList.add('drag-over');
+                });
+                
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('drag-over');
+                });
+                
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    
+                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    
+                    // Check if drop zone accepts this type
+                    if (zone.dataset.type !== data.type) {
+                        return;
+                    }
+                    
+                    // Check if number is already used
+                    if (data.type === 'number' && usedNumbers.has(data.value)) {
+                        return;
+                    }
+                    
+                    // If zone already has a tile, remove it first
+                    if (zone.querySelector('.tile')) {
+                        const oldTile = zone.querySelector('.tile');
+                        const oldValue = parseInt(oldTile.dataset.value) || oldTile.dataset.value;
+                        if (oldTile.dataset.type === 'number') {
+                            usedNumbers.delete(oldValue);
+                            updateNumberTiles();
+                        }
+                        zone.removeChild(oldTile);
+                    }
+                    
+                    // Add new tile to zone
+                    const newTile = createTile(data.value, data.type);
+                    newTile.classList.add('in-slot');
+                    newTile.draggable = true;
+                    
+                    // Make tile removable by dragging out
+                    newTile.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', JSON.stringify(data));
+                        // Remove from zone
+                        if (data.type === 'number') {
+                            usedNumbers.delete(data.value);
+                            updateNumberTiles();
+                        }
+                        zone.removeChild(newTile);
+                        zone.classList.remove('filled');
+                        checkSolution();
+                    });
+                    
+                    zone.appendChild(newTile);
+                    zone.classList.add('filled');
+                    
+                    // Track number usage
+                    if (data.type === 'number') {
+                        usedNumbers.add(data.value);
+                        updateNumberTiles();
+                    }
+                    
+                    checkSolution();
+                });
+            });
+        }
+
+        function updateNumberTiles() {
+            document.querySelectorAll('#number-tiles .tile').forEach(tile => {
+                const value = parseInt(tile.dataset.value);
+                if (usedNumbers.has(value)) {
+                    tile.classList.add('used');
+                    tile.draggable = false;
+                } else {
+                    tile.classList.remove('used');
+                    tile.draggable = true;
+                }
+            });
+        }
+
+        function clearBoard() {
+            // Remove all tiles from drop zones
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.innerHTML = '';
+                zone.classList.remove('filled');
+            });
+            
+            usedNumbers.clear();
+            updateNumberTiles();
+            
+            document.getElementById('feedback').style.display = 'none';
+        }
+
+        function checkSolution() {
+            const feedback = document.getElementById('feedback');
+            
+            // Check if all slots are filled
+            const allFilled = Array.from(document.querySelectorAll('.drop-zone')).every(
+                zone => zone.querySelector('.tile')
+            );
+            
+            if (!allFilled) {
+                feedback.style.display = 'none';
+                return;
+            }
+            
+            // Validate each equation
+            let allCorrect = true;
+            for (let i = 0; i < currentPuzzle.targets.length; i++) {
+                const num1Zone = document.querySelector(`[data-slot="num1-${i}"]`);
+                const opZone = document.querySelector(`[data-slot="op-${i}"]`);
+                const num2Zone = document.querySelector(`[data-slot="num2-${i}"]`);
+                
+                const num1 = parseInt(num1Zone.querySelector('.tile')?.dataset.value);
+                const op = opZone.querySelector('.tile')?.dataset.value;
+                const num2 = parseInt(num2Zone.querySelector('.tile')?.dataset.value);
+                const target = currentPuzzle.targets[i];
+                
+                let result;
+                switch(op) {
+                    case '+': result = num1 + num2; break;
+                    case '-': result = num1 - num2; break;
+                    case '×': result = num1 * num2; break;
+                    case '÷': result = num1 / num2; break;
+                }
+                
+                if (result !== target) {
+                    allCorrect = false;
+                    break;
+                }
+            }
+            
+            // Check if all numbers 1-10 are used
+            if (usedNumbers.size !== 10) {
+                allCorrect = false;
+            }
+            
+            if (allCorrect) {
+                feedback.className = 'feedback success';
+                feedback.textContent = '🎉 Correct! You solved the puzzle!';
+                feedback.style.display = 'block';
+            } else {
+                feedback.className = 'feedback error';
+                feedback.textContent = 'Not quite right. Keep trying!';
+                feedback.style.display = 'block';
+            }
+        }
+
+        // Initialize on load
+        newPuzzle();
+    </script>
+</body>
+</html>
