@@ -10,6 +10,10 @@ Some links to apps I've created and projects I've done.
 
 [n-back](nback/) - a version of the classic memory test
 
+[Kumi-Suji Puzzle](kumisuji.html) - an arithmetic game
+
+[Super Tic-tac-toe](ttt.html) - a more challenging tic-tac-toe game
+
 [Arithmetic Quizzes](https://mymath.page/) - get better at mental math
 
 [Squares](squares/) - practice squaring two-digit numbers
@@ -52,5 +56,6 @@ I used pandas and a number of the Python graphing packages to explore some relat
 [An html version of the project](baseball.html)  
 
 ![mountains](500by100pics/mountains1.png)
+
 
 
