@@ -315,7 +315,7 @@
 <body>
     <div class="container">
         <h1>Kumi-Suji Puzzle</h1>
-        <p class="subtitle">Pair numbers 1-10 using operators to create the target numbers</p>
+        <p class="subtitle">Pair numbers 1-10 to create the targets • Use all four operators (+, -, ×, ÷) at least once</p>
         
         <div class="header-row">
             <div class="controls">
@@ -412,13 +412,87 @@
         }
 
         function generateRandomPuzzle() {
-            // Start with shuffled numbers to increase randomness
+            const maxAttempts = 100;
+            
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                // Start with shuffled numbers to increase randomness
+                const numbers = shuffleArray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+                
+                // Partition into 5 pairs
+                const pairs = partitionIntoPairs(numbers);
+                
+                // Try to find a valid assignment with all 4 operators
+                const result = findValidAssignment(pairs);
+                
+                if (result) {
+                    return result;
+                }
+            }
+            
+            // Fallback (should rarely happen)
+            console.warn("Could not generate puzzle with all operators, using any valid puzzle");
+            return generateFallbackPuzzle();
+        }
+
+        function findValidAssignment(pairs) {
+            // Get all valid operations for each pair
+            const allOperations = pairs.map(pair => getValidOperations(pair[0], pair[1]));
+            
+            // Check if it's even possible to use all 4 operators
+            const availableOps = new Set();
+            allOperations.forEach(ops => {
+                ops.forEach(op => availableOps.add(op.op));
+            });
+            
+            if (availableOps.size < 4) {
+                return null; // Can't use all 4 operators with this pairing
+            }
+            
+            // Try to find an assignment using backtracking
+            const equations = [];
+            const usedOps = new Set();
+            
+            function backtrack(index) {
+                if (index === pairs.length) {
+                    // Check if all 4 operators were used
+                    return usedOps.size === 4;
+                }
+                
+                const operations = allOperations[index];
+                
+                // Try each possible operation for this pair
+                for (const op of operations) {
+                    equations[index] = op;
+                    const hadOp = usedOps.has(op.op);
+                    usedOps.add(op.op);
+                    
+                    if (backtrack(index + 1)) {
+                        return true;
+                    }
+                    
+                    // Backtrack
+                    if (!hadOp) {
+                        usedOps.delete(op.op);
+                    }
+                }
+                
+                return false;
+            }
+            
+            if (backtrack(0)) {
+                return {
+                    targets: equations.map(eq => eq.result),
+                    solution: equations
+                };
+            }
+            
+            return null;
+        }
+
+        function generateFallbackPuzzle() {
+            // Fallback: just generate any valid puzzle
             const numbers = shuffleArray([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-            
-            // Partition into 5 pairs
             const pairs = partitionIntoPairs(numbers);
-            
-            // For each pair, randomly select an operation
             const equations = [];
             const targets = [];
             
@@ -614,6 +688,9 @@
                 return;
             }
             
+            // Track which operators are used
+            const usedOperators = new Set();
+            
             // Validate each equation
             let allCorrect = true;
             for (let i = 0; i < currentPuzzle.targets.length; i++) {
@@ -625,6 +702,9 @@
                 const op = opZone.querySelector('.tile')?.dataset.value;
                 const num2 = parseInt(num2Zone.querySelector('.tile')?.dataset.value);
                 const target = currentPuzzle.targets[i];
+                
+                // Track this operator
+                usedOperators.add(op);
                 
                 let result;
                 switch(op) {
@@ -642,6 +722,11 @@
             
             // Check if all numbers 1-10 are used
             if (usedNumbers.size !== 10) {
+                allCorrect = false;
+            }
+            
+            // Check if all 4 operators are used
+            if (usedOperators.size !== 4) {
                 allCorrect = false;
             }
             
