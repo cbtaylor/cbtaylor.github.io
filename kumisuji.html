@@ -119,32 +119,6 @@
             align-items: center;
         }
 
-        .targets-section {
-            background: #f3f4f6;
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
-
-        .targets {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .target {
-            background: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            font-size: 1.6em;
-            font-weight: bold;
-            color: #667eea;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            min-width: 70px;
-            text-align: center;
-        }
-
         .workspace {
             margin-bottom: 15px;
         }
@@ -299,16 +273,6 @@
                 flex-wrap: wrap;
                 justify-content: center;
             }
-
-            .targets {
-                gap: 10px;
-            }
-
-            .target {
-                padding: 12px 18px;
-                font-size: 1.3em;
-                min-width: 60px;
-            }
         }
     </style>
 </head>
@@ -335,10 +299,6 @@
 
             <!-- Center: Game area -->
             <div class="center-panel">
-                <div class="targets-section">
-                    <div class="targets" id="targets"></div>
-                </div>
-
                 <div class="workspace" id="workspace"></div>
 
                 <div class="feedback" id="feedback"></div>
@@ -512,12 +472,6 @@
         function newPuzzle() {
             currentPuzzle = generateRandomPuzzle();
             usedNumbers.clear();
-            
-            // Display targets
-            const targetsDiv = document.getElementById('targets');
-            targetsDiv.innerHTML = currentPuzzle.targets.map(t => 
-                `<div class="target">${t}</div>`
-            ).join('');
             
             // Create workspace with equation rows
             const workspace = document.getElementById('workspace');
