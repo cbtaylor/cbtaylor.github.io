@@ -44,9 +44,41 @@
 
         .header-row {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
+        }
+
+        .difficulty-score {
+            font-size: 1.1em;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+
+        .difficulty-score.very.easy {
+            background: #ccfbf1;
+            color: #134e4a;
+        }
+
+        .difficulty-score.easy {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .difficulty-score.medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .difficulty-score.hard {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+
+        .difficulty-score.diabolical {
+            background: #fecaca;
+            color: #991b1b;
         }
 
         .controls {
@@ -282,6 +314,7 @@
         <p class="subtitle">Pair numbers 1-10 to create the targets • Use all four operators (+, -, ×, ÷) at least once</p>
         
         <div class="header-row">
+            <div class="difficulty-score" id="difficulty-score"></div>
             <div class="controls">
                 <button class="btn-secondary" onclick="clearBoard()">Clear</button>
                 <button class="btn-primary" onclick="newPuzzle()">New Puzzle</button>
@@ -369,6 +402,49 @@
             }
             
             return operations;
+        }
+
+        function countWaysToMakeTarget(target) {
+            // Count how many ways to make the target using pairs from 1-10
+            let count = 0;
+            
+            for (let a = 1; a <= 10; a++) {
+                for (let b = a; b <= 10; b++) {
+                    const ops = getValidOperations(a, b);
+                    for (const op of ops) {
+                        if (op.result === target) {
+                            count++;
+                        }
+                    }
+                }
+            }
+            
+            return count;
+        }
+
+        function calculateDifficulty(targets) {
+            // Calculate product of degrees of freedom for each target
+            let product = 1;
+            const degrees = [];
+            
+            for (const target of targets) {
+                const ways = countWaysToMakeTarget(target);
+                degrees.push(ways);
+                product *= ways;
+            }
+            
+            return {
+                product: product,
+                degrees: degrees
+            };
+        }
+
+        function getDifficultyLabel(score) {
+            if (score <= 2400) return 'Very Easy';
+            if (score <= 5000) return 'Easy';
+            if (score <= 19200) return 'Medium';
+            if (score <= 57600) return 'Hard';
+            return 'Diabolical';
         }
 
         function generateRandomPuzzle() {
@@ -472,6 +548,14 @@
         function newPuzzle() {
             currentPuzzle = generateRandomPuzzle();
             usedNumbers.clear();
+            
+            // Calculate difficulty score and display label
+            const difficulty = calculateDifficulty(currentPuzzle.targets);
+            const label = getDifficultyLabel(difficulty.product);
+            const scoreDisplay = document.getElementById('difficulty-score');
+            scoreDisplay.textContent = label;
+            // Convert label to lowercase class names (e.g., "Very Easy" -> "very easy")
+            scoreDisplay.className = 'difficulty-score ' + label.toLowerCase();
             
             // Create workspace with equation rows
             const workspace = document.getElementById('workspace');
