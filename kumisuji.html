@@ -145,10 +145,10 @@
         }
 
         .tiles-column {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 10px;
-            align-items: center;
+            justify-items: center;
         }
 
         .workspace {
@@ -291,8 +291,7 @@
             }
 
             .tiles-column {
-                flex-direction: row;
-                flex-wrap: wrap;
+                grid-template-columns: repeat(5, 1fr);
             }
 
             .side-panel {
