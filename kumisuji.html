@@ -134,6 +134,7 @@
             background: #f9fafb;
             padding: 15px;
             border-radius: 12px;
+            text-align: center;
         }
 
         .tiles-label {
@@ -141,7 +142,6 @@
             font-weight: 600;
             margin-bottom: 12px;
             color: #374151;
-            text-align: center;
         }
 
         .tiles-column {
@@ -149,14 +149,18 @@
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
             justify-items: center;
+            margin: 0 auto;
+            width: fit-content;
         }
 
         .workspace {
             margin-bottom: 15px;
+            width: 100%;
+            text-align: center;
         }
 
         .equation-row {
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
@@ -168,8 +172,8 @@
         }
 
         .drop-zone {
-            width: 70px;
-            height: 70px;
+            width: 58px;
+            height: 58px;
             border: 3px dashed #cbd5e1;
             border-radius: 10px;
             display: flex;
@@ -181,11 +185,11 @@
         }
 
         .drop-zone.number {
-            width: 70px;
+            width: 58px;
         }
 
         .drop-zone.operator {
-            width: 60px;
+            width: 58px;
         }
 
         .drop-zone.drag-over {
@@ -300,9 +304,88 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.6em;
+                margin-bottom: 3px;
+            }
+
+            .subtitle {
+                font-size: 0.85em;
+                margin-bottom: 10px;
+            }
+
+            .header-row {
+                margin-bottom: 10px;
+            }
+
+            .difficulty-score {
+                font-size: 0.95em;
+                padding: 6px 12px;
+            }
+
+            button {
+                padding: 8px 16px;
+                font-size: 0.9em;
+            }
+
+            .tiles-section {
+                padding: 10px;
+            }
+
+            .tiles-label {
+                font-size: 0.9em;
+                margin-bottom: 8px;
+            }
+
+            .tiles-column {
+                gap: 8px;
+            }
+
+            .tile {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5em;
+            }
+
             .equation-row {
                 flex-wrap: wrap;
                 justify-content: center;
+                padding: 8px;
+                margin-bottom: 8px;
+                min-height: 60px;
+                gap: 6px;
+            }
+
+            .drop-zone {
+                width: 48px;
+                height: 48px;
+            }
+
+            .drop-zone.operator {
+                width: 48px;
+            }
+
+            .equation-symbol {
+                font-size: 1.5em;
+            }
+
+            .equation-result {
+                font-size: 1.3em;
+                min-width: 50px;
+            }
+
+            .feedback {
+                font-size: 1em;
+                padding: 12px;
+                margin-top: 10px;
             }
         }
     </style>
