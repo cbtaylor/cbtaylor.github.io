@@ -32,6 +32,8 @@ Some links to apps I've created and projects I've done.
 
 [Connect 4](connect4.html) - classic game
 
+[Random student picker](picker.html) - slot machine style
+
 [Ship's Bell](shipsbell/) - old fashioned ship's clock
 
 [My Italian Greyhounds](igs.html) - some fancy CSS
@@ -56,6 +58,7 @@ I used pandas and a number of the Python graphing packages to explore some relat
 [An html version of the project](baseball.html)  
 
 ![mountains](500by100pics/mountains1.png)
+
 
 
 
