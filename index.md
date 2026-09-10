@@ -32,6 +32,8 @@ Some links to apps I've created and projects I've done.
 
 [Connect 4](connect4.html) - classic game
 
+[Headsup Poker](headsup.html) - Texas Hold'em
+
 [African geography quiz](africa.html) - boost your knowledge
 
 [Random student picker](picker.html) - slot machine style
