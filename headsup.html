@@ -57,7 +57,6 @@ header h1 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: .01em;
 header .meta { color: var(--ink-dim); }
 header .debug { margin-left: auto; display: flex; gap: 16px; align-items: center; color: var(--ink-dim); font-size: 14px; }
 header .debug label { display: flex; gap: 6px; align-items: center; }
-header .debug input[type=number] { width: 70px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; }
 
 main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
@@ -221,10 +220,7 @@ aside h2 { font-size: 14px; font-weight: 600; margin: 0; padding: 12px 14px; bor
     <h1>Heads-up hold'em</h1>
     <span class="meta">Blinds $10 / $20 · $1,000 stacks</span>
     <div class="debug">
-      <label><input type="checkbox" id="showComp" checked> Show computer's cards</label>
-      <label><input type="checkbox" id="showWhy" checked> Show computer's reasoning</label>
-      <label><input type="checkbox" id="showRead" checked> Show computer's read</label>
-      <label>Computer delay (ms) <input type="number" id="delay" value="900" min="0" step="100"></label>
+      <label><input type="checkbox" id="trainingMode"> Training mode</label>
     </div>
   </header>
 
@@ -433,7 +429,9 @@ const S = {
 };
 
 const $ = id => document.getElementById(id);
-const delay = () => Math.max(0, +$('delay').value || 0);
+const COMPUTER_DELAY_MS = 700; // fixed pacing so the computer's move doesn't appear instantly
+const delay = () => COMPUTER_DELAY_MS;
+const trainingMode = () => $('trainingMode').checked;
 
 function log(text, cls) {
   const p = document.createElement('p');
@@ -707,7 +705,7 @@ function computerAct() {
   if (S.phase !== 'betting' || S.toAct !== 1) return;
   if (typeof AI === 'undefined') { log('ai.js not loaded — random actions', 'why'); randomAct(); return; }
   const d = AI.decide(computerView());
-  if ($('showWhy').checked) log(`Computer: ${d.why}`, 'why');
+  if (trainingMode()) log(`Computer: ${d.why}`, 'why');
   doAction(1, d.kind, d.total);
 }
 
@@ -754,7 +752,7 @@ function setStatus(text, mine) {
 }
 
 function render() {
-  const showComp = $('showComp').checked;
+  const showComp = trainingMode();
   const atShowdown = S.phase === 'showdown' || (S.phase === 'handover' || S.phase === 'gameover') && S.result && S.street === 'river' && !S.players.some(p => p.folded);
 
   for (let i = 0; i < 2; i++) {
@@ -802,7 +800,7 @@ function render() {
 }
 
 function renderNotes() {
-  const show = $('showRead').checked && typeof AI !== 'undefined';
+  const show = trainingMode() && typeof AI !== 'undefined';
   $('notes').classList.toggle('hidden', !show);
   if (!show) return;
   const n = AI.notes();
@@ -823,7 +821,7 @@ function renderNotes() {
 
 const GRID_RANKS = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
 function renderRead() {
-  const show = $('showRead').checked && typeof AI !== 'undefined';
+  const show = trainingMode() && typeof AI !== 'undefined';
   $('read').classList.toggle('hidden', !show);
   if (!show) return;
   const grid = $('grid');
@@ -929,8 +927,7 @@ document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('clic
   v = Math.round(Math.min(L.maxTotal, Math.max(L.minTotal, v)));
   $('slider').value = v; $('amount').value = v; updateRaiseLabel();
 }));
-$('showComp').addEventListener('change', render);
-$('showRead').addEventListener('change', render);
+$('trainingMode').addEventListener('change', render);
 $('btnForget').addEventListener('click', () => { AI.forget(); log('Computer forgot its notes on you.', 'why'); render(); });
 
 render();
