@@ -54,7 +54,6 @@ header {
   padding-bottom: 10px;
 }
 header h1 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: .01em; }
-header .meta { color: var(--ink-dim); }
 header .debug { margin-left: auto; display: flex; gap: 16px; align-items: center; color: var(--ink-dim); font-size: 14px; }
 header .debug label { display: flex; gap: 6px; align-items: center; }
 
@@ -107,6 +106,17 @@ main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .board .pot { font-size: 15px; color: rgba(255,255,255,.85); font-variant-numeric: tabular-nums; }
 .board .pot strong { color: var(--brass); font-size: 20px; margin-left: 6px; }
 .board .street { font-size: 13px; color: rgba(255,255,255,.55); letter-spacing: .04em; }
+.table .status {
+  margin-top: -4px;
+  padding: 5px 16px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.32);
+  color: rgba(255,255,255,.8);
+  font-size: 13px;
+  min-height: 1.3em;
+  box-sizing: border-box;
+}
+.table .status.you { color: var(--brass); background: rgba(0,0,0,.4); }
 
 /* ---------- cards ---------- */
 .card {
@@ -143,9 +153,7 @@ main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
   display: grid;
   gap: 12px;
 }
-.controls .status { color: var(--ink-dim); min-height: 1.4em; }
-.controls .status.you { color: var(--brass); }
-.controls .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.controls .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center; }
 .btn {
   border: 1px solid var(--line);
   background: var(--panel-2);
@@ -164,9 +172,9 @@ main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .sizing input[type=range] { width: 100%; accent-color: var(--brass); }
 .sizing .amount { display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
 .sizing .amount input { width: 90px; background: var(--panel-2); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; font-size: 16px; text-align: right; }
-.sizing .presets { grid-column: 1 / -1; display: flex; gap: 6px; }
-.sizing .presets button { min-width: 0; padding: 4px 10px; font-size: 13px; }
-.sizing .range-note { grid-column: 1 / -1; color: var(--ink-dim); font-size: 13px; }
+.sizing .presets { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; justify-content: center; }
+.sizing .presets button { min-width: 0; flex: 0 0 auto; padding: 8px 14px; font-size: 13px; }
+.sizing .range-note { grid-column: 1 / -1; color: var(--ink-dim); font-size: 13px; text-align: center; }
 .hidden { display: none !important; }
 
 /* ---------- log ---------- */
@@ -218,7 +226,6 @@ aside h2 { font-size: 14px; font-weight: 600; margin: 0; padding: 12px 14px; bor
 <div class="app">
   <header>
     <h1>Heads-up hold'em</h1>
-    <span class="meta">Blinds $10 / $20 · $1,000 stacks</span>
     <div class="debug">
       <label><input type="checkbox" id="trainingMode"> Training mode</label>
     </div>
@@ -259,10 +266,11 @@ aside h2 { font-size: 14px; font-weight: 600; margin: 0; padding: 12px 14px; bor
           <div class="hand" id="hand-0"></div>
         </div>
       </div>
+
+      <div class="status" id="status">Press Deal to start.</div>
     </section>
 
     <section class="controls" aria-label="Actions">
-      <div class="status" id="status">Press Deal to start.</div>
       <div class="row" id="actionRow">
         <button class="btn deal" id="btnDeal">Deal</button>
         <button class="btn fold hidden" id="btnFold">Fold</button>
