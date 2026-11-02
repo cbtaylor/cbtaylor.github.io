@@ -1,8 +1,52 @@
 ### Welcome to Brian's site.
-I've collected a few project samples and tutorials on this site.
+Some links to apps I've created and projects I've done.
 
-### Tutorials
-[How to create slideshows from iPython notebooks](slideshow-creation.slides.html).
+### Apps
+[Day of the Week game](dayoftheweek/) - guess the day given any date
+
+[Linear equation quiz](linearquiz.html) - guess the correct equation
+
+[Prime or Composite](prime.html) - can you guess which?
+
+[n-back](nback/) - a version of the classic memory test
+
+[Kumi-Suji Puzzle](kumisuji.html) - an arithmetic game
+
+[Super Tic-tac-toe](ttt.html) - a more challenging tic-tac-toe game
+
+[Arithmetic Quizzes](https://mymath.page/) - get better at mental math
+
+[Squares](squares/) - practice squaring two-digit numbers
+
+[Cube Roots](cuberoot.html) - guess the cube root
+
+[Modular Arithmetic](modulo.html) - practice modular equivalences
+
+[Nim-sum](nim-sum.html) - determine the Nim-sum for a three-pile game
+
+[Word Finder](wordfind.html) - when you're stuck on Spelling Bee
+
+[Wordle 6](wordle6.html) - a Wordle clone, but with six letters
+
+[Buffon's Needle Experiment](buffon.html) - estimate the value of pi
+
+[Connect 4](connect4.html) - classic game
+
+[Headsup Poker](headsup.html) - Texas Hold'em
+
+[African geography quiz](africa.html) - boost your knowledge
+
+[Random student picker](picker.html) - slot machine style
+
+[Ship's Bell](shipsbell/) - old fashioned ship's clock
+
+[My Italian Greyhounds](igs.html) - some fancy CSS
+
+[Noisy](noisy/) - more fancy CSS
+
+[Tournament Scheduling problem](tournamentschedule.html) - from 2009 Pascal Contest
+
+[SVG examples](svg.html)
 
 ![sunset](500by100pics/sunset2.png)
 
@@ -21,4 +65,7 @@ I used pandas and a number of the Python graphing packages to explore some relat
 
 ![mountains](500by100pics/mountains1.png)
 
-[SVG examples](svg.html)
+
+
+
+

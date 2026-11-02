@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Picker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:           #080c14;
+      --surface:      #0d1220;
+      --surface-hi:   #131a2e;
+      --border:       #1e2840;
+      --border-hi:    #2e3f66;
+      --accent:       #4f8ef7;
+      --accent-glow:  rgba(79,142,247,0.25);
+      --gold:         #ffd060;
+      --gold-glow:    rgba(255,208,96,0.35);
+      --text:         #dce4f5;
+      --text-dim:     #5a6a8a;
+      --text-mid:     #8a9bbf;
+      --red:          #f06060;
+      --green:        #50d890;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* subtle background glow */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 25% 60%, rgba(79,142,247,0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 50% at 75% 30%, rgba(140,80,220,0.04) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .app {
+      width: 100%; max-width: 680px;
+      padding: 28px 20px 48px;
+      position: relative; z-index: 1;
+    }
+
+    /* ── HEADER ─────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 36px;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #1e3a8a, #3b6af0);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; box-shadow: 0 2px 12px rgba(79,142,247,0.3);
+    }
+    .logo-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem; letter-spacing: 0.12em;
+      color: var(--text);
+    }
+    .header-right {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .class-badge {
+      background: var(--surface-hi);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 0.82rem; font-weight: 600;
+      color: var(--accent);
+      max-width: 180px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .class-badge.none { color: var(--text-dim); }
+
+    /* ── STAGE ──────────────────────────────── */
+    .stage {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .drum-wrap {
+      width: 100%;
+      height: 180px;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      position: relative;
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.6s, box-shadow 0.6s;
+    }
+
+    /* top/bottom fade masks */
+    .drum-wrap::before,
+    .drum-wrap::after {
+      content: '';
+      position: absolute; left: 0; right: 0; height: 48px;
+      z-index: 2; pointer-events: none;
+    }
+    .drum-wrap::before {
+      top: 0;
+      background: linear-gradient(to bottom, var(--surface), transparent);
+    }
+    .drum-wrap::after {
+      bottom: 0;
+      background: linear-gradient(to top, var(--surface), transparent);
+    }
+
+    .drum-glow {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(79,142,247,0.05), transparent 70%);
+      transition: opacity 0.4s;
+      pointer-events: none; z-index: 1;
+    }
+
+    .drum-wrap.spinning { border-color: var(--border-hi); }
+    .drum-wrap.spinning .drum-glow {
+      background: radial-gradient(ellipse at center, rgba(79,142,247,0.12), transparent 70%);
+    }
+    .drum-wrap.winner-state {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 1px var(--gold), 0 0 40px var(--gold-glow), inset 0 0 60px rgba(255,208,96,0.04);
+    }
+    .drum-wrap.winner-state .drum-glow {
+      background: radial-gradient(ellipse at center, rgba(255,208,96,0.1), transparent 70%);
+    }
+
+    .name-slot {
+      position: relative; z-index: 3;
+      overflow: hidden;
+      height: 120px;
+      display: flex; align-items: center; justify-content: center;
+      width: 100%;
+      padding: 0 32px;
+    }
+    .name-a, .name-b {
+      position: absolute;
+      width: 100%;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.8rem, 8vw, 5rem);
+      letter-spacing: 0.04em;
+      text-align: center;
+      line-height: 1;
+      padding: 0 32px;
+      will-change: transform, opacity;
+    }
+    .name-a { color: var(--text); }
+    .name-b { color: var(--text); }
+
+    @keyframes slideInUp {
+      from { transform: translateY(50px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    @keyframes slideOutUp {
+      from { transform: translateY(0);    opacity: 1; }
+      to   { transform: translateY(-50px); opacity: 0; }
+    }
+    @keyframes slideInDown {
+      from { transform: translateY(-50px); opacity: 0; }
+      to   { transform: translateY(0);     opacity: 1; }
+    }
+    @keyframes slideOutDown {
+      from { transform: translateY(0);    opacity: 1; }
+      to   { transform: translateY(50px); opacity: 0; }
+    }
+    @keyframes winnerPop {
+      0%   { transform: scale(0.85); opacity: 0; }
+      60%  { transform: scale(1.06); }
+      100% { transform: scale(1);    opacity: 1; }
+    }
+    @keyframes winnerPulse {
+      0%, 100% { text-shadow: 0 0 20px rgba(255,208,96,0.5); }
+      50%       { text-shadow: 0 0 50px rgba(255,208,96,0.9), 0 0 80px rgba(255,208,96,0.4); }
+    }
+
+    .name-a.winner, .name-b.winner {
+      color: var(--gold);
+      animation: winnerPop 0.5s cubic-bezier(.22,1,.36,1) forwards,
+                 winnerPulse 2s ease-in-out 0.5s infinite;
+    }
+
+    /* idle placeholder */
+    .stage-hint {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      letter-spacing: 0.03em;
+      height: 20px;
+      text-align: center;
+    }
+
+    /* ── PICK BUTTON ────────────────────────── */
+    .pick-btn {
+      background: linear-gradient(160deg, #2a52cc 0%, #1a3ba8 100%);
+      border: none;
+      color: #fff;
+      padding: 16px 56px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem;
+      letter-spacing: 0.18em;
+      border-radius: 50px;
+      cursor: pointer;
+      position: relative; overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+      box-shadow: 0 4px 24px rgba(42,82,204,0.45), inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+    .pick-btn::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.07), transparent 50%);
+    }
+    .pick-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(42,82,204,0.55), inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+    .pick-btn:active:not(:disabled) { transform: translateY(0); }
+    .pick-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* spinning state */
+    @keyframes spinnerRing {
+      to { transform: rotate(360deg); }
+    }
+    .pick-btn.spinning::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent 40%, rgba(255,255,255,0.15) 60%, transparent);
+      animation: shimmer 1s linear infinite;
+    }
+    @keyframes shimmer {
+      from { transform: translateX(-100%); }
+      to   { transform: translateX(100%); }
+    }
+
+    /* ── INFO BAR ───────────────────────────── */
+    .info-bar {
+      display: flex; justify-content: center; gap: 24px;
+      margin-bottom: 24px;
+    }
+    .info-pill {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      color: var(--text-mid);
+    }
+    .info-pill span { font-weight: 700; color: var(--text); }
+    .info-pill.toggle-pill { cursor: pointer; user-select: none; transition: border-color 0.2s; }
+    .info-pill.toggle-pill:hover { border-color: var(--border-hi); }
+    .info-pill.toggle-pill.on { border-color: var(--green); color: var(--green); }
+    .info-pill.toggle-pill.on span { color: var(--green); }
+    .toggle-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--text-dim); transition: background 0.2s;
+    }
+    .info-pill.toggle-pill.on .toggle-dot { background: var(--green); }
+
+    /* ── HISTORY ────────────────────────────── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .panel-title {
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .text-btn {
+      background: none; border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.78rem; color: var(--text-dim);
+      cursor: pointer; padding: 2px 0;
+      transition: color 0.15s;
+    }
+    .text-btn:hover { color: var(--red); }
+    .chips {
+      display: flex; flex-wrap: wrap; gap: 7px;
+    }
+    .chip {
+      background: rgba(79,142,247,0.08);
+      border: 1px solid rgba(79,142,247,0.18);
+      color: var(--accent); border-radius: 20px;
+      padding: 4px 12px; font-size: 0.82rem; font-weight: 500;
+    }
+    .chip.recent {
+      background: rgba(255,208,96,0.08);
+      border-color: rgba(255,208,96,0.25);
+      color: var(--gold);
+    }
+    .empty-msg {
+      color: var(--text-dim); font-style: italic; font-size: 0.88rem;
+    }
+
+    /* ── BOTTOM CONTROLS ────────────────────── */
+    .controls {
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .ctrl-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-mid);
+      padding: 8px 16px;
+      border-radius: 8px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.84rem; font-weight: 500;
+      transition: all 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ctrl-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── MODAL ──────────────────────────────── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      z-index: 300;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: #0d1223;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      width: 90%; max-width: 500px;
+      max-height: 85vh; overflow-y: auto;
+      transform: translateY(16px) scale(0.98);
+      transition: transform 0.25s;
+    }
+    .overlay.open .modal { transform: none; }
+
+    .modal-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem; letter-spacing: 0.12em;
+      color: var(--accent); margin-bottom: 20px;
+    }
+
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 7px;
+    }
+    .field-hint {
+      font-size: 0.78rem; color: var(--text-dim);
+      font-style: italic; margin-top: 5px;
+    }
+    input[type=text], textarea {
+      width: 100%;
+      background: var(--surface-hi);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 9px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      transition: border-color 0.2s;
+    }
+    input[type=text]:focus, textarea:focus {
+      outline: none; border-color: var(--accent);
+    }
+    textarea { resize: vertical; min-height: 200px; line-height: 1.7; }
+
+    .modal-actions {
+      display: flex; gap: 10px; margin-top: 20px;
+    }
+    .btn-primary {
+      flex: 1;
+      background: var(--accent); color: #000;
+      border: none; padding: 12px;
+      border-radius: 9px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700; font-size: 0.92rem;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim); padding: 12px 20px;
+      border-radius: 9px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; font-size: 0.92rem;
+      transition: all 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--text-dim); color: var(--text); }
+
+    /* class list in modal */
+    .class-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    .class-row {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--surface-hi); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px;
+      cursor: pointer; transition: border-color 0.15s;
+    }
+    .class-row:hover { border-color: var(--border-hi); }
+    .class-row.active-row {
+      border-color: var(--accent);
+      background: rgba(79,142,247,0.07);
+    }
+    .class-row-name { font-weight: 600; font-size: 0.95rem; }
+    .class-row-count { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; }
+    .class-row-btns { display: flex; gap: 6px; }
+    .icon-btn {
+      background: none; border: none;
+      color: var(--text-dim); cursor: pointer;
+      padding: 4px 6px; border-radius: 5px;
+      font-size: 0.9rem; transition: color 0.15s;
+    }
+    .icon-btn:hover { color: var(--accent); }
+    .icon-btn.del:hover { color: var(--red); }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── PARTICLES CANVAS ───────────────────── */
+    #particles {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 200;
+    }
+
+    /* ── RESPONSIVE ─────────────────────────── */
+    @media (max-width: 480px) {
+      .drum-wrap { height: 140px; }
+      .name-a, .name-b { font-size: 2.4rem; }
+      .pick-btn { padding: 14px 40px; font-size: 1.4rem; }
+      .info-bar { gap: 10px; }
+      .info-pill { padding: 6px 10px; font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<div class="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🎲</div>
+      <div class="logo-text">Student Picker</div>
+    </div>
+    <div class="header-right">
+      <div class="class-badge none" id="classBadge">No class selected</div>
+      <button class="ctrl-btn" onclick="openClassesModal()" style="padding:7px 13px; font-size:0.8rem;">
+        ⚙ Classes
+      </button>
+    </div>
+  </header>
+
+  <!-- Stage -->
+  <div class="stage">
+    <div class="drum-wrap" id="drumWrap">
+      <div class="drum-glow"></div>
+      <div class="name-slot" id="nameSlot">
+        <div class="name-a" id="nameA">—</div>
+        <div class="name-b" id="nameB" style="opacity:0; transform:translateY(50px);"></div>
+      </div>
+    </div>
+    <div class="stage-hint" id="stageHint">Open "Classes" to get started</div>
+    <button class="pick-btn" id="pickBtn" onclick="startPicking()" disabled>PICK A STUDENT</button>
+  </div>
+
+  <!-- Info bar -->
+  <div class="info-bar">
+    <div class="info-pill">
+      🎓 <span id="poolCount">0</span> in pool
+    </div>
+    <div class="info-pill">
+      📋 <span id="pickedCount">0</span> picked
+    </div>
+    <div class="info-pill toggle-pill" id="excludeToggle" onclick="toggleExclude()">
+      <div class="toggle-dot" id="toggleDot"></div>
+      Skip already picked
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">Session History</div>
+      <button class="text-btn" onclick="clearHistory()">Reset</button>
+    </div>
+    <div class="chips" id="historyChips">
+      <span class="empty-msg">No one picked yet this session</span>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="ctrl-btn" onclick="openEditModal(null)">＋ New Class</button>
+    <button class="ctrl-btn" id="editCurrentBtn" onclick="editCurrentClass()" disabled>✏ Edit Class</button>
+  </div>
+
+</div><!-- /app -->
+
+
+<!-- ════════════════ CLASSES MODAL ════════════════ -->
+<div class="overlay" id="classesOverlay">
+  <div class="modal">
+    <div class="modal-title">Your Classes</div>
+    <div class="class-list" id="classListUI"></div>
+    <button class="btn-primary" onclick="openEditModal(null); closeOverlay('classesOverlay')">
+      ＋ New Class
+    </button>
+    <div class="modal-actions">
+      <button class="btn-secondary" style="width:100%" onclick="closeOverlay('classesOverlay')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ EDIT / NEW CLASS MODAL ════════════════ -->
+<div class="overlay" id="editOverlay">
+  <div class="modal">
+    <div class="modal-title" id="editTitle">New Class</div>
+    <div class="field">
+      <label>Class Name</label>
+      <input type="text" id="editName" placeholder="e.g. Math 8 – Block 2">
+    </div>
+    <div class="field">
+      <label>Student Names</label>
+      <textarea id="editNames" placeholder="One name per line. You can also paste a single column from Excel/Sheets.&#10;&#10;Alex Chen&#10;Priya Dhaliwal&#10;Sam Torres&#10;..."></textarea>
+      <div class="field-hint">One name per line. Paste directly from a spreadsheet column.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveClass()">Save</button>
+      <button class="btn-secondary" onclick="closeOverlay('editOverlay')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ══════════════════════════════════════════════════
+//  STATE & STORAGE
+// ══════════════════════════════════════════════════
+const STORE   = 'sp_classes_v2';
+const ACT_KEY = 'sp_active_v2';
+const HIST_KEY= 'sp_history_v2';
+const OPT_KEY = 'sp_opts_v2';
+
+let db          = {};      // { className: [name, ...] }
+let activeClass = null;
+let history     = [];      // names picked this session
+let opts        = { excludePicked: false };
+let isSpinning  = false;
+let editTarget  = null;    // null = new, string = existing class name
+
+function load() {
+  try { db          = JSON.parse(localStorage.getItem(STORE)   || '{}'); } catch(e) { db = {}; }
+  try { history     = JSON.parse(localStorage.getItem(HIST_KEY)|| '[]'); } catch(e) { history = []; }
+  try { opts        = { excludePicked: false, ...JSON.parse(localStorage.getItem(OPT_KEY)||'{}') }; } catch(e) {}
+  activeClass = localStorage.getItem(ACT_KEY) || null;
+  if (activeClass && !db[activeClass]) activeClass = null;
+}
+
+function persist() {
+  localStorage.setItem(STORE,    JSON.stringify(db));
+  localStorage.setItem(HIST_KEY, JSON.stringify(history));
+  localStorage.setItem(OPT_KEY,  JSON.stringify(opts));
+  if (activeClass) localStorage.setItem(ACT_KEY, activeClass);
+  else             localStorage.removeItem(ACT_KEY);
+}
+
+function getPool() {
+  if (!activeClass || !db[activeClass]) return [];
+  const all = db[activeClass];
+  if (!opts.excludePicked || history.length === 0) return all;
+  const picked = new Set(history);
+  const remaining = all.filter(n => !picked.has(n));
+  // if all exhausted, return full list (auto-reset)
+  return remaining.length > 0 ? remaining : all;
+}
+
+// ══════════════════════════════════════════════════
+//  UI SYNC
+// ══════════════════════════════════════════════════
+function syncUI() {
+  const pool    = getPool();
+  const all     = activeClass && db[activeClass] ? db[activeClass] : [];
+  const badge   = document.getElementById('classBadge');
+  const hint    = document.getElementById('stageHint');
+  const pickBtn = document.getElementById('pickBtn');
+  const editBtn = document.getElementById('editCurrentBtn');
+
+  // badge
+  if (activeClass) {
+    badge.textContent = activeClass;
+    badge.classList.remove('none');
+  } else {
+    badge.textContent = 'No class selected';
+    badge.classList.add('none');
+  }
+
+  // counters
+  document.getElementById('poolCount').textContent   = pool.length;
+  document.getElementById('pickedCount').textContent = history.length;
+
+  // exclude toggle
+  const tog = document.getElementById('excludeToggle');
+  document.getElementById('toggleDot');
+  tog.classList.toggle('on', opts.excludePicked);
+
+  // hint & button
+  if (!activeClass) {
+    hint.textContent = 'Open "Classes" to get started';
+    pickBtn.disabled = true;
+    editBtn.disabled = true;
+  } else if (pool.length === 0) {
+    hint.textContent = 'Add students to this class first';
+    pickBtn.disabled = true;
+    editBtn.disabled = false;
+  } else {
+    hint.textContent = `${all.length} students · ${pool.length} in pool`;
+    pickBtn.disabled = isSpinning;
+    editBtn.disabled = false;
+  }
+
+  syncHistory();
+}
+
+function syncHistory() {
+  const container = document.getElementById('historyChips');
+  if (history.length === 0) {
+    container.innerHTML = '<span class="empty-msg">No one picked yet this session</span>';
+    return;
+  }
+  // most recent first; last pick is gold
+  container.innerHTML = [...history].reverse().map((n, i) =>
+    `<span class="chip ${i === 0 ? 'recent' : ''}">${esc(n)}</span>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════════════
+//  SLOT-MACHINE ANIMATION
+// ══════════════════════════════════════════════════
+let activeSlot = 'a';   // which element is currently visible
+
+function nameEl(slot) {
+  return document.getElementById('name' + (slot === 'a' ? 'A' : 'B'));
+}
+
+function flipTo(name, fast) {
+  // Swap slots
+  const current = activeSlot;
+  const next    = current === 'a' ? 'b' : 'a';
+  const elIn    = nameEl(next);
+  const elOut   = nameEl(current);
+
+  const dur = fast ? '80ms' : '200ms';
+
+  elIn.textContent = name;
+  elIn.classList.remove('winner');
+
+  // Animate out
+  elOut.style.transition = `transform ${dur} ease-in, opacity ${dur} ease-in`;
+  elOut.style.transform  = `translateY(-40px)`;
+  elOut.style.opacity    = '0';
+
+  // Animate in
+  elIn.style.transition  = 'none';
+  elIn.style.transform   = 'translateY(40px)';
+  elIn.style.opacity     = '0';
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      elIn.style.transition = `transform ${dur} ease-out, opacity ${dur} ease-out`;
+      elIn.style.transform  = 'translateY(0)';
+      elIn.style.opacity    = '1';
+    });
+  });
+
+  activeSlot = next;
+}
+
+function startPicking() {
+  if (isSpinning) return;
+  const pool = getPool();
+  if (pool.length === 0) return;
+
+  isSpinning = true;
+  const pickBtn = document.getElementById('pickBtn');
+  const drum    = document.getElementById('drumWrap');
+  const hint    = document.getElementById('stageHint');
+
+  pickBtn.disabled = true;
+  pickBtn.classList.add('spinning');
+  pickBtn.textContent = '...';
+  drum.classList.remove('winner-state');
+  drum.classList.add('spinning');
+  hint.textContent = 'Choosing...';
+
+  // Clear winner style from current slot
+  nameEl(activeSlot).classList.remove('winner');
+  nameEl(activeSlot === 'a' ? 'b' : 'a').classList.remove('winner');
+
+  // Pick winner now so we can orchestrate reveal
+  const winner = pool[Math.floor(Math.random() * pool.length)];
+
+  const TOTAL   = 5000;
+  const startAt = performance.now();
+
+  function tick(now) {
+    const elapsed  = now - startAt;
+    const progress = Math.min(elapsed / TOTAL, 1);
+
+    if (progress >= 1) {
+      revealWinner(winner);
+      return;
+    }
+
+    // Eased interval: 55ms → 520ms
+    const t        = progress * progress;   // ease-in
+    const interval = 55 + (520 - 55) * t;
+    const fast     = interval < 150;
+
+    // Pick a display name (avoid winner until the last moment)
+    let display;
+    if (pool.length === 1) {
+      display = winner;
+    } else {
+      const others = pool.filter(n => n !== winner);
+      display = others[Math.floor(Math.random() * others.length)];
+    }
+
+    flipTo(display, fast);
+    setTimeout(() => requestAnimationFrame(tick), interval);
+  }
+
+  requestAnimationFrame(tick);
+}
+
+function revealWinner(name) {
+  const drum    = document.getElementById('drumWrap');
+  const hint    = document.getElementById('stageHint');
+  const pickBtn = document.getElementById('pickBtn');
+
+  // Final flip with winner styling
+  const next  = activeSlot === 'a' ? 'b' : 'a';
+  const elIn  = nameEl(next);
+  const elOut = nameEl(activeSlot);
+
+  elOut.style.transition = 'transform 0.2s ease-in, opacity 0.2s ease-in';
+  elOut.style.transform  = 'translateY(-40px)';
+  elOut.style.opacity    = '0';
+
+  elIn.textContent = name;
+  elIn.classList.remove('winner');
+  elIn.style.transition  = 'none';
+  elIn.style.transform   = 'translateY(40px)';
+  elIn.style.opacity     = '0';
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    elIn.style.transition = 'none';
+    elIn.style.transform  = 'translateY(0)';
+    elIn.style.opacity    = '1';
+    elIn.classList.add('winner');
+  }));
+  activeSlot = next;
+
+  drum.classList.remove('spinning');
+  drum.classList.add('winner-state');
+  hint.textContent = `🎉 ${name}!`;
+  pickBtn.classList.remove('spinning');
+  pickBtn.textContent = 'PICK A STUDENT';
+
+  // Record
+  history.push(name);
+  persist();
+
+  // Confetti!
+  burst(name);
+
+  setTimeout(() => {
+    isSpinning = false;
+    syncUI();
+  }, 2200);
+}
+
+function clearHistory() {
+  if (history.length === 0) return;
+  history = [];
+  persist();
+
+  // Reset visual state
+  const drum = document.getElementById('drumWrap');
+  drum.classList.remove('winner-state');
+  nameEl(activeSlot).classList.remove('winner');
+  nameEl(activeSlot).textContent = '?';
+
+  syncUI();
+}
+
+function toggleExclude() {
+  opts.excludePicked = !opts.excludePicked;
+  persist();
+  syncUI();
+}
+
+// ══════════════════════════════════════════════════
+//  CONFETTI
+// ══════════════════════════════════════════════════
+const cvs = document.getElementById('particles');
+const ctx = cvs.getContext('2d');
+let ptcls = [];
+let rafId = null;
+
+function resize() { cvs.width = innerWidth; cvs.height = innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+function burst() {
+  const drum = document.getElementById('drumWrap');
+  const r    = drum.getBoundingClientRect();
+  const cx   = r.left + r.width  / 2;
+  const cy   = r.top  + r.height / 2;
+  const pal  = ['#ffd060','#ff7070','#4f8ef7','#70e8a0','#d080f0','#ffffff','#ffb040'];
+
+  for (let i = 0; i < 90; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 4 + Math.random() * 9;
+    const size  = 3 + Math.random() * 7;
+    ptcls.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 3,
+      color: pal[Math.floor(Math.random() * pal.length)],
+      w: size, h: size * (0.4 + Math.random() * 0.6),
+      rot: Math.random() * Math.PI * 2,
+      rspeed: (Math.random() - 0.5) * 0.3,
+      life: 1,
+      decay: 0.012 + Math.random() * 0.016,
+      grav: 0.18
+    });
+  }
+  if (!rafId) animate();
+}
+
+function animate() {
+  ctx.clearRect(0, 0, cvs.width, cvs.height);
+  ptcls = ptcls.filter(p => p.life > 0);
+  if (!ptcls.length) { rafId = null; return; }
+
+  for (const p of ptcls) {
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle   = p.color;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    ctx.restore();
+    p.x  += p.vx;  p.y += p.vy;
+    p.vy += p.grav; p.vx *= 0.985;
+    p.rot += p.rspeed;
+    p.life -= p.decay;
+  }
+  rafId = requestAnimationFrame(animate);
+}
+
+// ══════════════════════════════════════════════════
+//  MODALS
+// ══════════════════════════════════════════════════
+function openOverlay(id) { document.getElementById(id).classList.add('open'); }
+function closeOverlay(id){ document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+function openClassesModal() {
+  renderClassList();
+  openOverlay('classesOverlay');
+}
+
+function renderClassList() {
+  const container = document.getElementById('classListUI');
+  container.innerHTML = '';
+  const names = Object.keys(db);
+
+  if (!names.length) {
+    const msg = document.createElement('p');
+    msg.style.cssText = 'color:var(--text-dim);font-style:italic;margin-bottom:12px;font-size:.88rem;';
+    msg.textContent = 'No classes yet. Create one below.';
+    container.appendChild(msg);
+    return;
+  }
+
+  names.forEach(n => {
+    const cnt    = (db[n] || []).length;
+    const active = n === activeClass;
+
+    // Row
+    const row = document.createElement('div');
+    row.className = 'class-row' + (active ? ' active-row' : '');
+    row.dataset.className = n;
+
+    // Info block
+    const info = document.createElement('div');
+
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'class-row-name';
+    nameDiv.textContent = n;
+
+    const countDiv = document.createElement('div');
+    countDiv.className = 'class-row-count';
+    countDiv.textContent = `${cnt} student${cnt !== 1 ? 's' : ''}`;
+
+    info.appendChild(nameDiv);
+    info.appendChild(countDiv);
+
+    // Button cluster
+    const btns = document.createElement('div');
+    btns.className = 'class-row-btns';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'icon-btn';
+    editBtn.title = 'Edit';
+    editBtn.textContent = '✏️';
+    editBtn.dataset.className = n;
+    editBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      openEditModal(e.currentTarget.dataset.className);
+      closeOverlay('classesOverlay');
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'icon-btn del';
+    delBtn.title = 'Delete';
+    delBtn.textContent = '🗑️';
+    delBtn.dataset.className = n;
+    delBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      deleteClass(e.currentTarget.dataset.className);
+    });
+
+    btns.appendChild(editBtn);
+    btns.appendChild(delBtn);
+
+    row.appendChild(info);
+    row.appendChild(btns);
+
+    // Selecting the row itself
+    row.addEventListener('click', () => selectClass(row.dataset.className));
+
+    container.appendChild(row);
+  });
+}
+
+function selectClass(name) {
+  if (!db[name]) return;
+  activeClass = name;
+  history = [];
+  persist();
+  syncUI();
+  closeOverlay('classesOverlay');
+
+  // Reset visual
+  const drum = document.getElementById('drumWrap');
+  drum.classList.remove('winner-state', 'spinning');
+  const el = nameEl(activeSlot);
+  el.classList.remove('winner');
+  el.textContent = '?';
+}
+
+function deleteClass(name) {
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  delete db[name];
+  if (activeClass === name) { activeClass = null; history = []; }
+  persist();
+  renderClassList();
+  syncUI();
+}
+
+function openEditModal(name) {
+  editTarget = name;
+  document.getElementById('editTitle').textContent = name ? 'Edit Class' : 'New Class';
+  document.getElementById('editName').value  = name || '';
+  document.getElementById('editNames').value = name ? (db[name] || []).join('\n') : '';
+  openOverlay('editOverlay');
+  setTimeout(() => document.getElementById('editName').focus(), 100);
+}
+
+function editCurrentClass() {
+  if (activeClass) openEditModal(activeClass);
+}
+
+function saveClass() {
+  const newName = document.getElementById('editName').value.trim();
+  const raw     = document.getElementById('editNames').value;
+
+  if (!newName) { alert('Please enter a class name.'); return; }
+
+  const students = raw.split('\n')
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+
+  // Handle rename
+  if (editTarget && editTarget !== newName) {
+    delete db[editTarget];
+    if (activeClass === editTarget) activeClass = newName;
+  }
+
+  db[newName] = students;
+  if (!activeClass) activeClass = newName;
+
+  persist();
+  syncUI();
+  closeOverlay('editOverlay');
+}
+
+// ══════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+// Keyboard shortcut: Space bar = pick
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !e.target.matches('input,textarea,button')) {
+    e.preventDefault();
+    if (!document.getElementById('pickBtn').disabled) startPicking();
+  }
+});
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+load();
+if (activeClass && db[activeClass] && db[activeClass].length > 0) {
+  nameEl(activeSlot).textContent = '?';
+}
+syncUI();
+</script>
+</body>
+</html>

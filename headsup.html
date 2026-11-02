@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heads-Up Hold'em</title>
+<style>
+/* ---------- tokens ---------- */
+:root {
+  --felt: #22694a;
+  --felt-edge: #17492f;
+  --rail: #5a3a22;
+  --rail-hi: #7a5232;
+  --room: #1c1a17;
+  --panel: #262320;
+  --panel-2: #2f2b27;
+  --line: #3d3833;
+  --ink: #efe9dc;
+  --ink-dim: #a69e8f;
+  --brass: #c9a227;
+  --danger: #b8432f;
+  --card: #fbf8ef;
+  --card-red: #b91c1c;
+  --card-black: #161616;
+  --card-w: 66px;
+  --card-h: 94px;
+  --radius: 8px;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--room); color: var(--ink); }
+body { font-size: 15px; line-height: 1.4; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+/* ---------- page layout ---------- */
+.app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  min-height: 100vh;
+}
+header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+header h1 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: .01em; }
+header .debug { margin-left: auto; display: flex; gap: 16px; align-items: center; color: var(--ink-dim); font-size: 14px; }
+header .debug label { display: flex; gap: 6px; align-items: center; }
+
+main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* ---------- table ---------- */
+.table {
+  position: relative;
+  background: radial-gradient(ellipse at 50% 40%, var(--felt) 0%, var(--felt-edge) 85%);
+  border: 14px solid var(--rail);
+  box-shadow: inset 0 0 0 2px var(--rail-hi), 0 20px 40px rgba(0,0,0,.45);
+  border-radius: 200px;
+  padding: 26px 40px;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 18px;
+  justify-items: center;
+}
+.seat {
+  display: grid;
+  grid-template-columns: 150px auto 150px;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 640px;
+}
+.seat .who { text-align: right; }
+.seat .who .name { font-weight: 600; font-size: 16px; }
+.seat .who .stack { font-size: 22px; font-variant-numeric: tabular-nums; }
+.seat .who .stack.busted { color: var(--danger); }
+.seat .badge {
+  display: inline-block; margin-top: 4px;
+  font-size: 12px; padding: 2px 8px; border-radius: 999px;
+  background: rgba(0,0,0,.25); color: var(--ink-dim);
+}
+.seat .badge.dealer { background: var(--brass); color: #2b2200; font-weight: 700; }
+.seat .cards { display: flex; gap: 8px; justify-self: center; min-height: var(--card-h); }
+.seat .side { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.seat .side .bet { font-variant-numeric: tabular-nums; color: var(--brass); font-weight: 600; min-height: 1.3em; }
+.seat .side .bet:empty::before { content: "\00a0"; }
+.seat .side .action { color: var(--ink); min-height: 1.3em; }
+.seat .side .action:empty::before { content: "\00a0"; }
+.seat .side .hand { color: rgba(255,255,255,.75); font-size: 13px; min-height: 1.3em; }
+.seat.active .who .name::after { content: " ●"; color: var(--brass); }
+.seat.winner .cards { filter: drop-shadow(0 0 10px rgba(201,162,39,.9)); }
+
+.board { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.board .community { display: flex; gap: 8px; min-height: var(--card-h); }
+.board .slot { width: var(--card-w); height: var(--card-h); border-radius: 6px; border: 1px dashed rgba(255,255,255,.25); }
+.board .pot { font-size: 15px; color: rgba(255,255,255,.85); font-variant-numeric: tabular-nums; }
+.board .pot strong { color: var(--brass); font-size: 20px; margin-left: 6px; }
+.board .street { font-size: 13px; color: rgba(255,255,255,.55); letter-spacing: .04em; }
+.table .status {
+  margin-top: -4px;
+  padding: 5px 16px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.32);
+  color: rgba(255,255,255,.8);
+  font-size: 13px;
+  min-height: 1.3em;
+  box-sizing: border-box;
+}
+.table .status.you { color: var(--brass); background: rgba(0,0,0,.4); }
+
+/* ---------- cards ---------- */
+.card {
+  width: var(--card-w); height: var(--card-h);
+  background: var(--card);
+  border-radius: 6px;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,.35);
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--card-black);
+  user-select: none;
+}
+.card.red { color: var(--card-red); }
+.card .corner {
+  position: absolute; left: 5px; top: 3px;
+  font-size: 17px; line-height: 1; font-weight: 700; text-align: center;
+}
+.card .corner .suit-small { display: block; font-size: 15px; line-height: 1; }
+.card .corner.br { left: auto; right: 5px; top: auto; bottom: 3px; transform: rotate(180deg); }
+.card .pip { position: absolute; inset: 0; display: grid; place-items: center; font-size: 34px; }
+.card.back {
+  background: repeating-linear-gradient(45deg, #7a1f2b 0 6px, #5c1520 6px 12px);
+  box-shadow: inset 0 0 0 4px var(--card), 0 2px 4px rgba(0,0,0,.35);
+}
+.card.used { outline: 3px solid var(--brass); outline-offset: -1px; }
+.card.dim { opacity: .45; }
+
+/* ---------- controls ---------- */
+.controls {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: grid;
+  gap: 12px;
+}
+.controls .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center; }
+.btn {
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--ink);
+  padding: 10px 16px;
+  border-radius: 6px;
+  min-width: 110px;
+}
+.btn:hover:not(:disabled) { border-color: var(--ink-dim); }
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+.btn.fold { color: #ffb4a6; }
+.btn.raise { background: #3e5a2a; border-color: #5a7f3d; }
+.btn.allin { background: #5a2f24; border-color: #8a4736; }
+.btn.deal { background: var(--brass); color: #2b2200; font-weight: 600; }
+.sizing { display: grid; grid-template-columns: 1fr auto; gap: 10px 14px; align-items: center; }
+.sizing input[type=range] { width: 100%; accent-color: var(--brass); }
+.sizing .amount { display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.sizing .amount input { width: 90px; background: var(--panel-2); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; font-size: 16px; text-align: right; }
+.sizing .presets { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; justify-content: center; }
+.sizing .presets button { min-width: 0; flex: 0 0 auto; padding: 8px 14px; font-size: 13px; }
+.sizing .range-note { grid-column: 1 / -1; color: var(--ink-dim); font-size: 13px; text-align: center; }
+.hidden { display: none !important; }
+
+/* ---------- log ---------- */
+aside {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: calc(100vh - 100px);
+  position: sticky; top: 16px;
+}
+aside h2 { font-size: 14px; font-weight: 600; margin: 0; padding: 12px 14px; border-bottom: 1px solid var(--line); color: var(--ink-dim); }
+.log { overflow-y: auto; padding: 8px 14px; font-size: 14px; flex: 1; min-height: 120px; }
+.log p { margin: 0 0 4px; }
+.log p.hand { color: var(--brass); margin-top: 10px; font-weight: 600; }
+.log p.street { color: var(--ink-dim); font-style: italic; }
+.log p.result { color: #d9e8b6; }
+.log p.you { color: #fff; }
+.log p.why { color: #8fb3a6; font-size: 13px; }
+.read { border-top: 1px solid var(--line); padding: 10px 14px 12px; }
+.read h2 { padding: 0 0 8px; border: 0; }
+.grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 1px; }
+.grid div { aspect-ratio: 1; font-size: 9px; display: grid; place-items: center; color: rgba(255,255,255,.85); background: rgba(201,162,39,.05); border-radius: 2px; }
+.grid div.blocked { background: #1a1815; color: rgba(255,255,255,.25); }
+.read-note { color: var(--ink-dim); font-size: 12px; margin-top: 6px; }
+.notes table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.notes td { padding: 2px 0; vertical-align: top; }
+.notes td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; padding-left: 8px; }
+.notes td.n { color: var(--ink-dim); text-align: right; padding-left: 6px; }
+.btn.small { min-width: 0; padding: 5px 10px; font-size: 12px; margin-top: 8px; }
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  aside { position: static; max-height: 260px; }
+  .table { border-radius: 60px; padding: 18px 12px; border-width: 10px; }
+  .seat { grid-template-columns: 1fr auto 1fr; gap: 8px; }
+  :root { --card-w: 52px; --card-h: 74px; }
+  .card .pip { font-size: 26px; }
+  .card .corner { font-size: 14px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .card { transition: outline-color .2s; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Heads-up hold'em</h1>
+    <div class="debug">
+      <label><input type="checkbox" id="trainingMode"> Training mode</label>
+    </div>
+  </header>
+
+  <main>
+    <section class="table" aria-label="Poker table">
+      <div class="seat" id="seat-1">
+        <div class="who">
+          <div class="name">Computer</div>
+          <div class="stack" id="stack-1">$1,000</div>
+          <span class="badge" id="badge-1"></span>
+        </div>
+        <div class="cards" id="cards-1"></div>
+        <div class="side">
+          <div class="bet" id="bet-1"></div>
+          <div class="action" id="action-1"></div>
+          <div class="hand" id="hand-1"></div>
+        </div>
+      </div>
+
+      <div class="board">
+        <div class="street" id="street"></div>
+        <div class="community" id="board"></div>
+        <div class="pot">Pot<strong id="pot">$0</strong></div>
+      </div>
+
+      <div class="seat" id="seat-0">
+        <div class="who">
+          <div class="name">You</div>
+          <div class="stack" id="stack-0">$1,000</div>
+          <span class="badge" id="badge-0"></span>
+        </div>
+        <div class="cards" id="cards-0"></div>
+        <div class="side">
+          <div class="bet" id="bet-0"></div>
+          <div class="action" id="action-0"></div>
+          <div class="hand" id="hand-0"></div>
+        </div>
+      </div>
+
+      <div class="status" id="status">Press Deal to start.</div>
+    </section>
+
+    <section class="controls" aria-label="Actions">
+      <div class="row" id="actionRow">
+        <button class="btn deal" id="btnDeal">Deal</button>
+        <button class="btn fold hidden" id="btnFold">Fold</button>
+        <button class="btn hidden" id="btnCheckCall">Check</button>
+        <button class="btn raise hidden" id="btnRaise">Raise to $40</button>
+        <button class="btn allin hidden" id="btnAllIn">All in</button>
+      </div>
+      <div class="sizing hidden" id="sizing">
+        <input type="range" id="slider" min="40" max="1000" step="1" value="40">
+        <div class="amount">$<input type="number" id="amount" value="40"></div>
+        <div class="presets">
+          <button class="btn" data-preset="min">Min</button>
+          <button class="btn" data-preset="third">⅓ pot</button>
+          <button class="btn" data-preset="half">½ pot</button>
+          <button class="btn" data-preset="pot">Pot</button>
+          <button class="btn" data-preset="max">Max</button>
+        </div>
+        <div class="range-note" id="rangeNote"></div>
+      </div>
+    </section>
+  </main>
+
+  <aside aria-label="Hand history">
+    <h2>Hand history</h2>
+    <div class="log" id="log"></div>
+    <div class="read" id="read">
+      <h2>Computer's read of your hand</h2>
+      <div class="grid" id="grid"></div>
+      <div class="read-note" id="readNote"></div>
+    </div>
+    <div class="read notes" id="notes">
+      <h2>Computer's notes on you</h2>
+      <table id="notesTable"></table>
+      <div class="read-note" id="notesAdj"></div>
+      <button class="btn small" id="btnForget">Forget what it has learned</button>
+    </div>
+  </aside>
+</div>
+
+<script>
+/* =====================================================================
+   CONSTANTS & CARD UTILITIES
+   ===================================================================== */
+const SB = 10, BB = 20, START_STACK = 1000;
+const SUITS = ['s', 'h', 'd', 'c'];
+const SUIT_SYMBOL = { s: '♠', h: '♥', d: '♦', c: '♣' };
+const RANK_CHAR = { 2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'8',9:'9',10:'10',11:'J',12:'Q',13:'K',14:'A' };
+const RANK_NAME = { 2:'Two',3:'Three',4:'Four',5:'Five',6:'Six',7:'Seven',8:'Eight',9:'Nine',10:'Ten',11:'Jack',12:'Queen',13:'King',14:'Ace' };
+const CATEGORY_NAME = ['High Card','Pair','Two Pair','Three of a Kind','Straight','Flush','Full House','Four of a Kind','Straight Flush'];
+
+function plural(r) { return r === 6 ? 'Sixes' : RANK_NAME[r] + 's'; }
+function money(n) { return '$' + n.toLocaleString('en-US'); }
+
+function makeDeck() {
+  const d = [];
+  for (let r = 2; r <= 14; r++) for (const s of SUITS) d.push({ r, s, id: r + s });
+  return d;
+}
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* =====================================================================
+   HAND EVALUATION
+   evaluate5 returns { cat, tb } where cat is 0..8 and tb is the list of
+   tie-break ranks in significance order. Higher wins lexicographically.
+   ===================================================================== */
+function evaluate5(cards) {
+  const ranks = cards.map(c => c.r).sort((a, b) => b - a);
+  const flush = cards.every(c => c.s === cards[0].s);
+
+  const counts = {};
+  for (const r of ranks) counts[r] = (counts[r] || 0) + 1;
+  // groups: [rank, count], sorted by count desc then rank desc
+  const groups = Object.entries(counts).map(([r, n]) => [+r, n])
+    .sort((a, b) => b[1] - a[1] || b[0] - a[0]);
+
+  let straightHigh = 0;
+  if (groups.length === 5) {
+    if (ranks[0] - ranks[4] === 4) straightHigh = ranks[0];
+    else if (ranks.join(',') === '14,5,4,3,2') straightHigh = 5; // wheel
+  }
+
+  if (straightHigh && flush) return { cat: 8, tb: [straightHigh] };
+  if (groups[0][1] === 4) return { cat: 7, tb: [groups[0][0], groups[1][0]] };
+  if (groups[0][1] === 3 && groups[1][1] === 2) return { cat: 6, tb: [groups[0][0], groups[1][0]] };
+  if (flush) return { cat: 5, tb: ranks };
+  if (straightHigh) return { cat: 4, tb: [straightHigh] };
+  if (groups[0][1] === 3) return { cat: 3, tb: groups.map(g => g[0]) };
+  if (groups[0][1] === 2 && groups[1][1] === 2) return { cat: 2, tb: groups.map(g => g[0]) };
+  if (groups[0][1] === 2) return { cat: 1, tb: groups.map(g => g[0]) };
+  return { cat: 0, tb: ranks };
+}
+
+function compareEval(a, b) {
+  if (a.cat !== b.cat) return a.cat - b.cat;
+  for (let i = 0; i < a.tb.length; i++) {
+    if (a.tb[i] !== b.tb[i]) return a.tb[i] - b.tb[i];
+  }
+  return 0;
+}
+
+function describe(ev) {
+  const t = ev.tb;
+  switch (ev.cat) {
+    case 8: return t[0] === 14 ? 'Royal Flush' : `Straight Flush, ${RANK_NAME[t[0]]} high`;
+    case 7: return `Four of a Kind, ${plural(t[0])}`;
+    case 6: return `Full House, ${plural(t[0])} full of ${plural(t[1])}`;
+    case 5: return `Flush, ${RANK_NAME[t[0]]} high`;
+    case 4: return `Straight, ${RANK_NAME[t[0]]} high`;
+    case 3: return `Three of a Kind, ${plural(t[0])}`;
+    case 2: return `Two Pair, ${plural(t[0])} and ${plural(t[1])}`;
+    case 1: return `Pair of ${plural(t[0])}`;
+    default: return `${RANK_NAME[t[0]]} high`;
+  }
+}
+
+// Best 5-card hand from 5, 6 or 7 cards. Returns { ev, cards, name }.
+function bestHand(cards) {
+  const n = cards.length;
+  let best = null;
+  for (let a = 0; a < n - 4; a++)
+    for (let b = a + 1; b < n - 3; b++)
+      for (let c = b + 1; c < n - 2; c++)
+        for (let d = c + 1; d < n - 1; d++)
+          for (let e = d + 1; e < n; e++) {
+            const hand = [cards[a], cards[b], cards[c], cards[d], cards[e]];
+            const ev = evaluate5(hand);
+            if (!best || compareEval(ev, best.ev) > 0) best = { ev, cards: hand };
+          }
+  best.name = describe(best.ev);
+  return best;
+}
+
+function describeHole(h) {
+  if (h[0].r === h[1].r) return `Pair of ${plural(h[0].r)}`;
+  const hi = Math.max(h[0].r, h[1].r), lo = Math.min(h[0].r, h[1].r);
+  return `${RANK_NAME[hi]}-${RANK_NAME[lo]} ${h[0].s === h[1].s ? 'suited' : 'offsuit'}`;
+}
+
+/* =====================================================================
+   GAME STATE
+   ===================================================================== */
+const S = {
+  players: [
+    { name: 'You', human: true, stack: START_STACK, hole: [], bet: 0, folded: false, allIn: false, acted: false, lastAction: '' },
+    { name: 'Computer', human: false, stack: START_STACK, hole: [], bet: 0, folded: false, allIn: false, acted: false, lastAction: '' },
+  ],
+  button: null,      // index of dealer (= small blind in heads-up)
+  deck: [], board: [], pot: 0,
+  street: 'idle',    // preflop | flop | turn | river
+  currentBet: 0,     // highest bet on this street
+  lastRaise: BB,     // size of the last full raise (sets the min-raise)
+  toAct: null,
+  handNum: 0,
+  phase: 'idle',     // idle | betting | runout | handover | gameover
+  usedCards: new Set(),
+  result: null,      // { winner, split }
+  timer: null,
+};
+
+const $ = id => document.getElementById(id);
+const COMPUTER_DELAY_MS = 700; // fixed pacing so the computer's move doesn't appear instantly
+const delay = () => COMPUTER_DELAY_MS;
+const trainingMode = () => $('trainingMode').checked;
+
+function log(text, cls) {
+  const p = document.createElement('p');
+  p.textContent = text;
+  if (cls) p.className = cls;
+  $('log').appendChild(p);
+  $('log').scrollTop = $('log').scrollHeight;
+}
+
+/* =====================================================================
+   HAND FLOW
+   ===================================================================== */
+function newGame() {
+  for (const p of S.players) p.stack = START_STACK;
+  S.handNum = 0; S.button = null; S.phase = 'idle';
+  $('log').innerHTML = '';
+  startHand();
+}
+
+function startHand() {
+  clearTimeout(S.timer);
+  S.handNum++;
+  S.button = S.handNum === 1 ? (Math.random() < 0.5 ? 0 : 1) : 1 - S.button;
+  S.deck = shuffle(makeDeck());
+  S.board = []; S.pot = 0; S.currentBet = 0; S.lastRaise = BB;
+  S.usedCards = new Set(); S.result = null;
+  for (const p of S.players) {
+    p.hole = []; p.bet = 0; p.folded = false; p.allIn = false; p.acted = false; p.lastAction = '';
+  }
+
+  log(`Hand ${S.handNum}`, 'hand');
+  const sb = S.button, bb = 1 - S.button;
+  log(`${S.players[sb].name} ${sb === 0 ? 'have' : 'has'} the button (small blind).`);
+  postBlind(sb, SB, 'small blind');
+  postBlind(bb, BB, 'big blind');
+  S.currentBet = Math.max(S.players[0].bet, S.players[1].bet);
+
+  for (let i = 0; i < 2; i++) for (const p of S.players) p.hole.push(S.deck.pop());
+  log(`You: ${cardText(S.players[0].hole)}   Computer: ${cardText(S.players[1].hole)}`);
+
+  S.street = 'preflop';
+  S.phase = 'betting';
+  S.toAct = sb;
+  if (typeof AI !== 'undefined') AI.newHand(S.players[1].hole); // heads-up: button/SB acts first before the flop
+  render();
+  continueAction();
+}
+
+function postBlind(i, amt, label) {
+  const p = S.players[i];
+  const a = Math.min(amt, p.stack);
+  p.stack -= a; p.bet += a;
+  if (p.stack === 0) p.allIn = true;
+  p.lastAction = `${label} ${money(a)}` + (p.allIn ? ' (all in)' : '');
+  log(`${p.name} post${i === 0 ? '' : 's'} the ${label} of ${money(a)}${p.allIn ? ' and is all in' : ''}.`);
+}
+
+function cardText(cards) { return cards.map(c => RANK_CHAR[c.r] + SUIT_SYMBOL[c.s]).join(' '); }
+
+// True when nobody who can still act needs to act.
+function roundComplete() {
+  const active = S.players.filter(p => !p.folded && !p.allIn);
+  return active.every(p => p.acted && p.bet === S.currentBet);
+}
+
+function continueAction() {
+  if (S.phase !== 'betting') return;
+  if (roundComplete()) { endStreet(); return; }
+  let p = S.players[S.toAct];
+  if (p.folded || p.allIn) { S.toAct = 1 - S.toAct; p = S.players[S.toAct]; }
+  render();
+  if (p.human) {
+    setStatus('Your turn.', true);
+  } else {
+    setStatus('Computer is thinking…');
+    S.timer = setTimeout(computerAct, delay());
+  }
+}
+
+// Options available to player i right now.
+function legalOptions(i) {
+  const p = S.players[i], o = S.players[1 - i];
+  const toCall = Math.min(S.currentBet - p.bet, p.stack);
+  const canCheck = S.currentBet === p.bet;
+  const canRaise = !o.allIn && !o.folded && p.stack > toCall;
+  const maxTotal = p.bet + p.stack;
+  let minTotal = S.currentBet + S.lastRaise;
+  if (minTotal > maxTotal) minTotal = maxTotal; // only an all-in "raise" is possible
+  const potForSizing = S.pot + p.bet + o.bet + toCall;
+  return { toCall, canCheck, canRaise, minTotal, maxTotal, potForSizing };
+}
+
+// kind: fold | check | call | raise (total = raise-to amount) | allin
+function doAction(i, kind, total) {
+  if (S.phase !== 'betting' || S.toAct !== i) return;
+  const p = S.players[i], o = S.players[1 - i];
+  const L = legalOptions(i);
+  const who = p.name;
+  const cls = p.human ? 'you' : '';
+  const before = { street: S.street, potBefore: S.pot + p.bet + o.bet, toCallBefore: L.toCall,
+                   currentBetBefore: S.currentBet, oppIsButton: S.button === i, bigBlind: BB, board: S.board.slice() };
+
+  if (kind === 'allin') {
+    total = p.bet + p.stack;
+    kind = total > S.currentBet ? 'raise' : 'call';
+  }
+
+  if (kind === 'fold') {
+    p.folded = true; p.lastAction = 'Fold';
+    log(`${who} fold${i === 0 ? '' : 's'}.`, cls);
+    if (p.human && typeof AI !== 'undefined') AI.observe({ ...before, kind, total });
+    endByFold(1 - i);
+    return;
+  }
+  if (kind === 'check') {
+    if (!L.canCheck) return;
+    p.lastAction = 'Check';
+    log(`${who} check${i === 0 ? '' : 's'}.`, cls);
+  }
+  if (kind === 'call') {
+    const amt = L.toCall;
+    p.stack -= amt; p.bet += amt;
+    if (p.stack === 0) p.allIn = true;
+    p.lastAction = `Call ${money(amt)}` + (p.allIn ? ' (all in)' : '');
+    log(`${who} call${i === 0 ? '' : 's'} ${money(amt)}${p.allIn ? ' and is all in' : ''}.`, cls);
+  }
+  if (kind === 'raise') {
+    total = Math.round(total);
+    if (!L.canRaise && total !== L.maxTotal) return;
+    if (total > L.maxTotal) total = L.maxTotal;
+    if (total < L.minTotal && total !== L.maxTotal) return;
+    if (total <= S.currentBet) return;
+    const wasBet = S.currentBet === 0;
+    const amt = total - p.bet;
+    p.stack -= amt; p.bet = total;
+    const raiseSize = total - S.currentBet;
+    if (raiseSize >= S.lastRaise) S.lastRaise = raiseSize; // a full raise resets the min-raise
+    S.currentBet = total;
+    o.acted = false; // the other player must respond
+    if (p.stack === 0) p.allIn = true;
+    const verb = wasBet ? `bet${i === 0 ? '' : 's'} ${money(total)}` : `raise${i === 0 ? '' : 's'} to ${money(total)}`;
+    p.lastAction = (wasBet ? `Bet ${money(total)}` : `Raise to ${money(total)}`) + (p.allIn ? ' (all in)' : '');
+    log(`${who} ${verb}${p.allIn ? ' and is all in' : ''}.`, cls);
+  }
+
+  if (p.human && typeof AI !== 'undefined') AI.observe({ ...before, kind, total });
+  p.acted = true;
+  S.toAct = 1 - i;
+  render();
+  continueAction();
+}
+
+// Move street bets into the pot, refunding any uncalled excess.
+function collectBets() {
+  const [a, b] = S.players;
+  const lo = Math.min(a.bet, b.bet);
+  for (const p of S.players) {
+    if (p.bet > lo) {
+      const refund = p.bet - lo;
+      p.stack += refund; p.bet = lo;
+      log(`${money(refund)} uncalled, returned to ${p.name}.`);
+    }
+  }
+  S.pot += a.bet + b.bet;
+  a.bet = 0; b.bet = 0;
+}
+
+function endStreet() {
+  collectBets();
+  for (const p of S.players) { p.acted = false; p.lastAction = ''; }
+  if (S.street === 'river') { showdown(); return; }
+  const active = S.players.filter(p => !p.folded && !p.allIn);
+  if (active.length < 2) { runOut(); return; }
+  dealNextStreet();
+  S.currentBet = 0; S.lastRaise = BB;
+  S.toAct = 1 - S.button; // heads-up: big blind acts first after the flop
+  render();
+  continueAction();
+}
+
+function dealNextStreet() {
+  if (S.street === 'preflop') { S.street = 'flop'; S.board.push(S.deck.pop(), S.deck.pop(), S.deck.pop()); }
+  else if (S.street === 'flop') { S.street = 'turn'; S.board.push(S.deck.pop()); }
+  else if (S.street === 'turn') { S.street = 'river'; S.board.push(S.deck.pop()); }
+  log(`${S.street[0].toUpperCase() + S.street.slice(1)}: ${cardText(S.board)}`, 'street');
+}
+
+// Someone is all in and the action is closed: deal the rest of the board.
+function runOut() {
+  S.phase = 'runout';
+  setStatus('All in — dealing out the board…');
+  render();
+  const step = () => {
+    if (S.street === 'river') { showdown(); return; }
+    dealNextStreet();
+    render();
+    S.timer = setTimeout(step, delay());
+  };
+  S.timer = setTimeout(step, delay());
+}
+
+function endByFold(winnerIdx) {
+  collectBets();
+  const w = S.players[winnerIdx];
+  w.stack += S.pot;
+  log(`${w.name} win${winnerIdx === 0 ? '' : 's'} ${money(S.pot)}.`, 'result');
+  S.pot = 0;
+  S.result = { winner: winnerIdx, split: false };
+  finishHand();
+}
+
+function showdown() {
+  S.phase = 'showdown';
+  const [a, b] = S.players;
+  const ha = bestHand([...a.hole, ...S.board]);
+  const hb = bestHand([...b.hole, ...S.board]);
+  log(`Showdown — You: ${ha.name}. Computer: ${hb.name}.`);
+  if (typeof AI !== 'undefined') AI.showdown(a.hole, S.board);
+  const cmp = compareEval(ha.ev, hb.ev);
+  if (cmp === 0) {
+    const half = Math.floor(S.pot / 2);
+    const odd = S.pot - 2 * half;
+    a.stack += half; b.stack += half;
+    S.players[1 - S.button].stack += odd; // odd chip to the player out of position
+    log(`Split pot: ${money(half)} each${odd ? ` (odd ${money(odd)} to ${S.players[1 - S.button].name})` : ''}.`, 'result');
+    S.result = { winner: null, split: true };
+    for (const c of [...ha.cards, ...hb.cards]) S.usedCards.add(c.id);
+  } else {
+    const wi = cmp > 0 ? 0 : 1;
+    const w = S.players[wi], wh = wi === 0 ? ha : hb;
+    w.stack += S.pot;
+    log(`${w.name} win${wi === 0 ? '' : 's'} ${money(S.pot)} with ${wh.name}.`, 'result');
+    S.result = { winner: wi, split: false };
+    for (const c of wh.cards) S.usedCards.add(c.id);
+  }
+  S.pot = 0;
+  finishHand();
+}
+
+function finishHand() {
+  S.phase = 'handover';
+  S.toAct = null;
+  const busted = S.players.find(p => p.stack === 0);
+  if (busted) {
+    S.phase = 'gameover';
+    const w = S.players.find(p => p.stack > 0);
+    log(`${busted.name} ${busted.human ? 'are' : 'is'} out of chips. ${w.name} win${w.human ? '' : 's'} the match.`, 'result');
+    setStatus(`Game over — ${w.name} win${w.human ? '' : 's'} the match.`);
+  } else {
+    setStatus('Hand over. Press Next hand to continue.');
+  }
+  render();
+}
+
+/* =====================================================================
+   COMPUTER: delegates to AI.decide (ai.js); falls back to random actions
+   if ai.js is missing.
+   ===================================================================== */
+function computerView() {
+  const p = S.players[1], o = S.players[0], L = legalOptions(1);
+  return {
+    hole: p.hole, board: S.board, street: S.street,
+    pot: S.pot + p.bet + o.bet,           // total pot including bets on the table
+    toCall: L.toCall, myBet: p.bet, myStack: p.stack, oppStack: o.stack,
+    currentBet: S.currentBet, minTotal: L.minTotal, maxTotal: L.maxTotal,
+    canCheck: L.canCheck, canRaise: L.canRaise, bigBlind: BB, isButton: S.button === 1,
+  };
+}
+
+function computerAct() {
+  if (S.phase !== 'betting' || S.toAct !== 1) return;
+  if (typeof AI === 'undefined') { log('ai.js not loaded — random actions', 'why'); randomAct(); return; }
+  const d = AI.decide(computerView());
+  if (trainingMode()) log(`Computer: ${d.why}`, 'why');
+  doAction(1, d.kind, d.total);
+}
+
+function randomAct() {
+  const L = legalOptions(1);
+  const r = Math.random();
+  const pickSize = () => {
+    const span = L.maxTotal - L.minTotal;
+    let t = L.minTotal + span * Math.pow(Math.random(), 2);
+    t = Math.round(t / 5) * 5;
+    return Math.min(L.maxTotal, Math.max(L.minTotal, t));
+  };
+  if (L.canCheck) {
+    if (!L.canRaise || r < 0.5) doAction(1, 'check');
+    else if (r < 0.93) doAction(1, 'raise', pickSize());
+    else doAction(1, 'allin');
+  } else {
+    if (r < 0.25) doAction(1, 'fold');
+    else if (r < 0.70 || !L.canRaise) doAction(1, 'call');
+    else if (r < 0.93) doAction(1, 'raise', pickSize());
+    else doAction(1, 'allin');
+  }
+}
+
+/* =====================================================================
+   RENDERING
+   ===================================================================== */
+function cardEl(c, faceUp) {
+  const d = document.createElement('div');
+  if (!faceUp) { d.className = 'card back'; return d; }
+  const red = c.s === 'h' || c.s === 'd';
+  d.className = 'card' + (red ? ' red' : '');
+  if (S.usedCards.size) d.classList.add(S.usedCards.has(c.id) ? 'used' : 'dim');
+  d.innerHTML = `
+    <div class="corner">${RANK_CHAR[c.r]}<span class="suit-small">${SUIT_SYMBOL[c.s]}</span></div>
+    <div class="pip">${SUIT_SYMBOL[c.s]}</div>
+    <div class="corner br">${RANK_CHAR[c.r]}<span class="suit-small">${SUIT_SYMBOL[c.s]}</span></div>`;
+  return d;
+}
+
+function setStatus(text, mine) {
+  $('status').textContent = text;
+  $('status').classList.toggle('you', !!mine);
+}
+
+function render() {
+  const showComp = trainingMode();
+  const atShowdown = S.phase === 'showdown' || (S.phase === 'handover' || S.phase === 'gameover') && S.result && S.street === 'river' && !S.players.some(p => p.folded);
+
+  for (let i = 0; i < 2; i++) {
+    const p = S.players[i];
+    $('stack-' + i).textContent = money(p.stack);
+    $('stack-' + i).classList.toggle('busted', p.stack === 0 && S.phase === 'gameover');
+    const badge = $('badge-' + i);
+    if (S.button === null) { badge.textContent = ''; badge.className = 'badge'; badge.style.display = 'none'; }
+    else {
+      badge.style.display = '';
+      const isBtn = S.button === i;
+      badge.textContent = isBtn ? 'D · SB' : 'BB';
+      badge.className = 'badge' + (isBtn ? ' dealer' : '');
+    }
+    const cards = $('cards-' + i);
+    cards.innerHTML = '';
+    const faceUp = p.human || showComp || atShowdown;
+    for (const c of p.hole) cards.appendChild(cardEl(c, faceUp));
+
+    $('bet-' + i).textContent = p.bet ? `Bet ${money(p.bet)}` : '';
+    $('action-' + i).textContent = p.folded ? 'Folded' : (p.lastAction || (p.allIn ? 'All in' : ''));
+
+    let handText = '';
+    if (p.hole.length && faceUp && !p.folded) {
+      handText = S.board.length >= 3 ? bestHand([...p.hole, ...S.board]).name : describeHole(p.hole);
+    }
+    $('hand-' + i).textContent = handText;
+
+    const seat = $('seat-' + i);
+    seat.classList.toggle('active', S.phase === 'betting' && S.toAct === i);
+    seat.classList.toggle('winner', !!S.result && S.result.winner === i);
+  }
+
+  const board = $('board');
+  board.innerHTML = '';
+  for (const c of S.board) board.appendChild(cardEl(c, true));
+  for (let i = S.board.length; i < 5; i++) { const s = document.createElement('div'); s.className = 'slot'; board.appendChild(s); }
+  // S.pot holds only chips already collected; add what's still out in front of the players.
+  $('pot').textContent = money(S.pot + S.players[0].bet + S.players[1].bet);
+  $('street').textContent = S.phase === 'idle' ? '' : S.street;
+
+  renderControls();
+  renderRead();
+  renderNotes();
+}
+
+function renderNotes() {
+  const show = trainingMode() && typeof AI !== 'undefined';
+  $('notes').classList.toggle('hidden', !show);
+  if (!show) return;
+  const n = AI.notes();
+  const t = $('notesTable');
+  t.innerHTML = '';
+  const head = document.createElement('tr');
+  head.innerHTML = `<td>Hands observed</td><td class="num">${n.hands}</td><td class="n"></td>`;
+  t.appendChild(head);
+  for (const row of n.rows) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${row.label}</td><td class="num">${Math.round(row.rate * 100)}%</td><td class="n">${row.k}/${row.n}</td>`;
+    t.appendChild(tr);
+  }
+  $('notesAdj').textContent = n.adjustments.length
+    ? 'Adjusting: ' + n.adjustments.join('; ') + '. Rates are smoothed toward a default player, so they move slowly at first.'
+    : 'No adjustments yet — you look like the default player so far. Rates are smoothed toward a default player, so they move slowly at first.';
+}
+
+const GRID_RANKS = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+function renderRead() {
+  const show = trainingMode() && typeof AI !== 'undefined';
+  $('read').classList.toggle('hidden', !show);
+  if (!show) return;
+  const grid = $('grid');
+  const inHand = S.phase !== 'idle';
+  const w = inHand ? AI.rangeByClass(S.board) : {};
+  if (!grid.children.length) {
+    for (let i = 0; i < 13; i++) for (let j = 0; j < 13; j++) {
+      const d = document.createElement('div');
+      d.textContent = i === j ? GRID_RANKS[i] + GRID_RANKS[j] : i < j ? GRID_RANKS[i] + GRID_RANKS[j] + 's' : GRID_RANKS[j] + GRID_RANKS[i] + 'o';
+      grid.appendChild(d);
+    }
+  }
+  [...grid.children].forEach(d => {
+    const v = w[d.textContent];
+    if (v === undefined) { d.className = inHand ? 'blocked' : ''; d.style.background = ''; return; }
+    d.className = '';
+    d.style.background = `rgba(201,162,39,${(0.05 + 0.95 * v).toFixed(2)})`;
+  });
+  if (inHand) {
+    const sm = AI.rangeSummary(S.board);
+    $('readNote').textContent = `Brightness = how likely the computer thinks each hand is. Range width ${Math.round(sm.width * 100)}% of all hands; mean strength ${Math.round(sm.meanStrength * 100)}th percentile.`;
+  } else $('readNote').textContent = '';
+}
+
+function renderControls() {
+  const myTurn = S.phase === 'betting' && S.toAct === 0;
+  const handDone = S.phase === 'handover' || S.phase === 'gameover' || S.phase === 'idle';
+
+  $('btnDeal').classList.toggle('hidden', !handDone);
+  $('btnDeal').textContent = S.phase === 'idle' ? 'Deal' : S.phase === 'gameover' ? 'New game' : 'Next hand';
+
+  for (const id of ['btnFold', 'btnCheckCall', 'btnRaise', 'btnAllIn']) $(id).classList.toggle('hidden', handDone);
+  $('sizing').classList.toggle('hidden', handDone);
+
+  if (handDone) return;
+
+  const L = legalOptions(0);
+  const p = S.players[0];
+  for (const id of ['btnFold', 'btnCheckCall', 'btnRaise', 'btnAllIn']) $(id).disabled = !myTurn;
+  $('slider').disabled = !myTurn; $('amount').disabled = !myTurn;
+  document.querySelectorAll('[data-preset]').forEach(b => b.disabled = !myTurn);
+
+  $('btnFold').disabled = !myTurn || L.canCheck; // folding when you could check is never allowed here
+  $('btnCheckCall').textContent = L.canCheck ? 'Check'
+    : (L.toCall >= p.stack ? `Call ${money(L.toCall)} (all in)` : `Call ${money(L.toCall)}`);
+
+  const fullRaisePossible = L.canRaise && L.maxTotal >= S.currentBet + S.lastRaise;
+  $('btnRaise').disabled = !myTurn || !fullRaisePossible;
+  $('btnAllIn').disabled = !myTurn || !(L.canRaise || L.toCall >= p.stack);
+  $('btnAllIn').textContent = `All in ${money(p.bet + p.stack)}`;
+
+  const slider = $('slider'), amt = $('amount');
+  slider.min = L.minTotal; slider.max = L.maxTotal;
+  amt.min = L.minTotal; amt.max = L.maxTotal;
+  if (myTurn && (+slider.value < L.minTotal || +slider.value > L.maxTotal || slider.dataset.street !== S.street + S.currentBet)) {
+    slider.value = L.minTotal; amt.value = L.minTotal;
+    slider.dataset.street = S.street + S.currentBet;
+  }
+  updateRaiseLabel();
+  $('rangeNote').textContent = fullRaisePossible
+    ? `${S.currentBet === 0 ? 'Bet' : 'Raise to'} between ${money(L.minTotal)} and ${money(L.maxTotal)}. Min raise ${money(S.lastRaise)}.`
+    : (L.canRaise ? `Only an all-in for ${money(L.maxTotal)} is possible (less than a full raise).` : 'No raise possible right now.');
+  $('sizing').classList.toggle('hidden', !L.canRaise);
+}
+
+function updateRaiseLabel() {
+  const v = +$('amount').value || 0;
+  $('btnRaise').textContent = S.currentBet === 0 ? `Bet ${money(v)}` : `Raise to ${money(v)}`;
+}
+
+/* =====================================================================
+   WIRING
+   ===================================================================== */
+$('btnDeal').addEventListener('click', () => { if (S.phase === 'gameover') newGame(); else startHand(); });
+$('btnFold').addEventListener('click', () => doAction(0, 'fold'));
+$('btnCheckCall').addEventListener('click', () => doAction(0, legalOptions(0).canCheck ? 'check' : 'call'));
+$('btnRaise').addEventListener('click', () => doAction(0, 'raise', +$('amount').value));
+$('btnAllIn').addEventListener('click', () => doAction(0, 'allin'));
+
+$('slider').addEventListener('input', e => { $('amount').value = e.target.value; updateRaiseLabel(); });
+$('amount').addEventListener('input', e => {
+  const L = legalOptions(0);
+  let v = +e.target.value || 0;
+  $('slider').value = Math.min(L.maxTotal, Math.max(L.minTotal, v));
+  updateRaiseLabel();
+});
+$('amount').addEventListener('change', e => {
+  const L = legalOptions(0);
+  let v = Math.round(+e.target.value || 0);
+  v = Math.min(L.maxTotal, Math.max(L.minTotal, v));
+  e.target.value = v; $('slider').value = v; updateRaiseLabel();
+});
+document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
+  const L = legalOptions(0), p = S.players[0];
+  let v;
+  switch (b.dataset.preset) {
+    case 'min': v = L.minTotal; break;
+    case 'third': v = p.bet + L.toCall + L.potForSizing / 3; break;
+    case 'half': v = p.bet + L.toCall + L.potForSizing / 2; break;
+    case 'pot': v = p.bet + L.toCall + L.potForSizing; break;
+    default: v = L.maxTotal;
+  }
+  v = Math.round(Math.min(L.maxTotal, Math.max(L.minTotal, v)));
+  $('slider').value = v; $('amount').value = v; updateRaiseLabel();
+}));
+$('trainingMode').addEventListener('change', render);
+$('btnForget').addEventListener('click', () => { AI.forget(); log('Computer forgot its notes on you.', 'why'); render(); });
+
+render();
+
+/* =====================================================================
+   SELF-TEST OF THE EVALUATOR (runs once, results in the console)
+   ===================================================================== */
+(function selfTest() {
+  const c = s => ({ r: { T: 10, J: 11, Q: 12, K: 13, A: 14 }[s[0]] || +s[0], s: s[1], id: s });
+  const H = str => bestHand(str.split(' ').map(c));
+  const cases = [
+    ['As Ks Qs Js Ts 2d 3c', 'Royal Flush'],
+    ['5h 4h 3h 2h Ah Kd Qc', 'Straight Flush, Five high'],
+    ['9c 9d 9h 9s 2c 3d 4h', 'Four of a Kind, Nines'],
+    ['Kc Kd Kh 7s 7c 2d 3h', 'Full House, Kings full of Sevens'],
+    ['Kc Kd Kh 7s 7c 7d 3h', 'Full House, Kings full of Sevens'],
+    ['2h 7h 9h Jh Kh 3c 4d', 'Flush, King high'],
+    ['Ah 2d 3c 4s 5h 9c Kd', 'Straight, Five high'],
+    ['Th Jd Qc Ks Ah 2c 3d', 'Straight, Ace high'],
+    ['6c 6d 6h 2s 3c 8d Kh', 'Three of a Kind, Sixes'],
+    ['Qc Qd 4h 4s 8c 8d Kh', 'Two Pair, Queens and Eights'],
+    ['Ac Ad 4h 5s 8c 9d Kh', 'Pair of Aces'],
+    ['Ac 3d 4h 5s 8c 9d Kh', 'Ace high'],
+  ];
+  let ok = true;
+  for (const [hand, expect] of cases) {
+    const got = H(hand).name;
+    if (got !== expect) { ok = false; console.error('Evaluator mismatch:', hand, 'expected', expect, 'got', got); }
+  }
+  // Kicker comparison and split detection
+  const a = H('Ac Ad Kh 5s 8c 9d 2h'), b = H('As Ah Qh 5d 8d 9c 2c');
+  if (compareEval(a.ev, b.ev) <= 0) { ok = false; console.error('Kicker test failed'); }
+  const s1 = H('Ah Kd Qc Js Th 2c 3d'), s2 = H('Ac Kh Qd Jc Ts 4c 5d');
+  if (compareEval(s1.ev, s2.ev) !== 0) { ok = false; console.error('Split test failed'); }
+  console.log(ok ? 'Hand evaluator self-test passed.' : 'Hand evaluator self-test FAILED.');
+})();
+</script>
+<script>
+/* =====================================================================
+   AI (tier 2): opponent range + equity vs range + realization + pot odds.
+   Globals: AI.newHand, AI.observe, AI.decide, AI.rangeByClass, AI.params
+   ===================================================================== */
+const AI = (() => {
+
+  const params = {
+    trials: 1500,        // Monte Carlo runouts per decision
+    bluff: 0.12,         // base frequency of bluffing with a hopeless hand
+    valueRaise: 0.62,    // equity at which value-raising starts to be likely
+    strongBet: 0.60,     // equity above which it usually bets when checked to
+    mediumBet: 0.50,     // equity above which it sometimes bets
+    callSlack: 0.02,     // calls slightly below the exact pot odds
+    openRaise: 0.48,     // preflop equity at which the small blind open-raises
+    openFold: 0.36,      // preflop equity below which the small blind usually folds
+    oopRealization: 0.88,  // equity realization out of position (before the flop)
+    weakRealization: 0.85, // extra realization penalty for weak hands
+  };
+
+  /* ---------- fast 7-card evaluator (returns a comparable number) ---------- */
+function evalFast(cards) {
+  const rc = new Uint8Array(15);       // rank counts
+  const sc = new Uint8Array(4);        // suit counts
+  const SI = { s: 0, h: 1, d: 2, c: 3 };
+  let rankMask = 0;
+  for (let i = 0; i < cards.length; i++) {
+    const c = cards[i]; rc[c.r]++; sc[SI[c.s]]++; rankMask |= 1 << c.r;
+  }
+  // flush?
+  let flushSuit = -1;
+  for (let s = 0; s < 4; s++) if (sc[s] >= 5) flushSuit = s;
+  const straightHigh = m => {
+    // A can play low
+    if (m & (1 << 14)) m |= 1 << 1;
+    for (let h = 14; h >= 5; h--) {
+      if (((m >> (h - 4)) & 31) === 31) return h;
+    }
+    return 0;
+  };
+  if (flushSuit >= 0) {
+    let fm = 0;
+    for (let i = 0; i < cards.length; i++) if (SI[cards[i].s] === flushSuit) fm |= 1 << cards[i].r;
+    const sh = straightHigh(fm);
+    if (sh) return 8 * 759375 + sh * 50625;
+    // top five flush ranks
+    let score = 5 * 759375, mult = 50625, n = 0;
+    for (let r = 14; r >= 2 && n < 5; r--) if (fm & (1 << r)) { score += r * mult; mult /= 15; n++; }
+    return score;
+  }
+  // groups
+  let quad = 0, trips = 0, pair1 = 0, pair2 = 0;
+  for (let r = 14; r >= 2; r--) {
+    const n = rc[r];
+    if (n === 4) quad = r;
+    else if (n === 3) { if (!trips) trips = r; else if (!pair1) pair1 = r; }
+    else if (n === 2) { if (!pair1) pair1 = r; else if (!pair2) pair2 = r; }
+  }
+  const kickers = (exclude, count) => {
+    let score = 0, mult = 50625, n = 0;
+    for (let r = 14; r >= 2 && n < count; r--) if (rc[r] && !exclude.includes(r)) { score += r * mult; mult /= 15; n++; }
+    return score;
+  };
+  if (quad) {
+    let k = 0; for (let r = 14; r >= 2; r--) if (rc[r] && r !== quad) { k = r; break; }
+    return 7 * 759375 + quad * 50625 + k * 3375;
+  }
+  if (trips && pair1) return 6 * 759375 + trips * 50625 + pair1 * 3375;
+  const sh = straightHigh(rankMask);
+  if (sh) return 4 * 759375 + sh * 50625;
+  if (trips) return 3 * 759375 + trips * 50625 + kickers([trips], 2) / 15;
+  if (pair1 && pair2) {
+    let k = 0; for (let r = 14; r >= 2; r--) if (rc[r] && r !== pair1 && r !== pair2) { k = r; break; }
+    return 2 * 759375 + pair1 * 50625 + pair2 * 3375 + k * 225;
+  }
+  if (pair1) return 1 * 759375 + pair1 * 50625 + kickers([pair1], 3) / 15;
+  return kickers([], 5);
+}
+
+  
+  /* ---------- preflop equity vs a random hand (Monte Carlo, 40k trials/class) ---------- */
+const PREFLOP_EQUITY = {
+  "22":0.503, "33":0.537, "44":0.569, "55":0.604, "66":0.634, "77":0.663, "88":0.692, "99":0.723, "32s":0.358, "32o":0.327, "42s":0.369, "42o":0.329, "43s":0.389,
+  "43o":0.357, "52s":0.382, "52o":0.343, "53s":0.397, "53o":0.366, "54s":0.417, "54o":0.382, "62s":0.376, "62o":0.339, "63s":0.393, "63o":0.362, "64s":0.415, "64o":0.381,
+  "65s":0.434, "65o":0.398, "72s":0.387, "72o":0.345, "73s":0.401, "73o":0.369, "74s":0.416, "74o":0.383, "75s":0.435, "75o":0.407, "76s":0.456, "76o":0.42, "82s":0.404,
+  "82o":0.373, "83s":0.406, "83o":0.373, "84s":0.428, "84o":0.396, "85s":0.447, "85o":0.415, "86s":0.464, "86o":0.433, "87s":0.48, "87o":0.45, "92s":0.424, "92o":0.391,
+  "93s":0.43, "93o":0.4, "94s":0.439, "94o":0.403, "95s":0.456, "95o":0.427, "96s":0.47, "96o":0.45, "97s":0.489, "97o":0.466, "98s":0.505, "98o":0.481, "T2s":0.447,
+  "T2o":0.421, "T3s":0.458, "T3o":0.426, "T4s":0.466, "T4o":0.433, "T5s":0.471, "T5o":0.443, "T6s":0.493, "T6o":0.465, "T7s":0.501, "T7o":0.478, "T8s":0.521, "T8o":0.5,
+  "T9s":0.543, "T9o":0.516, "TT":0.752, "J2s":0.477, "J2o":0.443, "J3s":0.485, "J3o":0.455, "J4s":0.49, "J4o":0.462, "J5s":0.503, "J5o":0.473, "J6s":0.513, "J6o":0.479,
+  "J7s":0.52, "J7o":0.497, "J8s":0.54, "J8o":0.517, "J9s":0.559, "J9o":0.532, "JTs":0.575, "JTo":0.556, "JJ":0.774, "Q2s":0.503, "Q2o":0.474, "Q3s":0.509, "Q3o":0.481,
+  "Q4s":0.521, "Q4o":0.493, "Q5s":0.528, "Q5o":0.504, "Q6s":0.536, "Q6o":0.51, "Q7s":0.544, "Q7o":0.517, "Q8s":0.56, "Q8o":0.541, "Q9s":0.578, "Q9o":0.55, "QTs":0.595,
+  "QTo":0.573, "QJs":0.597, "QJo":0.578, "QQ":0.8, "K2s":0.534, "K2o":0.504, "K3s":0.539, "K3o":0.513, "K4s":0.548, "K4o":0.528, "K5s":0.556, "K5o":0.533, "K6s":0.565,
+  "K6o":0.545, "K7s":0.577, "K7o":0.551, "K8s":0.579, "K8o":0.565, "K9s":0.599, "K9o":0.577, "KTs":0.615, "KTo":0.599, "KJs":0.622, "KJo":0.605, "KQs":0.633, "KQo":0.613,
+  "KK":0.827, "A2s":0.571, "A2o":0.55, "A3s":0.582, "A3o":0.555, "A4s":0.594, "A4o":0.569, "A5s":0.598, "A5o":0.576, "A6s":0.597, "A6o":0.574, "A7s":0.612, "A7o":0.589,
+  "A8s":0.615, "A8o":0.598, "A9s":0.622, "A9o":0.606, "ATs":0.646, "ATo":0.63, "AJs":0.657, "AJo":0.636, "AQs":0.663, "AQo":0.646, "AKs":0.672, "AKo":0.652, "AA":0.845
+};
+
+  const RC = { 2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'8',9:'9',10:'T',11:'J',12:'Q',13:'K',14:'A' };
+  const SUITS = ['s','h','d','c'];
+  function classKey(a, b) {
+    const hi = Math.max(a.r, b.r), lo = Math.min(a.r, b.r);
+    return hi === lo ? RC[hi] + RC[lo] : RC[hi] + RC[lo] + (a.s === b.s ? 's' : 'o');
+  }
+
+  /* ---------- the 1326 combos and their preflop strength percentile ---------- */
+  const COMBOS = [];
+  {
+    const deck = [];
+    for (let r = 2; r <= 14; r++) for (const s of SUITS) deck.push({ r, s, id: r + s });
+    for (let i = 0; i < 52; i++) for (let j = i + 1; j < 52; j++)
+      COMBOS.push({ a: deck[i], b: deck[j], key: classKey(deck[i], deck[j]) });
+  }
+  // percentile of each class = share of combos with lower preflop equity (midpoint of ties)
+  const PREFLOP_PCT = {};
+  {
+    const byEq = {};
+    for (const c of COMBOS) byEq[c.key] = (byEq[c.key] || 0) + 1;
+    const keys = Object.keys(byEq).sort((x, y) => PREFLOP_EQUITY[x] - PREFLOP_EQUITY[y]);
+    let below = 0;
+    for (const k of keys) { PREFLOP_PCT[k] = (below + byEq[k] / 2) / 1326; below += byEq[k]; }
+  }
+
+  /* ---------- opponent model: P(action | hand strength percentile s) ---------- */
+  const logistic = x => 1 / (1 + Math.exp(-x));
+  const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
+  // Every likelihood has a floor: nobody is assumed to play perfectly, so no hand is ever ruled out.
+  // A holds the tier-3 adjustments (all zero / one for a player about whom nothing is known).
+  // betShift/callShift split IP vs OOP because heads-up position changes what a bet or a fold means;
+  // airFloor splits small vs big (≥75% pot) because a big bet is not just "more likely a bet the way a
+  // small one is" — it's polarized, and whether THIS human's big bets skew value or bluff is exactly
+  // the thing observed showdowns can tell us (see the $820 river shove that started this).
+  const A = { openShift: 0, betShiftIP: 0, betShiftOOP: 0, callShiftIP: 0, callShiftOOP: 0,
+              bbDefendShift: 0, airFloor: 0.12, airFloorSmall: 0.12, airFloorBig: 0.12, bluffMult: 1, valueShift: 0 };
+  const L = {
+    open:        (s, size) => 0.08 + 0.87 * logistic((s - (0.45 + A.openShift + clamp((size - 3) * 0.03, 0, 0.3))) / 0.08),
+    limp:        s => clamp(1 - L.open(s, 3) - 0.6 * logistic((0.22 - s) / 0.06), 0.05, 1),
+    threeBet:    (s, size) => 0.03 + 0.70 * logistic((s - (0.82 + 0.04 * size)) / 0.05),
+    callRaise:   (s, size) => clamp(0.15 + 0.75 * logistic((s - (0.30 + A.bbDefendShift + 0.05 * size)) / 0.10) - L.threeBet(s, size), 0.05, 0.9),
+    raiseLimper: (s, size) => 0.03 + 0.60 * logistic((s - (0.80 + clamp((size - 4) * 0.01, 0, 0.1))) / 0.06),
+    checkOption: s => 1 - L.raiseLimper(s, 4),
+    bet:         (s, f, ip) => {
+      const floor = f >= 0.75 ? A.airFloorBig : A.airFloorSmall;
+      const shift = ip ? A.betShiftIP : A.betShiftOOP;
+      return floor + (0.80 - floor) * logistic((s - (0.50 + shift + 0.15 * f)) / 0.10);
+    },
+    check:       (s, ip) => 1 - (0.05 + 0.75 * logistic((s - (0.62 + (ip ? A.betShiftIP : A.betShiftOOP))) / 0.10)),
+    raise:       (s, f) => A.airFloor / 3 + (0.64 - A.airFloor / 3) * logistic((s - (0.82 + 0.05 * f)) / 0.06),
+    call:        (s, f, ip) => clamp(0.08 + 0.85 * logistic((s - (0.28 + (ip ? A.callShiftIP : A.callShiftOOP) + 0.22 * f)) / 0.10) - L.raise(s, f), 0.05, 0.9),
+  };
+
+  /* ---------- tier 3: statistics about the opponent, kept across hands ----------
+     Each rate is smoothed toward a prior (the rate the default curves imply) with a
+     pseudo-count, so a few hands nudge the model and many hands move it. */
+  const PRIORS = {
+    sbRaise:   { rate: 0.56, n: 10 },  // raises when first to act from the small blind — rare opportunity (~1 per 2 hands), keep cautious
+    bbFold:    { rate: 0.35, n: 8 },   // folds the big blind to a raise — rare opportunity, keep cautious
+    bet:       { rate: 0.40, n: 4 },   // bets when checked to (postflop) — fires often, safe to trust sooner
+    foldToBet: { rate: 0.45, n: 4 },   // folds when facing a bet or raise (postflop) — fires often, safe to trust sooner
+    sdBluff:   { rate: 0.25, n: 6 },   // showed a weak hand after betting/raising postflop — rare, keep cautious
+    sdBluffSize: { rate: 0.25, n: 8 }, // same, but split small/big bet — each tier gets ~half the samples, so be more cautious still
+  };
+  const STATS_KEY = 'holdem-ai-notes-v1';
+  const blankStats = () => ({ hands: 0, sbOpp: 0, sbRaise: 0, bbFaceRaise: 0, bbFold: 0,
+    betOpp: 0, bets: 0, betOpp_ip: 0, bets_ip: 0, betOpp_oop: 0, bets_oop: 0,
+    faceBet: 0, foldToBet: 0, raiseToBet: 0,
+    faceBet_ip: 0, foldToBet_ip: 0, faceBet_oop: 0, foldToBet_oop: 0,
+    sdAggr: 0, sdAggrWeak: 0, sdAggr_small: 0, sdAggrWeak_small: 0, sdAggr_big: 0, sdAggrWeak_big: 0 });
+  let stats = blankStats();
+  let humanAggrPostflop = false;
+  let humanAggrMaxFrac = 0; // the largest pot-fraction of any postflop bet/raise the human made this hand
+  try { const saved = JSON.parse(localStorage.getItem(STATS_KEY)); if (saved && typeof saved.hands === 'number') stats = { ...blankStats(), ...saved }; } catch (e) {}
+  function saveStats() { try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch (e) {} }
+  function forget() { stats = blankStats(); saveStats(); adapt(); }
+  const rate = (k, n, prior) => (k + prior.rate * prior.n) / (n + prior.n);
+  function rates() {
+    return {
+      sbRaise:     rate(stats.sbRaise, stats.sbOpp, PRIORS.sbRaise),
+      bbFold:      rate(stats.bbFold, stats.bbFaceRaise, PRIORS.bbFold),
+      bet:         rate(stats.bets, stats.betOpp, PRIORS.bet),
+      bet_ip:      rate(stats.bets_ip, stats.betOpp_ip, PRIORS.bet),
+      bet_oop:     rate(stats.bets_oop, stats.betOpp_oop, PRIORS.bet),
+      foldToBet:     rate(stats.foldToBet, stats.faceBet, PRIORS.foldToBet),
+      foldToBet_ip:  rate(stats.foldToBet_ip, stats.faceBet_ip, PRIORS.foldToBet),
+      foldToBet_oop: rate(stats.foldToBet_oop, stats.faceBet_oop, PRIORS.foldToBet),
+      sdBluff:       rate(stats.sdAggrWeak, stats.sdAggr, PRIORS.sdBluff),
+      sdBluff_small: rate(stats.sdAggrWeak_small, stats.sdAggr_small, PRIORS.sdBluffSize),
+      sdBluff_big:   rate(stats.sdAggrWeak_big, stats.sdAggr_big, PRIORS.sdBluffSize),
+    };
+  }
+  // Turn the observed rates into shifts of the model's curves and of the decision rule.
+  function adapt() {
+    const R = rates();
+    // A logistic with floor a and amplitude b centred at c raises a fraction ≈ a + b(1 − c) of hands.
+    A.openShift    = clamp((1 - (R.sbRaise - 0.08) / 0.87) - 0.45, -0.30, 0.30);
+    A.betShiftIP   = clamp((1 - (R.bet_ip  - 0.12) / 0.68) - 0.60, -0.30, 0.30);
+    A.betShiftOOP  = clamp((1 - (R.bet_oop - 0.12) / 0.68) - 0.60, -0.30, 0.30);
+    A.callShiftIP  = clamp((R.foldToBet_ip  - PRIORS.foldToBet.rate) * 0.8, -0.25, 0.25);  // folds more (this position) → calls are stronger
+    A.callShiftOOP = clamp((R.foldToBet_oop - PRIORS.foldToBet.rate) * 0.8, -0.25, 0.25);
+    A.bbDefendShift= clamp((R.bbFold - PRIORS.bbFold.rate) * 0.6, -0.20, 0.20);
+    A.airFloor      = clamp(0.12 * R.sdBluff       / PRIORS.sdBluff.rate,     0.04, 0.35);  // used only for facing-a-bet raises (unsplit)
+    A.airFloorSmall = clamp(0.12 * R.sdBluff_small / PRIORS.sdBluffSize.rate, 0.04, 0.35);
+    A.airFloorBig   = clamp(0.12 * R.sdBluff_big   / PRIORS.sdBluffSize.rate, 0.04, 0.55);  // higher ceiling: a habitual big-bet bluffer is very exploitable
+    A.bluffMult    = clamp(R.foldToBet / PRIORS.foldToBet.rate, 0.4, 2.2);              // folds more → bluff more
+    A.valueShift   = clamp((PRIORS.foldToBet.rate - R.foldToBet) * 0.3, -0.05, 0.08);   // calls more → bet thinner for value
+  }
+  adapt();
+  function notes() {
+    const R = rates();
+    const line = (label, k, n, r) => ({ label, k, n, rate: r });
+    const rows = [
+      line('Raises first in from the small blind', stats.sbRaise, stats.sbOpp, R.sbRaise),
+      line('Folds the big blind to a raise', stats.bbFold, stats.bbFaceRaise, R.bbFold),
+      line('Bets when checked to — in position', stats.bets_ip, stats.betOpp_ip, R.bet_ip),
+      line('Bets when checked to — out of position', stats.bets_oop, stats.betOpp_oop, R.bet_oop),
+      line('Folds to a bet — in position', stats.foldToBet_ip, stats.faceBet_ip, R.foldToBet_ip),
+      line('Folds to a bet — out of position', stats.foldToBet_oop, stats.faceBet_oop, R.foldToBet_oop),
+      line('Small/medium bets (<75% pot) shown as bluffs', stats.sdAggrWeak_small, stats.sdAggr_small, R.sdBluff_small),
+      line('Big bets (≥75% pot) shown as bluffs', stats.sdAggrWeak_big, stats.sdAggr_big, R.sdBluff_big),
+    ];
+    const adj = [];
+    if (A.bluffMult > 1.15) adj.push(`bluffing ${A.bluffMult.toFixed(1)}× as often`);
+    if (A.bluffMult < 0.85) adj.push(`bluffing ${A.bluffMult.toFixed(1)}× as often`);
+    if (A.valueShift > 0.015) adj.push('betting thinner for value');
+    if (A.valueShift < -0.015) adj.push('betting only stronger hands for value');
+    if (A.airFloorBig > 0.20) adj.push('giving your big bets less credit — reading them as bluff-heavy');
+    if (A.airFloorBig < 0.09) adj.push('giving your big bets full credit — reading them as value-heavy');
+    if (A.airFloorSmall > 0.15) adj.push('calling your small bets down lighter');
+    if (A.openShift < -0.05) adj.push('treating small-blind raises as wide');
+    if (A.openShift > 0.05) adj.push('treating small-blind raises as tight');
+    if (A.betShiftIP - A.betShiftOOP > 0.08) adj.push('noticing you check more (bet less) out of position than in position');
+    if (A.betShiftOOP - A.betShiftIP > 0.08) adj.push('noticing you check more (bet less) in position than out of position');
+    return { hands: stats.hands, rows, adjustments: adj };
+  }
+
+  /* ---------- per-hand state ---------- */
+  let W = new Float64Array(1326);   // range weights
+  let myHole = [], strengthCache = { boardLen: -1, s: null };
+
+  function newHand(hole) {
+    myHole = hole;
+    W.fill(1);
+    strengthCache = { boardLen: -1, s: null };
+    humanAggrPostflop = false;
+    humanAggrMaxFrac = 0;
+    stats.hands++;
+    adapt();
+  }
+
+  // Record what the opponent did, for the cross-hand statistics.
+  // ev.oppIsButton means "the acting player (the human, here) is the button" — in heads-up that's
+  // also "in position postflop" (the big blind acts first on every street after preflop).
+  function record(ev) {
+    const preflop = ev.street === 'preflop';
+    const ip = ev.oppIsButton;
+    if (preflop) {
+      const facingBB = ev.currentBetBefore / ev.bigBlind;
+      if (ev.oppIsButton && facingBB <= 1) { stats.sbOpp++; if (ev.kind === 'raise') stats.sbRaise++; }
+      else if (!ev.oppIsButton && facingBB > 1) { stats.bbFaceRaise++; if (ev.kind === 'fold') stats.bbFold++; }
+    } else if (ev.toCallBefore === 0) {
+      stats.betOpp++; if (ip) stats.betOpp_ip++; else stats.betOpp_oop++;
+      if (ev.kind === 'raise') {
+        stats.bets++; if (ip) stats.bets_ip++; else stats.bets_oop++;
+        humanAggrPostflop = true;
+        const frac = clamp((ev.total - ev.currentBetBefore) / Math.max(1, ev.potBefore), 0, 2);
+        if (frac > humanAggrMaxFrac) humanAggrMaxFrac = frac;
+      }
+    } else {
+      stats.faceBet++; if (ip) stats.faceBet_ip++; else stats.faceBet_oop++;
+      if (ev.kind === 'fold') { stats.foldToBet++; if (ip) stats.foldToBet_ip++; else stats.foldToBet_oop++; }
+      if (ev.kind === 'raise') {
+        stats.raiseToBet++; humanAggrPostflop = true;
+        const frac = clamp((ev.total - ev.currentBetBefore) / Math.max(1, ev.potBefore), 0, 2);
+        if (frac > humanAggrMaxFrac) humanAggrMaxFrac = frac;
+      }
+    }
+    saveStats();
+  }
+
+  // At showdown: was the opponent's postflop aggression backed by a hand? Classified by the biggest
+  // bet/raise fraction they used this hand, so a habitual big-bet-bluffer can be told apart from one
+  // who only bluffs small.
+  function showdown(oppHole, board) {
+    if (!humanAggrPostflop || board.length < 5) return;
+    const s = strengths(board);
+    const idx = COMBOS.findIndex(c => (c.a.id === oppHole[0].id && c.b.id === oppHole[1].id) || (c.a.id === oppHole[1].id && c.b.id === oppHole[0].id));
+    if (idx < 0) return;
+    stats.sdAggr++;
+    const weak = s[idx] < 0.5;
+    if (weak) stats.sdAggrWeak++;
+    if (humanAggrMaxFrac >= 0.75) { stats.sdAggr_big++; if (weak) stats.sdAggrWeak_big++; }
+    else { stats.sdAggr_small++; if (weak) stats.sdAggrWeak_small++; }
+    saveStats();
+  }
+
+  // Which combos are still physically possible given the cards we can see.
+  function liveMask(board) {
+    const seen = new Set([...myHole, ...board].map(c => c.id));
+    return COMBOS.map(c => !seen.has(c.a.id) && !seen.has(c.b.id));
+  }
+
+  // Hand-strength percentile of every combo on this board (0 = worst, 1 = best).
+  function strengths(board) {
+    if (board.length === 0) return COMBOS.map(c => PREFLOP_PCT[c.key]);
+    if (strengthCache.boardLen === board.length) return strengthCache.s;
+    const live = liveMask(board);
+    const vals = COMBOS.map((c, i) => live[i] ? evalFast([c.a, c.b, ...board]) : -1);
+    const sorted = vals.filter(v => v >= 0).sort((x, y) => x - y);
+    const n = sorted.length;
+    const s = vals.map(v => {
+      if (v < 0) return 0;
+      // percentile with ties at the midpoint
+      let lo = 0, hi = n;
+      while (lo < hi) { const m = (lo + hi) >> 1; if (sorted[m] < v) lo = m + 1; else hi = m; }
+      let lo2 = lo, hi2 = n;
+      while (lo2 < hi2) { const m = (lo2 + hi2) >> 1; if (sorted[m] <= v) lo2 = m + 1; else hi2 = m; }
+      return (lo + (lo2 - lo) / 2) / n;
+    });
+    // Draw boost on the flop and turn: a bet from a draw should look plausible.
+    if (board.length < 5) {
+      COMBOS.forEach((c, i) => {
+        if (!live[i]) return;
+        const cards = [c.a, c.b, ...board];
+        const suits = {}; let mask = 0;
+        for (const k of cards) { suits[k.s] = (suits[k.s] || 0) + 1; mask |= 1 << k.r; }
+        const flushDraw = Object.values(suits).some(n => n === 4);
+        if (mask & (1 << 14)) mask |= 2;
+        let oesd = false;
+        for (let h = 5; h <= 13 && !oesd; h++) if (((mask >> (h - 3)) & 15) === 15 && !(mask & (1 << (h + 1))) && !(mask & (1 << (h - 4)))) oesd = true;
+        const boost = flushDraw && oesd ? 0.78 : flushDraw ? 0.62 : oesd ? 0.55 : 0;
+        if (boost > s[i]) s[i] = boost;
+      });
+    }
+    strengthCache = { boardLen: board.length, s };
+    return s;
+  }
+
+  /* ---------- observe an opponent action and update the range ----------
+     ev: { street, kind: fold|check|call|raise, total, potBefore, toCallBefore,
+           currentBetBefore, oppIsButton, bigBlind, board } */
+  function observe(ev) {
+    record(ev);
+    if (ev.kind === 'fold') return;
+    const s = strengths(ev.board);
+    const preflop = ev.street === 'preflop';
+    let like;
+    if (preflop) {
+      const sizeBB = ev.total / ev.bigBlind;                    // raise-to size in big blinds
+      const facingBB = ev.currentBetBefore / ev.bigBlind;       // what the opponent faced, in big blinds
+      if (ev.kind === 'raise') {
+        if (facingBB <= 1 && ev.oppIsButton) like = x => L.open(x, sizeBB);
+        else if (facingBB <= 1) like = x => L.raiseLimper(x, sizeBB);
+        else like = x => L.threeBet(x, sizeBB - facingBB);
+      } else if (ev.kind === 'call') {
+        like = facingBB <= 1 ? x => L.limp(x) : x => L.callRaise(x, facingBB);
+      } else like = x => L.checkOption(x);
+    } else {
+      const potBeforeBet = Math.max(1, ev.potBefore - ev.toCallBefore);
+      const ip = ev.oppIsButton; // human is SB/button this hand => in position postflop
+      if (ev.kind === 'check') like = x => L.check(x, ip);
+      else if (ev.kind === 'call') { const f = clamp(ev.toCallBefore / potBeforeBet, 0, 2); like = x => L.call(x, f, ip); }
+      else {
+        const f = clamp((ev.total - ev.currentBetBefore) / Math.max(1, ev.potBefore), 0, 2);
+        like = ev.currentBetBefore === 0 ? x => L.bet(x, f, ip) : x => L.raise(x, f);
+      }
+    }
+    for (let i = 0; i < 1326; i++) W[i] *= like(s[i]);
+    // keep the weights in a sensible numeric range; never let a bad likelihood poison the range
+    let mx = 0, bad = false;
+    for (let i = 0; i < 1326; i++) { if (!Number.isFinite(W[i])) bad = true; else if (W[i] > mx) mx = W[i]; }
+    if (bad || mx === 0) {
+      W.fill(1);
+      if (typeof log === 'function') log('AI: range update produced a bad value — range reset to uniform', 'why');
+      return;
+    }
+    for (let i = 0; i < 1326; i++) W[i] /= mx;
+  }
+
+  /* ---------- equity vs the weighted range ---------- */
+  function equityVsRange(hole, board, trials) {
+    const live = liveMask(board);
+    const cum = new Float64Array(1326);
+    let total = 0;
+    for (let i = 0; i < 1326; i++) { if (live[i]) total += W[i]; cum[i] = total; }
+    if (total === 0) return 0.5;
+    const seen = new Set([...hole, ...board].map(c => c.id));
+    const rest = [];
+    for (let r = 2; r <= 14; r++) for (const s of SUITS) if (!seen.has(r + s)) rest.push({ r, s, id: r + s });
+    const need = 5 - board.length;
+    let score = 0;
+    for (let t = 0; t < trials; t++) {
+      // sample an opponent combo proportional to weight
+      const u = Math.random() * total;
+      let lo = 0, hi = 1325;
+      while (lo < hi) { const m = (lo + hi) >> 1; if (cum[m] < u) lo = m + 1; else hi = m; }
+      const opp = COMBOS[lo];
+      // sample the runout from cards not in the combo
+      let filled = 0; const runout = [];
+      for (let i = 0; filled < need; i++) {
+        const j = i + Math.floor(Math.random() * (rest.length - i));
+        [rest[i], rest[j]] = [rest[j], rest[i]];
+        if (rest[i].id !== opp.a.id && rest[i].id !== opp.b.id) { runout.push(rest[i]); filled++; }
+      }
+      const mine = evalFast([...hole, ...board, ...runout]);
+      const theirs = evalFast([opp.a, opp.b, ...board, ...runout]);
+      score += mine > theirs ? 1 : mine === theirs ? 0.5 : 0;
+    }
+    return score / trials;
+  }
+
+  // Summary of the range for the log and the grid.
+  function rangeSummary(board) {
+    const live = liveMask(board), s = strengths(board);
+    let wsum = 0, ssum = 0, n = 0;
+    for (let i = 0; i < 1326; i++) if (live[i]) { wsum += W[i]; ssum += W[i] * s[i]; n++; }
+    return { width: wsum / n, meanStrength: wsum ? ssum / wsum : 0.5 };
+  }
+  // Per-class weight for the grid, divided by the class's FULL combo count (6 pairs, 4 suited,
+  // 12 offsuit) so card removal shows as dimming: AA at half brightness when we hold an ace.
+  const CLASS_COMBOS = {};
+  for (const c of COMBOS) CLASS_COMBOS[c.key] = (CLASS_COMBOS[c.key] || 0) + 1;
+  function rangeByClass(board) {
+    const live = liveMask(board || []);
+    const sum = {};
+    COMBOS.forEach((c, i) => { if (live[i]) sum[c.key] = (sum[c.key] || 0) + W[i]; });
+    const out = {}; let mx = 0;
+    for (const k in sum) { out[k] = sum[k] / CLASS_COMBOS[k]; if (out[k] > mx) mx = out[k]; }
+    for (const k in out) out[k] /= mx || 1;
+    return out;
+  }
+
+  /* ---------- helpers ---------- */
+  const pct = x => Math.round(x * 100) + '%';
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  function sizeTo(v, desired) {
+    let t = Math.round(desired / 5) * 5;
+    t = clamp(t, v.minTotal, v.maxTotal);
+    if (t >= 0.6 * v.maxTotal) t = v.maxTotal;
+    return t;
+  }
+  // Equity realization: out of position and weak hands cash in less of their raw equity,
+  // and the penalty fades as fewer streets remain.
+  function realization(eq, v) {
+    const streetsLeft = { preflop: 3, flop: 2, turn: 1, river: 0 }[v.street];
+    let R = v.isButton ? 1.0 : params.oopRealization;
+    if (eq < 0.45) R *= params.weakRealization;
+    else if (eq < 0.65) R *= (1 + params.weakRealization) / 2;
+    return 1 - (1 - R) * streetsLeft / 3;
+  }
+
+  /* ---------- the decision ---------- */
+  function decide(v) {
+    const preflop = v.street === 'preflop';
+    const raw = equityVsRange(v.hole, v.board, params.trials);
+    const R = realization(raw, v);
+    const adj = raw * R;
+    const sum = rangeSummary(v.board);
+    const facingRaise = preflop ? v.currentBet > v.bigBlind : v.toCall > 0;
+    const r = Math.random();
+    const base = `equity ${pct(raw)} vs range (width ${pct(sum.width)}), realized ~${pct(adj)}`;
+    const potAfterCall = v.pot + v.toCall;
+
+    if (preflop && v.isButton && !facingRaise) {
+      if (adj >= params.openRaise && v.canRaise && r < 0.85) {
+        const total = sizeTo(v, adj >= 0.7 && r < 0.2 ? 4 * v.bigBlind : 3 * v.bigBlind);
+        return { kind: 'raise', total, why: `${base} — open-raise` };
+      }
+      if (adj < params.openFold && r < 0.7) return { kind: 'fold', why: `${base} — too weak to play from the small blind` };
+      return { kind: 'call', why: `${base} — limp` };
+    }
+    if (preflop && v.canCheck) {
+      if (adj >= 0.52 && v.canRaise && r < 0.7) {
+        return { kind: 'raise', total: sizeTo(v, 4 * v.bigBlind), why: `${base} — raise the limper` };
+      }
+      return { kind: 'check', why: `${base} — take the free flop` };
+    }
+    if (v.toCall > 0) {
+      const potOdds = v.toCall / potAfterCall;
+      const price = `needs ${pct(potOdds)}`;
+      if (adj < potOdds - params.callSlack) {
+        const bluffOk = v.canRaise && v.toCall < v.pot && v.maxTotal > 2.5 * v.currentBet && sum.meanStrength < 0.6;
+        if (bluffOk && r < params.bluff * A.bluffMult * 0.5) {
+          return { kind: 'raise', total: sizeTo(v, 2.5 * v.currentBet + v.myBet), why: `${base}, ${price} — bluff-raise` };
+        }
+        return { kind: 'fold', why: `${base}, ${price} — fold` };
+      }
+      const pRaise = v.canRaise ? clamp((adj - params.valueRaise) / (0.85 - params.valueRaise), 0, 1) * 0.8 : 0;
+      if (r < pRaise) {
+        const shove = adj >= 0.85 && v.maxTotal <= 3 * potAfterCall;
+        const desired = shove ? v.maxTotal : Math.max(3 * v.currentBet, v.myBet + v.toCall + potAfterCall);
+        return { kind: 'raise', total: sizeTo(v, desired), why: `${base}, ${price} — raise for value` };
+      }
+      return { kind: 'call', why: `${base}, ${price} — call` };
+    }
+    const betFrac = pick([0.5, 0.66, 0.75, 1.0]);
+    const desired = v.myBet + betFrac * v.pot;
+    if (adj >= params.strongBet - A.valueShift && v.canRaise && r < 0.8) {
+      const shove = adj >= 0.85 && v.maxTotal <= 2 * v.pot && r < 0.3;
+      return { kind: 'raise', total: sizeTo(v, shove ? v.maxTotal : desired), why: `${base} — value bet` };
+    }
+    if (adj >= params.mediumBet - A.valueShift && v.canRaise && r < 0.35) {
+      return { kind: 'raise', total: sizeTo(v, desired), why: `${base} — bet for thin value / protection` };
+    }
+    // Bluff more readily when the range looks weak, less when it looks strong.
+    const bluffFreq = params.bluff * A.bluffMult * clamp(1.6 - 2 * sum.meanStrength, 0.3, 1.6);
+    if (adj < 0.35 && v.canRaise && v.street !== 'river' && r < bluffFreq) {
+      return { kind: 'raise', total: sizeTo(v, desired), why: `${base} — bluff` };
+    }
+    if (v.street === 'river' && adj < 0.30 && v.canRaise && r < bluffFreq * 0.6) {
+      return { kind: 'raise', total: sizeTo(v, desired), why: `${base} — river bluff` };
+    }
+    return { kind: 'check', why: `${base} — check` };
+  }
+
+  return { newHand, observe, showdown, decide, rangeByClass, rangeSummary, notes, forget, params, A, stats: () => stats, equityVsRange, evalFast, PREFLOP_EQUITY, PREFLOP_PCT, L };
+})();
+</script>
+</body>
+</html>

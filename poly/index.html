@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Polyhedra Visualizations</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4a90e2;
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #a0a0a0;
+            font-size: 1.2em;
+            margin-bottom: 50px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(74, 144, 226, 0.3);
+            background: rgba(74, 144, 226, 0.1);
+        }
+        
+        .card h2 {
+            color: #4a90e2;
+            font-size: 1.8em;
+            margin: 0 0 15px 0;
+        }
+        
+        .card p {
+            color: #d0d0d0;
+            font-size: 1em;
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        .icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>3D Polyhedra Visualizations</h1>
+        <p class="subtitle">Interactive models with nets</p>
+        
+        <div class="grid">
+            <a href="tri-prism.html" class="card">
+                <div class="icon">△</div>
+                <h2>Triangular Prism</h2>
+                <p>Explore the 3D shape and see how it unfolds into a net</p>
+            </a>
+            
+            <a href="rect-prism.html" class="card">
+                <div class="icon">▭</div>
+                <h2>Rectangular Prism</h2>
+                <p>Explore the 3D shape and see how it unfolds into a net</p>
+            </a>
+            
+            <a href="tetrahedron.html" class="card">
+                <div class="icon">▲</div>
+                <h2>Tetrahedron</h2>
+                <p>Explore the 3D shape and see how it unfolds into a net</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
