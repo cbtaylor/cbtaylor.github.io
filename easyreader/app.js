@@ -11,7 +11,7 @@
  *  - Listening position is saved per book in localStorage.
  */
 
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.0.1';
 const LIB_KEY = 'er_library_v1';
 const PROGRESS_PREFIX = 'er_progress_';
 const SKIP_SECONDS = 30;
@@ -509,7 +509,19 @@ function openManage() {
     go('manage');
 }
 
-function groupFiles(files, mode) {
+function relParts(f) {
+    return (f.webkitRelativePath || '').split('/').filter(Boolean);
+}
+
+// True when the chosen folder holds 2+ MP3s directly and no subfolders with MP3s:
+// most likely the person picked ONE book's folder, not the whole Audiobooks folder.
+function looksLikeSingleBookFolder(files, mode) {
+    if (mode !== 'folder') return false;
+    const mp3s = files.filter((f) => /\.mp3$/i.test(f.name));
+    return mp3s.length >= 2 && mp3s.every((f) => relParts(f).length === 2);
+}
+
+function groupFiles(files, mode, asOneBook) {
     const groups = new Map();
     const add = (title, f) => {
         if (!groups.has(title)) groups.set(title, []);
@@ -517,9 +529,10 @@ function groupFiles(files, mode) {
     };
     for (const f of files) {
         if (!/\.mp3$/i.test(f.name)) continue;
-        const parts = (f.webkitRelativePath || '').split('/').filter(Boolean);
+        const parts = relParts(f);
         // Audiobooks / BookName / [subfolders /] chapter.mp3  ->  book = BookName
         if (mode === 'folder' && parts.length >= 3) add(prettyName(parts[1]), f);
+        else if (asOneBook && parts.length === 2) add(prettyName(parts[0]), f);   // chosen folder = one book
         else add(prettyName(f.name), f);               // a loose file is a book by itself
     }
     return Array.from(groups, ([title, list]) => ({
@@ -528,10 +541,36 @@ function groupFiles(files, mode) {
     })).sort((a, b) => collator.compare(a.title, b.title));
 }
 
+let lastPick = null;        // { files, mode, oneBook } so the preview can be regrouped
+
 function onPicked(files, mode) {
+    lastPick = { files, mode, oneBook: looksLikeSingleBookFolder(files, mode) };
+    renderPreview();
+}
+
+$('btn-regroup').addEventListener('click', () => {
+    if (!lastPick) return;
+    lastPick.oneBook = !lastPick.oneBook;
+    renderPreview();
+});
+
+function renderPreview() {
+    const { files, mode, oneBook } = lastPick;
     const result = $('import-result');
     result.classList.add('hidden');
-    pendingGroups = groupFiles(files, mode);
+    pendingGroups = groupFiles(files, mode, oneBook);
+
+    // Offer the other interpretation when the folder could be read either way.
+    const ambiguous = looksLikeSingleBookFolder(files, mode);
+    $('regroup-note').classList.toggle('hidden', !ambiguous);
+    $('btn-regroup').classList.toggle('hidden', !ambiguous);
+    if (ambiguous) {
+        $('regroup-note').textContent = oneBook
+            ? 'All these MP3 files are directly inside the chosen folder, so they are being added as ONE book (the files are its chapters).'
+            : 'These MP3 files are being added as SEPARATE books, one per file.';
+        $('btn-regroup').textContent = oneBook ? 'No, make each file its own book' : 'No, make them one book';
+    }
+
     const list = $('preview-list');
     list.textContent = '';
     if (pendingGroups.length === 0) {
