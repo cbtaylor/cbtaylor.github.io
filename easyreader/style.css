@@ -1,0 +1,233 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    color: #ffffff;
+    overflow: hidden;
+    touch-action: manipulation;
+}
+
+.view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    background-color: #000000;
+}
+
+.view.active {
+    display: flex;
+}
+
+header {
+    background-color: #121212;
+    border-bottom: 2px solid #333333;
+    padding: 24px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.player-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+}
+
+.player-header h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 75%;
+    text-align: right;
+}
+
+.nav-btn {
+    background-color: #333333;
+    color: #ffffff;
+    border: 3px solid #ffffff;
+    border-radius: 16px;
+    padding: 16px 28px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.nav-btn:active {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.centered-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    gap: 32px;
+    padding: 20px;
+}
+
+.instruction-text {
+    font-size: 2rem;
+    color: #cccccc;
+    line-height: 1.4;
+    max-width: 600px;
+}
+
+.giant-btn {
+    border-radius: 24px;
+    font-size: 2.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.1);
+}
+
+.primary-btn {
+    background-color: #ffffff;
+    color: #000000;
+    border: none;
+    padding: 36px 48px;
+    width: 100%;
+    max-width: 600px;
+    font-size: 2.5rem;
+}
+
+.primary-btn:active {
+    background-color: #cccccc;
+}
+
+.book-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-bottom: 40px;
+}
+
+.book-item {
+    background-color: #1a1a1a;
+    border: 4px solid #444444;
+    color: #ffffff;
+    padding: 36px 32px;
+    border-radius: 24px;
+    font-size: 2.4rem;
+    font-weight: bold;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.book-item::after {
+    content: "▶";
+    font-size: 2rem;
+    color: #ffffff;
+    margin-left: 20px;
+}
+
+.book-item:active {
+    background-color: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+}
+
+.book-item:active::after {
+    color: #000000;
+}
+
+.player-main {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 40px 24px;
+    height: 100%;
+}
+
+.now-playing-container {
+    text-align: center;
+    margin: auto 0;
+    width: 100%;
+}
+
+.chapter-title {
+    font-size: 2.2rem;
+    color: #dddddd;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.controls-container {
+    display: flex;
+    width: 100%;
+    max-width: 700px;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.control-btn {
+    background-color: #222222;
+    border: 3px solid #666666;
+    color: #ffffff;
+    flex: 1;
+    height: 140px;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 1.5rem;
+}
+
+.control-btn:active {
+    background-color: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
+}
+
+.play-pause-btn {
+    background-color: #ffffff;
+    border: none;
+    color: #000000;
+    flex: 1.5;
+    height: 160px;
+    border-radius: 32px;
+}
+
+.play-pause-btn:active {
+    background-color: #cccccc;
+}
+
+.hidden {
+    display: none !important;
+}

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Audiobooks</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="bookshelf-view" class="view active">
+        <header>
+            <h1>Audiobooks</h1>
+        </header>
+        <main>
+            <div id="welcome-screen" class="centered-message">
+                <button id="btn-select-folder" class="giant-btn primary-btn">Select Audiobooks Folder</button>
+                <p class="instruction-text">Tap the button above to choose your folder on this phone.</p>
+            </div>
+            <div id="book-list" class="book-list hidden"></div>
+        </main>
+    </div>
+
+    <div id="player-view" class="view">
+        <header class="player-header">
+            <button id="btn-back-shelf" class="nav-btn">&larr; Books</button>
+            <h2 id="current-book-title">Book Title</h2>
+        </header>
+        <main class="player-main">
+            <div class="now-playing-container">
+                <div id="current-chapter-title" class="chapter-title">Chapter Loading...</div>
+            </div>
+            <div class="controls-container">
+                <button id="btn-skip-back" class="giant-btn control-btn" aria-label="Rewind 30 seconds">
+                    <svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" stroke-width="2" fill="none"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
+                    <span>-30s</span>
+                </button>
+                <button id="btn-play-pause" class="giant-btn play-pause-btn" aria-label="Play / Pause">
+                    <svg id="icon-play" viewBox="0 0 24 24" width="80" height="80" stroke="currentColor" stroke-width="2" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                    <svg id="icon-pause" viewBox="0 0 24 24" width="80" height="80" stroke="currentColor" stroke-width="2" fill="currentColor" class="hidden"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                </button>
+                <button id="btn-skip-forward" class="giant-btn control-btn" aria-label="Forward 30 seconds">
+                    <svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" stroke-width="2" fill="none"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
+                    <span>+30s</span>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+        }
+    </script>
+</body>
+</html>
