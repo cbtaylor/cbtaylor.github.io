@@ -1,58 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Audiobooks</title>
+    <meta name="description" content="A very simple audiobook player with large buttons.">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
+    <link rel="icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="bookshelf-view" class="view active">
-        <header>
-            <h1>Audiobooks</h1>
-        </header>
-        <main>
-            <div id="welcome-screen" class="centered-message">
-                <button id="btn-select-folder" class="giant-btn primary-btn">Select Audiobooks Folder</button>
-                <p class="instruction-text">Tap the button above to choose your folder on this phone.</p>
-            </div>
-            <div id="book-list" class="book-list hidden"></div>
-        </main>
-    </div>
 
-    <div id="player-view" class="view">
-        <header class="player-header">
-            <button id="btn-back-shelf" class="nav-btn">&larr; Books</button>
-            <h2 id="current-book-title">Book Title</h2>
-        </header>
-        <main class="player-main">
-            <div class="now-playing-container">
-                <div id="current-chapter-title" class="chapter-title">Chapter Loading...</div>
+    <!-- Screen reader announcements (Play / Pause) -->
+    <div id="sr-state" class="sr-only" role="status" aria-live="polite"></div>
+
+    <!-- ============ BOOKSHELF ============ -->
+    <section id="view-shelf" class="view active" aria-labelledby="shelf-title">
+        <h1 id="shelf-title" class="screen-title">My Audiobooks</h1>
+
+        <main class="scroll">
+            <div id="empty" class="empty hidden">
+                <p class="big">No audiobooks yet.</p>
+                <p>A helper needs to add the books first.</p>
+                <button id="btn-add-empty" class="btn primary">Add audiobooks</button>
             </div>
-            <div class="controls-container">
-                <button id="btn-skip-back" class="giant-btn control-btn" aria-label="Rewind 30 seconds">
-                    <svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" stroke-width="2" fill="none"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
-                    <span>-30s</span>
-                </button>
-                <button id="btn-play-pause" class="giant-btn play-pause-btn" aria-label="Play / Pause">
-                    <svg id="icon-play" viewBox="0 0 24 24" width="80" height="80" stroke="currentColor" stroke-width="2" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                    <svg id="icon-pause" viewBox="0 0 24 24" width="80" height="80" stroke="currentColor" stroke-width="2" fill="currentColor" class="hidden"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-                </button>
-                <button id="btn-skip-forward" class="giant-btn control-btn" aria-label="Forward 30 seconds">
-                    <svg viewBox="0 0 24 24" width="64" height="64" stroke="currentColor" stroke-width="2" fill="none"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
-                    <span>+30s</span>
-                </button>
-            </div>
+            <div id="book-list" class="book-list"></div>
         </main>
-    </div>
+
+        <footer>
+            <button id="btn-manage" class="btn quiet">Add or remove books</button>
+        </footer>
+    </section>
+
+    <!-- ============ PLAYER ============ -->
+    <section id="view-player" class="view" aria-label="Player">
+        <div class="info">
+            <h2 id="p-title"></h2>
+            <p id="p-chapter" class="chapter"></p>
+        </div>
+
+        <div id="bar" class="bar" role="progressbar" aria-label="Progress in this chapter"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="bar-fill"></div>
+        </div>
+        <p id="p-time" class="time"></p>
+        <p id="p-status" class="status"></p>
+
+        <button id="btn-play" class="btn play">
+            <svg id="icon-play" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><polygon points="6 3 20 12 6 21"></polygon></svg>
+            <svg id="icon-pause" class="hidden" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="3" width="5" height="18"></rect><rect x="14" y="3" width="5" height="18"></rect></svg>
+            <span id="play-label">Play</span>
+        </button>
+
+        <div class="skip-row">
+            <button id="btn-back" class="btn skip">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>
+                <span>Back<br>30 seconds</span>
+            </button>
+            <button id="btn-fwd" class="btn skip">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M13 17l5-5-5-5M6 17l5-5-5-5"/></svg>
+                <span>Forward<br>30 seconds</span>
+            </button>
+        </div>
+
+        <button id="btn-books" class="btn quiet">&larr; My Books</button>
+    </section>
+
+    <!-- ============ ADD / REMOVE BOOKS (for the helper) ============ -->
+    <section id="view-manage" class="view" aria-labelledby="manage-title">
+        <h1 id="manage-title" class="screen-title small">Add or remove books</h1>
+
+        <main class="scroll manage">
+            <div class="panel">
+                <h2>Add books</h2>
+                <p class="note">Books are copied into this app once, so they keep working later without any setup.
+                   Install the app to the home screen <strong>before</strong> adding books.</p>
+                <button id="btn-pick-folder" class="btn primary small-btn">Choose the Audiobooks folder</button>
+                <p class="note">Pick the <strong>Audiobooks</strong> folder itself. Each folder inside it becomes one book
+                   (its MP3 files are the chapters). An MP3 file sitting loose in the folder becomes its own book.</p>
+                <button id="btn-pick-files" class="btn secondary small-btn">Choose single MP3 files</button>
+                <p class="note">Each file chosen becomes its own book.</p>
+
+                <input id="in-folder" type="file" webkitdirectory multiple hidden>
+                <input id="in-files" type="file" accept=".mp3,audio/mpeg" multiple hidden>
+            </div>
+
+            <div id="preview" class="panel hidden">
+                <h2>Ready to add</h2>
+                <ul id="preview-list" class="plain-list"></ul>
+                <div class="row">
+                    <button id="btn-import" class="btn primary small-btn">Add these</button>
+                    <button id="btn-cancel-import" class="btn secondary small-btn">Cancel</button>
+                </div>
+            </div>
+
+            <div id="progress-panel" class="panel hidden" role="status" aria-live="polite">
+                <p id="import-text"></p>
+                <div class="bar thin"><div id="import-fill"></div></div>
+                <p class="note">Keep this screen open until it says it's finished.</p>
+            </div>
+
+            <p id="import-result" class="result hidden" role="status" aria-live="polite"></p>
+
+            <div class="panel">
+                <h2>Books on this phone</h2>
+                <ul id="manage-list" class="plain-list"></ul>
+                <p id="manage-none" class="note">None yet.</p>
+            </div>
+
+            <p id="storage-info" class="note"></p>
+            <p id="version-info" class="note"></p>
+        </main>
+
+        <footer>
+            <button id="btn-manage-done" class="btn quiet">&larr; Done</button>
+        </footer>
+    </section>
 
     <script src="app.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
-        }
-    </script>
 </body>
 </html>
