@@ -34,15 +34,21 @@ To add a book later, repeat step 2. Re-adding an existing book skips files alrea
 
 - Tap a book: it starts playing where she left off (backs up 5 seconds).
 - **Play/Pause** is the big yellow button. **Back/Forward 30 seconds** cross chapter boundaries.
+- **Next chapter** / **Previous chapter** (shown for books with more than one file). Previous restarts the chapter if you're more than 5 seconds in, otherwise it goes to the previous chapter (on chapter 1 it restarts). Repeated taps keep going.
 - Chapters play one after another. At the end of the book it says "The End" and offers *Listen again*.
 - The Android Back button (and **My Books**) pauses and returns to the list.
 - Lock-screen and headphone buttons work (Media Session).
 
 ## Updating the app later
 
-The service worker serves files from its cache and refreshes them in the background, so a new version appears the
-**second** time the app is opened after you push. The version number shows at the bottom of *Add or remove books*.
-If you ever need to force every cached file to be dropped, bump `CACHE_VERSION` in `sw.js`.
+Push the changes to GitHub. The service worker is **network-first**: whenever the phone is online it fetches every app
+file fresh, so the new version appears the **first** time the app is opened after GitHub Pages has published it
+(usually a minute or two). Offline, or if the network takes more than 4 seconds, it uses the copy saved on the phone.
+The version number shows at the bottom of *Add or remove books*. If you ever need to discard every saved copy, bump
+`CACHE_VERSION` in `sw.js`.
+
+(An earlier version served saved copies first and refreshed each file separately, which could briefly pair a new
+`app.js` with an old `index.html` and break the app after an update. That's why it changed.)
 
 ## Not tested on real hardware
 

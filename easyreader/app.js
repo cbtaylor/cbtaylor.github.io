@@ -11,10 +11,11 @@
  *  - Listening position is saved per book in localStorage.
  */
 
-const APP_VERSION = '2.0.1';
+const APP_VERSION = '2.1.0';
 const LIB_KEY = 'er_library_v1';
 const PROGRESS_PREFIX = 'er_progress_';
 const SKIP_SECONDS = 30;
+const PREVIOUS_RESTART_SECONDS = 5;    // "Previous" restarts the chapter if you're further in than this
 const RESUME_BACKUP_SECONDS = 5;       // when reopening a book, back up a few seconds
 
 /* =====================================================================
@@ -217,6 +218,7 @@ async function loadTrack(index, { startAt = 0, play = true } = {}) {
     finished = false;
     intendPlay = play;
     switching = true;
+    flashUntil = 0;                                    // drop any "Start of chapter..." message
     setStatus('');
     renderPlayer();
     try {
@@ -306,14 +308,40 @@ function skip(delta) {
     }
 }
 
-function changeChapter(direction) {                   // used by headphone / lock-screen buttons
-    if (!book || switching) return;
-    if (direction < 0) {
-        if (audio.currentTime > 5 || track === 0) audio.currentTime = 0;
-        else loadTrack(track - 1, { startAt: 0, play: intendPlay });
-    } else if (track < book.chapters.length - 1) {
-        loadTrack(track + 1, { startAt: 0, play: intendPlay });
+/* Next / Previous chapter.
+ * Repeated taps accumulate (track changes immediately; a newer load cancels an older one),
+ * so tapping Next three times quickly moves three chapters. */
+function nextChapter() {
+    if (!book || finished) return;
+    if (track < book.chapters.length - 1) loadTrack(track + 1, { startAt: 0, play: intendPlay });
+}
+
+/* Previous: more than PREVIOUS_RESTART_SECONDS into a chapter -> restart it;
+ * otherwise go to the previous chapter (on chapter 1: restart it). */
+function previousChapter() {
+    if (!book || finished) return;
+    const loading = switching || pendingSeek !== null;
+    const atStart = loading || audio.currentTime <= PREVIOUS_RESTART_SECONDS;
+    if (!atStart) {
+        audio.currentTime = 0;
+        flash(`Start of chapter ${track + 1}`);
+    } else if (track > 0) {
+        loadTrack(track - 1, { startAt: 0, play: intendPlay });
+    } else if (!loading) {
+        audio.currentTime = 0;
+        flash('Start of chapter 1');
     }
+}
+
+/* A short message shown in the time line (no layout shift) and announced to screen readers. */
+let flashText = '';
+let flashUntil = 0;
+function flash(text) {
+    flashText = text;
+    flashUntil = Date.now() + 2500;
+    $('sr-state').textContent = text;
+    renderProgress();
+    setTimeout(renderProgress, 2600);
 }
 
 function saveNow(force) {
@@ -342,6 +370,9 @@ function renderPlayer() {
     if (!book) return;
     const n = book.chapters.length;
     $('p-chapter').textContent = finished ? 'The End' : (n > 1 ? `Chapter ${track + 1} of ${n}` : '');
+    $('chapter-row').classList.toggle('hidden', n < 2);          // nothing to skip in a one-file book
+    $('btn-prev').disabled = finished;
+    $('btn-next').disabled = finished || track >= n - 1;
 
     const playing = intendPlay && !finished;
     $('icon-play').classList.toggle('hidden', playing);
@@ -367,7 +398,7 @@ function renderProgress() {
     const pct = ok ? Math.min(100, (100 * t) / d) : 0;
     $('bar-fill').style.width = pct + '%';
     $('bar').setAttribute('aria-valuenow', String(Math.round(pct)));
-    $('p-time').textContent = ok ? `${fmtTime(t)} of ${fmtTime(d)}` : '';
+    $('p-time').textContent = Date.now() < flashUntil ? flashText : (ok ? `${fmtTime(t)} of ${fmtTime(d)}` : '');
 }
 
 /* ---------- audio events ---------- */
@@ -465,8 +496,8 @@ function setupMediaSession() {
     set('pause', () => { if (book && intendPlay) togglePlay(); });
     set('seekbackward', () => skip(-SKIP_SECONDS));
     set('seekforward', () => skip(SKIP_SECONDS));
-    set('previoustrack', () => changeChapter(-1));
-    set('nexttrack', () => changeChapter(1));
+    set('previoustrack', previousChapter);
+    set('nexttrack', nextChapter);
 }
 
 /* ---------- buttons ---------- */
@@ -474,6 +505,8 @@ function setupMediaSession() {
 $('btn-play').addEventListener('click', togglePlay);
 $('btn-back').addEventListener('click', () => skip(-SKIP_SECONDS));
 $('btn-fwd').addEventListener('click', () => skip(SKIP_SECONDS));
+$('btn-prev').addEventListener('click', previousChapter);
+$('btn-next').addEventListener('click', nextChapter);
 $('btn-books').addEventListener('click', goBack);
 
 /* =====================================================================
