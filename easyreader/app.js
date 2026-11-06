@@ -11,7 +11,7 @@
  *  - Listening position is saved per book in localStorage.
  */
 
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.1.1';
 const LIB_KEY = 'er_library_v1';
 const PROGRESS_PREFIX = 'er_progress_';
 const SKIP_SECONDS = 30;
@@ -87,6 +87,36 @@ function writeProgress(bookId, data) {
     try {
         localStorage.setItem(PROGRESS_PREFIX + bookId, JSON.stringify({ ...data, t: Date.now() }));
     } catch (e) { /* storage full or blocked: not fatal */ }
+}
+
+/* =====================================================================
+ * Problem log: the player shows a gentle message to the listener; the real
+ * cause is kept here and shown on the "Add or remove books" screen.
+ * ===================================================================== */
+
+const PROBLEM_KEY = 'er_last_problem_v1';
+
+function recordProblem(err, info) {
+    try {
+        localStorage.setItem(PROBLEM_KEY, JSON.stringify({
+            at: Date.now(),
+            name: (err && err.name) || 'Error',
+            message: String((err && err.message) || err).slice(0, 200),
+            ...info
+        }));
+    } catch (e) { /* ignore */ }
+}
+
+function describeLastProblem() {
+    try {
+        const p = JSON.parse(localStorage.getItem(PROBLEM_KEY) || 'null');
+        if (!p) return '';
+        const when = new Date(p.at).toLocaleString();
+        return `Last problem (${when}): "${p.book}", chapter ${p.chapter} (${p.file}) while ${p.phase}. ` +
+               `${p.name}: ${p.message}`;
+    } catch (e) {
+        return '';
+    }
 }
 
 /* =====================================================================
@@ -221,9 +251,19 @@ async function loadTrack(index, { startAt = 0, play = true } = {}) {
     flashUntil = 0;                                    // drop any "Start of chapter..." message
     setStatus('');
     renderPlayer();
+    let phase = 'opening the chapter file';
     try {
-        const file = await getChapterFile(book, index);
+        let file;
+        try {
+            file = await getChapterFile(book, index);
+        } catch (firstErr) {
+            if (firstErr && firstErr.name === 'NotFoundError') throw firstErr;     // really missing: retrying won't help
+            await new Promise((resolve) => setTimeout(resolve, 500));              // anything else: try once more
+            if (token !== loadToken) return;
+            file = await getChapterFile(book, index);
+        }
         if (token !== loadToken) return;
+        phase = 'starting the audio';
         if (objectUrl) URL.revokeObjectURL(objectUrl);
         objectUrl = URL.createObjectURL(file);
         pendingSeek = startAt;
@@ -242,7 +282,15 @@ async function loadTrack(index, { startAt = 0, play = true } = {}) {
     } catch (err) {
         if (token === loadToken) {
             intendPlay = false;
-            setStatus('Sorry, this part of the book could not be opened. Please ask for help.');
+            recordProblem(err, {
+                book: book.title,
+                chapter: index + 1,
+                file: book.chapters[index] && book.chapters[index].file,
+                phase
+            });
+            setStatus(err && err.name === 'NotFoundError'
+                ? 'Part of this book is missing from the phone. Please ask for help.'
+                : 'Sorry, this part of the book could not be opened. Please ask for help.');
         }
     } finally {
         if (token === loadToken) {
@@ -751,8 +799,66 @@ function renderManage() {
     }
 
     $('version-info').textContent = `Version ${APP_VERSION}`;
+    const last = describeLastProblem();
+    $('last-problem').textContent = last;
+    $('last-problem').classList.toggle('hidden', !last);
     updateStorageInfo();
 }
+
+/* Opens every chapter file of every book (metadata only, so it's quick) and reports what's wrong. */
+async function checkBooks() {
+    const out = $('check-result');
+    const button = $('btn-check');
+    button.disabled = true;
+    out.classList.remove('hidden');
+    out.textContent = 'Checking...';
+    try {
+        const lib = loadLibrary();
+        const root = await booksRoot();
+        const lines = [];
+        let files = 0;
+        let expected = 0;
+        for (const b of lib.books) {
+            let dir;
+            try {
+                dir = await root.getDirectoryHandle(b.id);
+            } catch (e) {
+                lines.push(`"${b.title}": the whole book is missing (${e.name}).`);
+                continue;
+            }
+            const problems = [];
+            for (let i = 0; i < b.chapters.length; i++) {
+                const c = b.chapters[i];
+                files++;
+                expected += c.size || 0;
+                try {
+                    const f = await (await dir.getFileHandle(c.file)).getFile();
+                    if (c.size && f.size !== c.size) problems.push(`${i + 1} (wrong size)`);
+                } catch (e) {
+                    problems.push(`${i + 1} (${e.name})`);
+                }
+            }
+            if (problems.length) {
+                const shown = problems.slice(0, 10).join(', ');
+                lines.push(`"${b.title}": chapter ${shown}${problems.length > 10 ? ` and ${problems.length - 10} more` : ''}.`);
+            }
+        }
+        let usage = '';
+        try {
+            const est = await navigator.storage.estimate();
+            usage = ` Books should use about ${fmtBytes(expected)}; the app is storing ${fmtBytes(est.usage)}.`;
+        } catch (e) { /* optional */ }
+        out.textContent = lines.length
+            ? `Problems found:\n${lines.join('\n')}\nTo repair: choose the same Audiobooks folder again; files that are missing are copied again.${usage}`
+            : `All ${lib.books.length} ${lib.books.length === 1 ? 'book looks' : 'books look'} fine (${files} files checked).${usage}`;
+    } catch (err) {
+        out.textContent = `The check itself failed: ${err && err.name}: ${err && err.message}`;
+    } finally {
+        button.disabled = false;
+    }
+}
+
+$('btn-check').addEventListener('click', checkBooks);
 
 async function removeBook(id) {
     try {

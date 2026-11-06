@@ -39,6 +39,15 @@ To add a book later, repeat step 2. Re-adding an existing book skips files alrea
 - The Android Back button (and **My Books**) pauses and returns to the list.
 - Lock-screen and headphone buttons work (Media Session).
 
+## If a book won't play
+
+If the player says *"Part of this book is missing"* or *"could not be opened"*, open **Add or remove books**:
+- **Last problem** shows the real cause (book, chapter, file, error).
+- **Check all books** opens every chapter file and lists any that are missing or the wrong size.
+- To repair, choose the same Audiobooks folder again (*Add these*): files that are already complete are skipped and the
+  missing ones are copied again.
+Meanwhile **Next chapter** skips past a chapter that won't open.
+
 ## Updating the app later
 
 Push the changes to GitHub. The service worker is **network-first**: whenever the phone is online it fetches every app
