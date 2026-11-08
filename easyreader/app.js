@@ -11,7 +11,7 @@
  *  - Listening position is saved per book in localStorage.
  */
 
-const APP_VERSION = '2.1.1';
+const APP_VERSION = '2.1.2';
 const LIB_KEY = 'er_library_v1';
 const PROGRESS_PREFIX = 'er_progress_';
 const SKIP_SECONDS = 30;
@@ -253,28 +253,41 @@ async function loadTrack(index, { startAt = 0, play = true } = {}) {
     renderPlayer();
     let phase = 'opening the chapter file';
     try {
-        let file;
-        try {
-            file = await getChapterFile(book, index);
-        } catch (firstErr) {
-            if (firstErr && firstErr.name === 'NotFoundError') throw firstErr;     // really missing: retrying won't help
-            await new Promise((resolve) => setTimeout(resolve, 500));              // anything else: try once more
+        let url;
+        if (prefetched && prefetched.bookId === book.id && prefetched.index === index) {
+            // The next chapter was prepared in advance, so there is NOTHING to wait for here:
+            // playback starts in the same instant the previous chapter ends. (With the screen off,
+            // Android is far less willing to start playback that begins after a delay.)
+            url = prefetched.url;
+            prefetched = null;
+        } else {
+            dropPrefetch();
+            let file;
+            try {
+                file = await getChapterFile(book, index);
+            } catch (firstErr) {
+                if (firstErr && firstErr.name === 'NotFoundError') throw firstErr;     // really missing: retrying won't help
+                await new Promise((resolve) => setTimeout(resolve, 500));              // anything else: try once more
+                if (token !== loadToken) return;
+                file = await getChapterFile(book, index);
+            }
             if (token !== loadToken) return;
-            file = await getChapterFile(book, index);
+            url = URL.createObjectURL(file);
         }
-        if (token !== loadToken) return;
         phase = 'starting the audio';
         if (objectUrl) URL.revokeObjectURL(objectUrl);
-        objectUrl = URL.createObjectURL(file);
+        objectUrl = url;
         pendingSeek = startAt;
-        audio.src = objectUrl;
+        audio.src = url;
+        const playing = intendPlay ? audio.play() : null;      // start FIRST, then do the bookkeeping
         // Record the new position straight away, so progress is never left
         // pointing at the old chapter's time.
         writeProgress(book.id, { track: index, time: Math.max(0, startAt) });
         updateMediaSession();
-        if (intendPlay) {
+        prefetchNext();
+        if (playing) {
             try {
-                await audio.play();
+                await playing;
             } catch (err) {
                 if (token === loadToken) handlePlayError(err);
             }
@@ -298,6 +311,33 @@ async function loadTrack(index, { startAt = 0, play = true } = {}) {
             renderPlayer();
         }
     }
+}
+
+/* The next chapter's file is opened ahead of time (cheap: it is only a reference to the stored
+ * file), so that moving on to it needs no waiting. Used by chapter-end, Next and Previous. */
+let prefetched = null;      // { bookId, index, url }
+
+function dropPrefetch() {
+    if (prefetched) {
+        URL.revokeObjectURL(prefetched.url);
+        prefetched = null;
+    }
+}
+
+async function prefetchNext() {
+    if (!book) return;
+    const next = track + 1;
+    if (next >= book.chapters.length) { dropPrefetch(); return; }
+    if (prefetched && prefetched.bookId === book.id && prefetched.index === next) return;
+    dropPrefetch();
+    const forBook = book.id;
+    const forToken = loadToken;
+    try {
+        const file = await getChapterFile(book, next);
+        if (!book || book.id !== forBook || forToken !== loadToken || track + 1 !== next) return;   // moved on meanwhile
+        dropPrefetch();
+        prefetched = { bookId: forBook, index: next, url: URL.createObjectURL(file) };
+    } catch (e) { /* not essential: loadTrack will open it the normal way */ }
 }
 
 function handlePlayError(err) {
@@ -403,6 +443,7 @@ function saveNow(force) {
 function leavePlayer() {
     saveNow(true);
     loadToken++;                                       // cancel any chapter still loading
+    dropPrefetch();
     switching = false;
     intendPlay = false;
     audio.pause();
