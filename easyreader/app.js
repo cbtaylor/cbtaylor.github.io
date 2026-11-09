@@ -11,7 +11,7 @@
  *  - Listening position is saved per book in localStorage.
  */
 
-const APP_VERSION = '2.1.2';
+const APP_VERSION = '2.1.3';
 const LIB_KEY = 'er_library_v1';
 const PROGRESS_PREFIX = 'er_progress_';
 const SKIP_SECONDS = 30;
@@ -117,6 +117,29 @@ function describeLastProblem() {
     } catch (e) {
         return '';
     }
+}
+
+/* =====================================================================
+ * Trace log: a short, timestamped list of what the player did and what the phone did to it.
+ * Kept in localStorage (survives the page being closed) and shown on the helper screen.
+ * "v" = screen on / page visible, "h" = screen off / page hidden.
+ * ===================================================================== */
+
+const TRACE_KEY = 'er_trace_v1';
+const TRACE_MAX = 120;
+const HEARTBEAT_MS = 60000;
+let lastBeat = 0;
+let lastTrackStart = 0;
+let autoRetries = 0;
+let traceLines = [];
+try { traceLines = JSON.parse(localStorage.getItem(TRACE_KEY) || '[]'); } catch (e) { traceLines = []; }
+
+function trace(message) {
+    const now = new Date();
+    const clock = now.toTimeString().slice(0, 8);
+    traceLines.push(`${clock} ${document.visibilityState === 'visible' ? 'v' : 'h'} ${message}`);
+    if (traceLines.length > TRACE_MAX) traceLines.splice(0, traceLines.length - TRACE_MAX);
+    try { localStorage.setItem(TRACE_KEY, JSON.stringify(traceLines)); } catch (e) { /* ignore */ }
 }
 
 /* =====================================================================
@@ -254,7 +277,8 @@ async function loadTrack(index, { startAt = 0, play = true } = {}) {
     let phase = 'opening the chapter file';
     try {
         let url;
-        if (prefetched && prefetched.bookId === book.id && prefetched.index === index) {
+        const fromPrefetch = !!(prefetched && prefetched.bookId === book.id && prefetched.index === index);
+        if (fromPrefetch) {
             // The next chapter was prepared in advance, so there is NOTHING to wait for here:
             // playback starts in the same instant the previous chapter ends. (With the screen off,
             // Android is far less willing to start playback that begins after a delay.)
@@ -280,6 +304,10 @@ async function loadTrack(index, { startAt = 0, play = true } = {}) {
         pendingSeek = startAt;
         audio.src = url;
         const playing = intendPlay ? audio.play() : null;      // start FIRST, then do the bookkeeping
+        lastTrackStart = Date.now();
+        autoRetries = 0;
+        trace(`load chapter ${index + 1} of ${book.chapters.length} (${fromPrefetch ? 'prepared' : 'fetched'}) play=${!!playing}`);
+        if (playing) playing.then(() => trace('play() ok'), (e) => trace('play() failed: ' + (e && e.name)));
         // Record the new position straight away, so progress is never left
         // pointing at the old chapter's time.
         writeProgress(book.id, { track: index, time: Math.max(0, startAt) });
@@ -507,6 +535,10 @@ audio.addEventListener('loadedmetadata', () => {
 audio.addEventListener('timeupdate', () => {
     renderProgress();
     saveNow(false);
+    if (Date.now() - lastBeat > HEARTBEAT_MS) {          // a line a minute: gaps show when the page was frozen
+        lastBeat = Date.now();
+        trace(`playing chapter ${track + 1} t=${audio.currentTime.toFixed(0)}`);
+    }
     if ('mediaSession' in navigator && navigator.mediaSession.setPositionState &&
         isFinite(audio.duration) && audio.duration > 0) {
         try {
@@ -527,6 +559,26 @@ audio.addEventListener('play', () => {
 
 audio.addEventListener('pause', () => {
     if (!book) return;
+    const unexpected = intendPlay && !switching && !finished && !audio.ended;   // we did not ask for this pause
+    trace(`pause event: unexpected=${unexpected} t=${audio.currentTime.toFixed(1)} ready=${audio.readyState} ended=${audio.ended}`);
+
+    // Observed on a real phone with the screen off: playback sometimes stops just after a new chapter
+    // starts, with no error. If that happens within a few seconds of a chapter starting, try once more.
+    if (unexpected && autoRetries < 1 && Date.now() - lastTrackStart < 5000) {
+        autoRetries++;
+        trace('auto-retry: playback stopped right after the chapter started; calling play() again');
+        audio.play().then(
+            () => trace('auto-retry: play() ok'),
+            (e) => {
+                trace('auto-retry: play() failed: ' + (e && e.name));
+                intendPlay = false;
+                pausedAt = Date.now();
+                renderPlayer();
+            }
+        );
+        return;
+    }
+
     if (!switching && !finished && !audio.ended) {
         intendPlay = false;                            // e.g. a phone call or headphones unplugged
         pausedAt = Date.now();
@@ -535,8 +587,15 @@ audio.addEventListener('pause', () => {
     renderPlayer();
 });
 
+/* ---------- trace events (shown on the helper screen) ---------- */
+for (const name of ['play', 'playing', 'waiting', 'stalled', 'emptied', 'abort']) {
+    audio.addEventListener(name, () => trace(`audio ${name} t=${audio.currentTime.toFixed(1)}`));
+}
+audio.addEventListener('error', () => trace(`audio ERROR code=${audio.error && audio.error.code}`));
+
 audio.addEventListener('ended', () => {
     if (!book) return;
+    trace(`audio ended (chapter ${track + 1} of ${book.chapters.length})`);
     if (track < book.chapters.length - 1) {
         loadTrack(track + 1, { startAt: 0, play: true });
     } else {
@@ -557,9 +616,13 @@ audio.addEventListener('error', () => {
 });
 
 document.addEventListener('visibilitychange', () => {
+    trace(`screen ${document.visibilityState}`);
     if (document.visibilityState === 'hidden') saveNow(true);
 });
-window.addEventListener('pagehide', () => saveNow(true));
+window.addEventListener('pagehide', () => { trace('pagehide'); saveNow(true); });
+window.addEventListener('pageshow', () => trace('pageshow'));
+document.addEventListener('freeze', () => trace('page FROZEN by the browser'));
+document.addEventListener('resume', () => trace('page resumed after freeze'));
 
 /* ---------- lock screen / headphone controls ---------- */
 
@@ -579,7 +642,9 @@ function updateMediaSession() {
 function setupMediaSession() {
     if (!('mediaSession' in navigator)) return;
     const set = (action, fn) => {
-        try { navigator.mediaSession.setActionHandler(action, fn); } catch (e) { /* unsupported action */ }
+        try {
+            navigator.mediaSession.setActionHandler(action, (...args) => { trace(`media control: ${action}`); fn(...args); });
+        } catch (e) { /* unsupported action */ }
     };
     set('play', () => { if (book && !intendPlay) togglePlay(); });
     set('pause', () => { if (book && intendPlay) togglePlay(); });
@@ -843,8 +908,15 @@ function renderManage() {
     const last = describeLastProblem();
     $('last-problem').textContent = last;
     $('last-problem').classList.toggle('hidden', !last);
+    $('trace-log').textContent = traceLines.slice(-60).join('\n') || '(nothing recorded yet)';
     updateStorageInfo();
 }
+
+$('btn-trace-clear').addEventListener('click', () => {
+    traceLines = [];
+    try { localStorage.removeItem(TRACE_KEY); } catch (e) { /* ignore */ }
+    $('trace-log').textContent = '(nothing recorded yet)';
+});
 
 /* Opens every chapter file of every book (metadata only, so it's quick) and reports what's wrong. */
 async function checkBooks() {

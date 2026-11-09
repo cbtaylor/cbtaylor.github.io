@@ -365,6 +365,21 @@ footer .btn { width: 100%; }
 
 .note.pre { white-space: pre-line; overflow-wrap: anywhere; }
 
+.trace {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.7rem;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    max-height: 16rem;
+    overflow-y: auto;
+    background: #000;
+    border: 1px solid #444;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    color: #d0d0d0;
+}
+
 .row { display: flex; gap: 0.6rem; }
 .row .btn { flex: 1 1 0; }
 
