@@ -2,7 +2,7 @@
   "name": "Day Of The Week Game",
   "short_name": "Day of Week",
   "description": "Practice working out the day of the week for any date.",
-  "id": "./",
+  "id": "dotw-day-of-the-week",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
